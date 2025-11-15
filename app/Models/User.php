@@ -27,35 +27,34 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
     }
 
-    /**
-     * Verifica se o usuário tem a role (string) ou qualquer role do array.
-     */
-    public function hasRole($role): bool
+    public function timeEntries()
     {
-        $names = $this->roles->pluck('name')->toArray();
-
-        if (is_array($role)) {
-            return count(array_intersect($role, $names)) > 0;
-        }
-
-        return in_array($role, $names);
+        return $this->hasMany(TimeEntry::class);
     }
 
-    // helper pra atribuir role
-    public function assignRole($role)
+    public function adjustments()
     {
-        if (is_string($role)) {
-            $roleModel = Role::where('name', $role)->first();
-            if ($roleModel) {
-                $this->roles()->syncWithoutDetaching([$roleModel->id]);
-            }
-        } elseif ($role instanceof Role) {
-            $this->roles()->syncWithoutDetaching([$role->id]);
+        return $this->hasMany(Adjustment::class);
+    }
+
+    public function hasRole($role): bool
+    {
+        $roles = $this->roles->pluck('name')->toArray();
+
+        if (is_array($role)) {
+            return count(array_intersect($role, $roles)) > 0;
         }
+
+        return in_array($role, $roles);
     }
 }

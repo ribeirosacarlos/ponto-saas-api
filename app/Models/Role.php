@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasUuid;
+use App\Traits.HasUuid;
 
 class Role extends Model
 {
@@ -12,7 +12,10 @@ class Role extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['name','display_name'];
+    protected $fillable = [
+        'name',
+        'display_name',
+    ];
 
     public function users()
     {
