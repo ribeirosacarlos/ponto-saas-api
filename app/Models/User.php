@@ -2,47 +2,60 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+use App\Traits\HasUuid;
+use App\Traits\CompanyScoped;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, Notifiable, HasUuid, CompanyScoped;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'company_id',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function roles()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
+    }
+
+    /**
+     * Verifica se o usuário tem a role (string) ou qualquer role do array.
+     */
+    public function hasRole($role): bool
+    {
+        $names = $this->roles->pluck('name')->toArray();
+
+        if (is_array($role)) {
+            return count(array_intersect($role, $names)) > 0;
+        }
+
+        return in_array($role, $names);
+    }
+
+    // helper pra atribuir role
+    public function assignRole($role)
+    {
+        if (is_string($role)) {
+            $roleModel = Role::where('name', $role)->first();
+            if ($roleModel) {
+                $this->roles()->syncWithoutDetaching([$roleModel->id]);
+            }
+        } elseif ($role instanceof Role) {
+            $this->roles()->syncWithoutDetaching([$role->id]);
+        }
     }
 }
