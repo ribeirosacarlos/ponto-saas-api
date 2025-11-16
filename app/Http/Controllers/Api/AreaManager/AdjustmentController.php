@@ -12,6 +12,8 @@ class AdjustmentController extends Controller
     {
         $adj = Adjustment::findOrFail($id);
 
+        $this->authorize('approve', $adj);
+
         $adj->update([
             'status'      => 'approved',
             'approver_id' => $request->user()->id
@@ -23,6 +25,8 @@ class AdjustmentController extends Controller
     public function reject($id, Request $request)
     {
         $adj = Adjustment::findOrFail($id);
+
+        $this->authorize('reject', $adj);
 
         $adj->update([
             'status'      => 'rejected',

@@ -13,7 +13,7 @@ class ShiftController extends Controller
         return Shift::paginate(20);
     }
 
-    public function store(Request $request)
+    public function store(ShiftStoreRequest $request)
     {
         $request->validate([
             'name'        => 'required',
@@ -38,7 +38,7 @@ class ShiftController extends Controller
         return Shift::findOrFail($id);
     }
 
-    public function update($id, Request $request)
+    public function update($id, ShiftStoreRequest $request)
     {
         $shift = Shift::findOrFail($id);
 
