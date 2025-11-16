@@ -3,10 +3,13 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
+
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
+
 use App\Http\Controllers\Api\AreaManager\TimeEntryController as AreaManagerTimeEntryController;
 use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdjustmentController;
+
 use App\Http\Controllers\Api\Admin\EmployeeController;
 use App\Http\Controllers\Api\Admin\ShiftController;
 use App\Http\Controllers\Api\Admin\ReportController;
