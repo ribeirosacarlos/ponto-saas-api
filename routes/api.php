@@ -1,23 +1,78 @@
-<?php 
+<?php
+
 use Illuminate\Support\Facades\Route;
-use App\Services\TenantManager;
 
-Route::get('/tenant-check', function (TenantManager $tm) {
-    return [
-        'tenant' => $tm->tenant() ? $tm->tenant()->slug : null,
-        'tenant_name' => $tm->tenant() ? $tm->tenant()->name : null,
-    ];
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
+use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
+use App\Http\Controllers\Api\AreaManager\TimeEntryController as AreaManagerTimeEntryController;
+use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdjustmentController;
+use App\Http\Controllers\Api\Admin\EmployeeController;
+use App\Http\Controllers\Api\Admin\ShiftController;
+use App\Http\Controllers\Api\Admin\ReportController;
+
+Route::prefix('v1')->group(function () {
+
+    Route::post('/auth/login', [AuthController::class, 'login']);
+
+    Route::middleware(['auth:sanctum'])->group(function () {
+
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+        // EMPLOYEE
+        Route::prefix('employee')
+            ->middleware(['role:employee|area_manager|manager|admin'])
+            ->group(function () {
+
+                // Registrar batida
+                Route::post('/clock', [EmployeeTimeEntryController::class, 'clock']);
+
+                // Listar batidas do próprio usuário
+                Route::get('/entries', [EmployeeTimeEntryController::class, 'myEntries']);
+
+                // Solicitar ajuste
+                Route::post('/adjustments', [EmployeeAdjustmentController::class, 'request']);
+            });
+
+
+        // AREA MANAGER
+        Route::prefix('area-manager')
+            ->middleware(['role:area_manager|manager|admin'])
+            ->group(function () {
+
+                // Ver batidas da equipe
+                Route::get('/team/entries', [AreaManagerTimeEntryController::class, 'teamEntries']);
+
+                // Aprovar ajustes
+                Route::post('/adjustments/{id}/approve', [AreaManagerAdjustmentController::class, 'approve']);
+                Route::post('/adjustments/{id}/reject',  [AreaManagerAdjustmentController::class, 'reject']);
+            });
+
+
+        // ADMIN AREA
+        Route::prefix('admin')
+            ->middleware(['role:admin'])
+            ->group(function () {
+
+                // Funcionários
+                Route::apiResource('employees', EmployeeController::class);
+
+                // Jornadas
+                Route::apiResource('shifts', ShiftController::class);
+
+                // Relatórios
+                Route::get('/reports/time', [ReportController::class, 'timeReport']);
+            });
+
+
+        // DEBUG / TESTE DO TENANT
+        Route::get('/tenant-check', function (\App\Services\TenantManager $tm) {
+            return [
+                'tenant' => $tm->tenant()?->slug,
+                'tenant_name' => $tm->tenant()?->name,
+            ];
+        });
+
+    });
+
 });
-
-Route::middleware(['auth:sanctum','role:admin'])
-    ->prefix('admin')
-    ->group(function () {
-        Route::get('/dashboard', fn() => ['message' => 'Admin OK']);
-    });
-
-// Employee
-Route::middleware(['auth:sanctum','role:employee|manager|area_manager|admin'])
-    ->prefix('employee')
-    ->group(function () {
-        Route::get('/test', fn() => ['message' => 'Employee OK']);
-    });
