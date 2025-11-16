@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: Ponto SaaS API
+  version: 1.0.0
+
+servers:
+  - url: https://{tenant}.localhost:8000/api/v1
+    variables:
+      tenant:
+        default: acme
+
+paths: {}

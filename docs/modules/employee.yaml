@@ -1,0 +1,36 @@
+paths:
+  /employee/clock:
+    post:
+      summary: Registrar batida (entrada/saída)
+      tags:
+        - Employee - Time Entries
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [in, out]
+                latitude:
+                  type: string
+                longitude:
+                  type: string
+      responses:
+        "201":
+          description: Batida registrada
+
+  /employee/entries:
+    get:
+      summary: Listar batidas do próprio usuário
+      tags:
+        - Employee - Time Entries
+      security:
+        - sanctum: []
+      responses:
+        "200":
+          description: Lista de batidas

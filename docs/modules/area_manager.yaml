@@ -1,0 +1,27 @@
+paths:
+  /area-manager/team/entries:
+    get:
+      summary: Listar batidas da equipe
+      tags:
+        - Area Manager - Time Entries
+      security:
+        - sanctum: []
+      responses:
+        "200":
+          description: OK
+
+  /area-manager/adjustments/{id}/approve:
+    post:
+      summary: Aprovar ajuste
+      tags:
+        - Area Manager - Adjustments
+      security:
+        - sanctum: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Ajuste aprovado
