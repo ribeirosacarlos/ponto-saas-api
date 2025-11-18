@@ -1,0 +1,22 @@
+openapi: 3.0.0
+info:
+  title: "Ponto SaaS API"
+  version: "1.0.0"
+  description: "Documentação da API de Controle de Ponto"
+
+servers:
+  - url: https://api.meudominio.com/v1
+    description: Produção
+  - url: http://localhost:8000/v1
+    description: Local
+
+paths: {}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

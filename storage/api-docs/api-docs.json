@@ -1,0 +1,1515 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Ponto SaaS API",
+        "description": "Documentação da API de controle de ponto",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/v1",
+            "description": "Local"
+        },
+        {
+            "url": "https://api.suaempresa.com/v1",
+            "description": "Produção"
+        }
+    ],
+    "paths": {
+        "/v1/admin/employees": {
+            "get": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Lista todos os funcionários da empresa",
+                "description": "Retorna uma lista paginada contendo todos os funcionários associados à empresa do administrador.",
+                "operationId": "d41539d5ed92599c5649c66eb20d99a8",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Página atual",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de funcionários",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 45
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "company_id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Maria Santos"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "maria@empresa.com"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2025-02-10T14:32:20Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Cria um novo funcionário para a empresa",
+                "description": "Apenas administradores podem criar novos funcionários.",
+                "operationId": "be4a9e4b1a00e7f5cb9755b11a150ed7",
+                "requestBody": {
+                    "description": "Dados do funcionário",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "João Silva"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "joao@empresa.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "12345678"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "admin",
+                                            "manager",
+                                            "area_manager",
+                                            "employee"
+                                        ],
+                                        "example": "employee",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Funcionário criado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "company_id": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "João Silva"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "joao@empresa.com"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/employees/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Exibe detalhes de um funcionário",
+                "description": "Retorna os dados completos de um funcionário específico.",
+                "operationId": "b66517d886ea6640afeac90e9eb2ff39",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID do funcionário",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes do funcionário",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "company_id": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Maria Santos"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "maria@empresa.com"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "example": "2025-02-10T14:32:20Z"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Funcionário não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Atualiza os dados de um funcionário",
+                "description": "Permite alterar nome, email e opcionalmente a senha.",
+                "operationId": "6aad7d763f7c48ad115b3dd257fa90f4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID do funcionário",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Dados a serem atualizados",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Maria Silva"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "maria.silva@empresa.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "novaSenha123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Funcionário atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Maria Silva"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "maria.silva@empresa.com"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Remove um funcionário da empresa",
+                "description": "Remove o registro permanentemente.",
+                "operationId": "ea1b81ef65f43dea3e37476220c8f12c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID do funcionário",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Funcionário removido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Deletado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Funcionário não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/reports/time": {
+            "get": {
+                "tags": [
+                    "Admin - Reports"
+                ],
+                "summary": "Relatório de batidas por período",
+                "description": "Retorna todas as batidas de ponto dentro de um intervalo de datas, incluindo os dados do usuário.",
+                "operationId": "db3f7ac54a1e6705098088f50f11bcd9",
+                "parameters": [
+                    {
+                        "name": "start",
+                        "in": "query",
+                        "description": "Data inicial (YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "2025-02-01"
+                        }
+                    },
+                    {
+                        "name": "end",
+                        "in": "query",
+                        "description": "Data final (YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "2025-02-28"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de batidas no período fornecido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 12
+                                            },
+                                            "user_id": {
+                                                "type": "integer",
+                                                "example": 7
+                                            },
+                                            "clocked_at": {
+                                                "type": "string",
+                                                "example": "2025-02-10T09:00:00Z"
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "example": "in"
+                                            },
+                                            "latitude": {
+                                                "type": "string",
+                                                "example": "-23.550520",
+                                                "nullable": true
+                                            },
+                                            "longitude": {
+                                                "type": "string",
+                                                "example": "-46.633308",
+                                                "nullable": true
+                                            },
+                                            "source": {
+                                                "type": "string",
+                                                "example": "web"
+                                            },
+                                            "user": {
+                                                "description": "Informações do funcionário",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 7
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Carlos Alberto"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "carlos@empresa.com"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação (datas ausentes ou inválidas)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/shifts": {
+            "get": {
+                "tags": [
+                    "Admin - Shifts"
+                ],
+                "summary": "Lista todas as jornadas de trabalho",
+                "description": "LISTAR SHIFTS\n---------------------------------------------------------",
+                "operationId": "7cfacbe889eb5b27ae9521b2c50214ca",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "company_id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Turno Normal"
+                                                    },
+                                                    "start_time": {
+                                                        "type": "string",
+                                                        "example": "08:00"
+                                                    },
+                                                    "end_time": {
+                                                        "type": "string",
+                                                        "example": "17:00"
+                                                    },
+                                                    "is_flexible": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Shifts"
+                ],
+                "summary": "Cria uma nova jornada de trabalho",
+                "description": "CRIAR SHIFT\n---------------------------------------------------------",
+                "operationId": "6eb593c818adcf10838cbf3b09dc82ab",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "start_time",
+                                    "end_time"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Turno Manhã"
+                                    },
+                                    "start_time": {
+                                        "type": "string",
+                                        "example": "06:00"
+                                    },
+                                    "end_time": {
+                                        "type": "string",
+                                        "example": "14:00"
+                                    },
+                                    "is_flexible": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Criado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 4
+                                        },
+                                        "company_id": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Turno Manhã"
+                                        },
+                                        "start_time": {
+                                            "type": "string",
+                                            "example": "06:00"
+                                        },
+                                        "end_time": {
+                                            "type": "string",
+                                            "example": "14:00"
+                                        },
+                                        "is_flexible": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/shifts/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Shifts"
+                ],
+                "summary": "Exibe uma jornada específica",
+                "description": "MOSTRAR SHIFT\n---------------------------------------------------------",
+                "operationId": "88de3342e8ff22e10cb6a084bbff852f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes da jornada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "company_id": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Turno Manhã"
+                                        },
+                                        "start_time": {
+                                            "type": "string",
+                                            "example": "06:00"
+                                        },
+                                        "end_time": {
+                                            "type": "string",
+                                            "example": "14:00"
+                                        },
+                                        "is_flexible": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Shifts"
+                ],
+                "summary": "Atualiza uma jornada existente",
+                "description": "ATUALIZAR SHIFT\n---------------------------------------------------------",
+                "operationId": "5b287969dcdaaf2e288eb8ad10c09754",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Turno Atualizado"
+                                    },
+                                    "start_time": {
+                                        "type": "string",
+                                        "example": "07:00"
+                                    },
+                                    "end_time": {
+                                        "type": "string",
+                                        "example": "15:00"
+                                    },
+                                    "is_flexible": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Atualizado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Turno Atualizado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Shifts"
+                ],
+                "summary": "Remove uma jornada de trabalho",
+                "description": "DELETAR SHIFT\n---------------------------------------------------------",
+                "operationId": "fa1005b478b1d1f4a6e8153e818d2bbe",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Jornada removida",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Deletado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/area-manager/adjustments/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Area Manager - Adjustments"
+                ],
+                "summary": "Aprova um ajuste solicitado pelo funcionário",
+                "description": "O gestor aprova um ajuste pendente. Atualiza o status e registra o 'approver_id'.",
+                "operationId": "4b33f380735fc075bcbc3a7956848034",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID do ajuste a ser aprovado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ajuste aprovado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "original_time": {
+                                            "type": "string",
+                                            "example": "2025-02-10 08:00:00"
+                                        },
+                                        "corrected_time": {
+                                            "type": "string",
+                                            "example": "2025-02-10 08:10:00"
+                                        },
+                                        "reason": {
+                                            "type": "string",
+                                            "example": "Esqueci de bater o ponto"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "approved"
+                                        },
+                                        "approver_id": {
+                                            "type": "integer",
+                                            "example": 7
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Usuário não autorizado"
+                    },
+                    "404": {
+                        "description": "Ajuste não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/area-manager/adjustments/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Area Manager - Adjustments"
+                ],
+                "summary": "Rejeita um ajuste solicitado pelo funcionário",
+                "description": "O gestor rejeita um ajuste pendente. Atualiza o status e registra o 'approver_id'.",
+                "operationId": "cfcaaeacfdc055ebab16322cef9fc9db",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID do ajuste a ser rejeitado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ajuste rejeitado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "original_time": {
+                                            "type": "string",
+                                            "example": "2025-02-10 08:00:00"
+                                        },
+                                        "corrected_time": {
+                                            "type": "string",
+                                            "example": "2025-02-10 08:10:00"
+                                        },
+                                        "reason": {
+                                            "type": "string",
+                                            "example": "Esqueci de bater o ponto"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "rejected"
+                                        },
+                                        "approver_id": {
+                                            "type": "integer",
+                                            "example": 7
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Usuário não autorizado"
+                    },
+                    "404": {
+                        "description": "Ajuste não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/area-manager/team/entries": {
+            "get": {
+                "tags": [
+                    "Area Manager - Time Entries"
+                ],
+                "summary": "Lista as batidas de ponto da equipe",
+                "description": "Retorna entradas de ponto de todos os funcionários da equipe que o gestor pode visualizar.",
+                "operationId": "b0cf11c2ba79f53e2cd53d6f8fbe77ad",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número da página para paginação",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada das batidas da equipe",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 30
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 120
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 25
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "clocked_at": {
+                                                        "type": "string",
+                                                        "example": "2025-02-10T14:32:20Z"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "in"
+                                                    },
+                                                    "latitude": {
+                                                        "type": "string",
+                                                        "example": "-23.550520",
+                                                        "nullable": true
+                                                    },
+                                                    "longitude": {
+                                                        "type": "string",
+                                                        "example": "-46.633308",
+                                                        "nullable": true
+                                                    },
+                                                    "source": {
+                                                        "type": "string",
+                                                        "example": "web"
+                                                    },
+                                                    "user": {
+                                                        "description": "Informações do funcionário",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 12
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "João da Silva"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "joao@empresa.com"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Usuário não autorizado a visualizar entradas da equipe"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Realiza login do usuário",
+                "description": "Retorna o token e dados do usuário autenticado",
+                "operationId": "2c84e8de383e2d44452e7f8b79a8b7e2",
+                "requestBody": {
+                    "description": "Dados de login",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "usuario@empresa.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "description": "Objeto completo do usuário autenticado",
+                                            "type": "object"
+                                        },
+                                        "roles": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "employee",
+                                                "admin"
+                                            ]
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "2|xjfi3290jf0239jf0asd0f9as..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Credenciais inválidas"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Realiza logout do usuário autenticado",
+                "description": "Revoga o token atual do usuário",
+                "operationId": "d8ae940eb58b4e626e279e176bfd7457",
+                "responses": {
+                    "200": {
+                        "description": "Logout realizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logout feito com sucesso"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/adjustments": {
+            "post": {
+                "tags": [
+                    "Employee - Adjustments"
+                ],
+                "summary": "Solicita um ajuste de ponto",
+                "description": "O funcionário envia uma solicitação de correção de horário (entrada/saída). A solicitação entra como 'pending'.",
+                "operationId": "2cf9ab31b369832867d67f9316239e1e",
+                "requestBody": {
+                    "description": "Dados do ajuste solicitado",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "original_time",
+                                    "corrected_time",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "original_time": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-02-10 08:00:00"
+                                    },
+                                    "corrected_time": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-02-10 08:10:00"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Esqueci de registrar a entrada"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ajuste criado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "original_time": {
+                                            "type": "string",
+                                            "example": "2025-02-10 08:00:00"
+                                        },
+                                        "corrected_time": {
+                                            "type": "string",
+                                            "example": "2025-02-10 08:10:00"
+                                        },
+                                        "reason": {
+                                            "type": "string",
+                                            "example": "Esqueci de registrar a entrada"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Usuário não autorizado a solicitar ajustes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/clock": {
+            "post": {
+                "tags": [
+                    "Employee - Time Entries"
+                ],
+                "summary": "Registrar batida de ponto (entrada ou saída)",
+                "description": "O funcionário registra uma batida de ponto. A localização é opcional.",
+                "operationId": "19dedd588c22206ec7c07003fccf0013",
+                "requestBody": {
+                    "description": "Dados da batida",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "in",
+                                            "out"
+                                        ],
+                                        "example": "in"
+                                    },
+                                    "latitude": {
+                                        "type": "string",
+                                        "example": "-23.550520",
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "string",
+                                        "example": "-46.633308",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Batida registrada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "clocked_at": {
+                                            "type": "string",
+                                            "example": "2025-02-10T14:32:20Z"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "example": "in"
+                                        },
+                                        "latitude": {
+                                            "type": "string",
+                                            "example": "-23.550520",
+                                            "nullable": true
+                                        },
+                                        "longitude": {
+                                            "type": "string",
+                                            "example": "-46.633308",
+                                            "nullable": true
+                                        },
+                                        "source": {
+                                            "type": "string",
+                                            "example": "web"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Usuário não autorizado a registrar batida"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/entries": {
+            "get": {
+                "tags": [
+                    "Employee - Time Entries"
+                ],
+                "summary": "Lista as batidas do próprio funcionário autenticado",
+                "description": "Retorna uma listagem paginada dos registros de batida do usuário.",
+                "operationId": "b743185c32a5fb107dcf31c55ee155ff",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número da página",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de batidas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 42
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "clocked_at": {
+                                                        "type": "string",
+                                                        "example": "2025-02-10T14:32:20Z"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "out"
+                                                    },
+                                                    "latitude": {
+                                                        "type": "string",
+                                                        "example": "-23.550520",
+                                                        "nullable": true
+                                                    },
+                                                    "longitude": {
+                                                        "type": "string",
+                                                        "example": "-46.633308",
+                                                        "nullable": true
+                                                    },
+                                                    "source": {
+                                                        "type": "string",
+                                                        "example": "web"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Admin - Employees",
+            "description": "Gestão de funcionários da empresa (CRUD)"
+        },
+        {
+            "name": "Admin - Reports",
+            "description": "Relatórios administrativos"
+        },
+        {
+            "name": "Admin - Shifts",
+            "description": "Gestão de jornadas de trabalho"
+        },
+        {
+            "name": "Area Manager - Adjustments",
+            "description": "Aprovação e rejeição de ajustes feitos pelos funcionários"
+        },
+        {
+            "name": "Area Manager - Time Entries",
+            "description": "Consultas das batidas de ponto da equipe supervisionada"
+        },
+        {
+            "name": "Auth",
+            "description": "Autenticação do usuário"
+        },
+        {
+            "name": "Employee - Adjustments",
+            "description": "Solicitações de ajuste de ponto feitas pelo funcionário"
+        },
+        {
+            "name": "Employee - Time Entries",
+            "description": "Rotas de registro e consulta de batidas de ponto do funcionário"
+        }
+    ]
+}
