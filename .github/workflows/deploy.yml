@@ -1,4 +1,4 @@
-name: Deploy Laravel to Hostinger
+name: Deploy Laravel to Hostinger Dudu
 
 on:
   push:
