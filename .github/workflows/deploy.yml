@@ -25,9 +25,13 @@ jobs:
 
       - name: Prepare build folder
         run: |
+          rm -rf build
           mkdir build
-          cp -R * build/
+          shopt -s dotglob
+          cp -R !(build) build/
+          shopt -u dotglob
           cp -R vendor build/vendor
+
 
       - name: Upload Laravel root to Hostinger (except public)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
