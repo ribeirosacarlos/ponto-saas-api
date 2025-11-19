@@ -27,11 +27,8 @@ jobs:
         run: |
           rm -rf build
           mkdir build
-          shopt -s dotglob
-          cp -R !(build) build/
-          shopt -u dotglob
+          rsync -av --exclude=build --exclude=.git --exclude=.github ./ build/
           cp -R vendor build/vendor
-
 
       - name: Upload Laravel root to Hostinger (except public)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
