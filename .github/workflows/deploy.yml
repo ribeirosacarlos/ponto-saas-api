@@ -38,8 +38,8 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           protocol: ftp
-          local-dir: build
-          server-dir: laravel-api
+          local-dir: build/
+          server-dir: laravel-api/
 
       - name: Upload Public folder to public_html
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -48,5 +48,5 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           protocol: ftp
-          local-dir: build/public
-          server-dir: public_html
+          local-dir: build/public/
+          server-dir: public_html/
