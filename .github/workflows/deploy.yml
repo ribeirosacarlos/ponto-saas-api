@@ -11,13 +11,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up PHP
+      - name: Set up PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          extension-csv: mbstring, intl, bcmath
+          extensions: mbstring, intl, bcmath
+          ini-values: post_max_size=256M, upload_max_filesize=256M
 
       - name: Install Composer dependencies
         run: |
@@ -36,7 +37,7 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
-          protocol: ftps
+          protocol: ftp
           local-dir: build
           server-dir: laravel-api
 
@@ -46,6 +47,6 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
-          protocol: ftps
+          protocol: ftp
           local-dir: build/public
           server-dir: public_html
