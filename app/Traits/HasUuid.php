@@ -6,16 +6,15 @@ use Illuminate\Support\Str;
 
 trait HasUuid
 {
-    public static function bootHasUuid()
+    protected static function bootHasUuid()
     {
         static::creating(function ($model) {
-            if (empty($model->{$model->getKeyName()})) {
+            if (! $model->getKey()) {
                 $model->{$model->getKeyName()} = (string) Str::uuid();
             }
         });
     }
 
-    // Important for Laravel to treat the key as string/UUID
     public function getIncrementing()
     {
         return false;

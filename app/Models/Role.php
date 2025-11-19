@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits.HasUuid;
+use App\Traits\HasUuid;
 
 class Role extends Model
 {
-    use HasUuid;
+    use HasFactory, HasUuid;
 
     public $incrementing = false;
     protected $keyType = 'string';

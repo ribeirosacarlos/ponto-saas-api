@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasUuid;
 
 class Company extends Model
 {
-    use HasUuid;
+    use HasFactory, HasUuid;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -15,6 +16,15 @@ class Company extends Model
     protected $fillable = [
         'name',
         'slug',
+        'document',
+        'email',
+        'phone',
+        'address',
+        'city',
+        'state',
+        'plan',
+        'trial_ends_at',
+        'subscription_ends_at',
     ];
 
     public function users()

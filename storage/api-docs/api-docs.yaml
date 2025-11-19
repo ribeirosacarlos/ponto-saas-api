@@ -5,9 +5,9 @@ info:
   description: "Documentação da API de Controle de Ponto"
 
 servers:
-  - url: https://api.meudominio.com/v1
+  - url: https://api.meudominio.com/api
     description: Produção
-  - url: http://localhost:8000/v1
+  - url: http://localhost:8000/api
     description: Local
 
 paths: {}

@@ -12,12 +12,12 @@ namespace App\Swagger;
  * )
  *
  * @OA\Server(
- *     url="http://localhost:8000/v1",
+ *     url="http://localhost:8000",
  *     description="Local"
  * )
  *
  * @OA\Server(
- *     url="https://api.suaempresa.com/v1",
+ *     url="https://api.suaempresa.com",
  *     description="Produção"
  * )
  */
