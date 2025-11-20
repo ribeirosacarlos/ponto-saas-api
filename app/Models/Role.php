@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids; // <--- trait nativo
+use Illuminate\Support\Str;
 
 class Role extends Model
 {
-    use HasFactory, HasUuid;
+    use HasFactory, HasUuids;
 
     public $incrementing = false;
     protected $keyType = 'string';

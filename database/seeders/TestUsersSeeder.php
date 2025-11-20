@@ -23,37 +23,40 @@ class TestUsersSeeder extends Seeder
         $employeeRole = Role::where('name', 'employee')->first();
 
         // Admin
-        User::factory()->create([
+        $admin = User::factory()->create([
             'company_id' => $company->id,
-            'role_id' => $adminRole->id,
             'name' => 'Admin Teste',
             'email' => 'admin@teste.com',
             'password' => bcrypt('123456'),
         ]);
+        $admin->roles()->attach($adminRole->id);
 
         // Manager
-        User::factory()->create([
+        $manager = User::factory()->create([
             'company_id' => $company->id,
-            'role_id' => $managerRole->id,
             'name' => 'Manager Teste',
             'email' => 'manager@teste.com',
             'password' => bcrypt('123456'),
         ]);
+        $manager->roles()->attach($managerRole->id);
 
         // Area Manager
-        User::factory()->create([
+        $areaManager = User::factory()->create([
             'company_id' => $company->id,
-            'role_id' => $areaManagerRole->id,
             'name' => 'Area Manager Teste',
             'email' => 'area_manager@teste.com',
             'password' => bcrypt('123456'),
         ]);
+        $areaManager->roles()->attach($areaManagerRole->id);
 
         // Employees
-        User::factory(5)->create([
+        $employees = User::factory(5)->create([
             'company_id' => $company->id,
-            'role_id' => $employeeRole->id,
             'password' => bcrypt('123456'),
         ]);
+
+        foreach ($employees as $emp) {
+            $emp->roles()->attach($employeeRole->id);
+        }
     }
 }

@@ -2,19 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasUuid;
-use App\Traits\CompanyScoped;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class TimeEntry extends Model
 {
-    use HasUuid, CompanyScoped;
+    use HasFactory, HasUuids;
 
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'company_id',
         'user_id',
         'clocked_at',
         'type',
@@ -22,11 +21,6 @@ class TimeEntry extends Model
         'longitude',
         'source',
     ];
-
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
-    }
 
     public function user()
     {

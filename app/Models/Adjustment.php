@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use App\Traits\CompanyScoped;
 
 class Adjustment extends Model
 {
-    use HasUuid, CompanyScoped;
+    use HasFactory, HasUuids, CompanyScoped;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -22,6 +23,15 @@ class Adjustment extends Model
         'reason',
         'status',
     ];
+
+    protected $casts = [
+        'original_time' => 'datetime',
+        'corrected_time' => 'datetime',
+    ];
+
+    /* ---------------------------------------
+     |  RELATIONSHIPS
+     ---------------------------------------*/
 
     public function company()
     {

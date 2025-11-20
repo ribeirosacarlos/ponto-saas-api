@@ -13,21 +13,17 @@ return new class extends Migration
     {
         Schema::create('time_entries', function (Blueprint $table) {
             $table->uuid('id')->primary();
-
-            $table->uuid('company_id');
-            $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade');
-
             $table->uuid('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-
+            
             $table->timestamp('clocked_at');
-            $table->enum('type', ['in','out']);
-
+            $table->string('type'); // in/out
             $table->string('latitude')->nullable();
             $table->string('longitude')->nullable();
-            $table->string('source')->nullable(); // web/mobile
-
+            $table->string('source')->default('web');
+            
             $table->timestamps();
+            
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();            
         });
     }
 
