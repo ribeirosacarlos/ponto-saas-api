@@ -3,14 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;   // <--- AQUI
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Laravel\Sanctum\HasApiTokens;
 use App\Traits\HasUuid;
 use App\Traits\CompanyScoped;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasUuid, CompanyScoped;  // <--- AQUI
+    use HasApiTokens, HasFactory, Notifiable, HasUuid, CompanyScoped;
 
     public $incrementing = false;
     protected $keyType = 'string';

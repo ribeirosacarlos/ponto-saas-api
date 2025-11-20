@@ -13,17 +13,171 @@
         {
             "url": "https://api.suaempresa.com/api",
             "description": "Produção"
+        },
+        {
+            "url": "/api"
         }
     ],
     "paths": {
+        "/v1/admin/employees/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Exibe funcionário",
+                "operationId": "d04734d38380dde1ac1c37e4afcaadcd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "company_id": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Maria Santos"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "maria@empresa.com"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "example": "2025-02-10T14:32:20Z"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Atualiza funcionário",
+                "operationId": "62549cf95d1a17012af2fbe150ab08f2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Maria Silva"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "maria.silva@empresa.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "novaSenha123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Atualizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Remove funcionário",
+                "operationId": "fe20028e2f92772cc8939515f8fe4358",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Removido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Deletado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/admin/employees": {
             "get": {
                 "tags": [
                     "Admin - Employees"
                 ],
                 "summary": "Lista todos os funcionários da empresa",
-                "description": "Retorna uma lista paginada contendo todos os funcionários associados à empresa do administrador.",
-                "operationId": "d41539d5ed92599c5649c66eb20d99a8",
+                "description": "Retorna uma lista paginada contendo todos os funcionários associados à empresa.",
+                "operationId": "cdc74514cfb54ba8907fbb4eab28be76",
                 "parameters": [
                     {
                         "name": "page",
@@ -38,7 +192,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de funcionários",
+                        "description": "Lista paginada",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -100,11 +254,9 @@
                 "tags": [
                     "Admin - Employees"
                 ],
-                "summary": "Cria um novo funcionário para a empresa",
-                "description": "Apenas administradores podem criar novos funcionários.",
-                "operationId": "be4a9e4b1a00e7f5cb9755b11a150ed7",
+                "summary": "Cria um novo funcionário",
+                "operationId": "003b07c984533abdca4dba95b0f6e1bc",
                 "requestBody": {
-                    "description": "Dados do funcionário",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -134,9 +286,7 @@
                                             "manager",
                                             "area_manager",
                                             "employee"
-                                        ],
-                                        "example": "employee",
-                                        "nullable": true
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -146,7 +296,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Funcionário criado com sucesso",
+                        "description": "Criado",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -172,192 +322,6 @@
                                 }
                             }
                         }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/v1/admin/employees/{id}": {
-            "get": {
-                "tags": [
-                    "Admin - Employees"
-                ],
-                "summary": "Exibe detalhes de um funcionário",
-                "description": "Retorna os dados completos de um funcionário específico.",
-                "operationId": "b66517d886ea6640afeac90e9eb2ff39",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID do funcionário",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 10
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Detalhes do funcionário",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer",
-                                            "example": 10
-                                        },
-                                        "company_id": {
-                                            "type": "integer",
-                                            "example": 3
-                                        },
-                                        "name": {
-                                            "type": "string",
-                                            "example": "Maria Santos"
-                                        },
-                                        "email": {
-                                            "type": "string",
-                                            "example": "maria@empresa.com"
-                                        },
-                                        "created_at": {
-                                            "type": "string",
-                                            "example": "2025-02-10T14:32:20Z"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Funcionário não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Admin - Employees"
-                ],
-                "summary": "Atualiza os dados de um funcionário",
-                "description": "Permite alterar nome, email e opcionalmente a senha.",
-                "operationId": "6aad7d763f7c48ad115b3dd257fa90f4",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID do funcionário",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 10
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "description": "Dados a serem atualizados",
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Maria Silva"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "example": "maria.silva@empresa.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "example": "novaSenha123"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Funcionário atualizado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer",
-                                            "example": 10
-                                        },
-                                        "name": {
-                                            "type": "string",
-                                            "example": "Maria Silva"
-                                        },
-                                        "email": {
-                                            "type": "string",
-                                            "example": "maria.silva@empresa.com"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Admin - Employees"
-                ],
-                "summary": "Remove um funcionário da empresa",
-                "description": "Remove o registro permanentemente.",
-                "operationId": "ea1b81ef65f43dea3e37476220c8f12c",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID do funcionário",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 10
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Funcionário removido",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Deletado"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Funcionário não encontrado"
                     }
                 },
                 "security": [
@@ -1475,6 +1439,15 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
             }
         }
     },
