@@ -79,3 +79,12 @@ Route::prefix('v1')->group(function () {
     });
 
 });
+
+Route::get('/db-test', function () {
+    try {
+        \DB::connection()->getPdo();
+        return ['status' => 'ok', 'message' => 'Conexão com banco funcionando!'];
+    } catch (\Exception $e) {
+        return ['status' => 'error', 'message' => $e->getMessage()];
+    }
+});

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api\Employee;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use App\Models\TimeEntry;
 use App\Http\Requests\TimeEntryStoreRequest;
 
 class TimeEntryController extends Controller
 {
+    use AuthorizesRequests;
+
     public function clock(TimeEntryStoreRequest $request)
     {
         $this->authorize('create', TimeEntry::class);
@@ -31,7 +34,6 @@ class TimeEntryController extends Controller
         return response()->json($entry, 201);
     }
 
-
     public function myEntries(Request $request)
     {
         $entries = $request->user()
@@ -39,7 +41,6 @@ class TimeEntryController extends Controller
             ->orderBy('clocked_at', 'desc')
             ->paginate(20);
 
-        // Authorize each entry
         foreach ($entries as $entry) {
             $this->authorize('view', $entry);
         }
