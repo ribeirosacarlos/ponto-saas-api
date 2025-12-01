@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Se já estiver indo para /public, não mexe
+    RewriteCond %{REQUEST_URI} !^/public/
+
+    # Redireciona tudo que chegar na raiz para a pasta /public
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
