@@ -22,6 +22,12 @@ class TimeEntryController extends Controller
             'longitude' => 'nullable|string',
         ]);
 
+        $lastEntry = $request->user()->timeEntries()->latest('clocked_at')->first();
+
+        if ($lastEntry && $lastEntry->clocked_at->diffInSeconds(now()) < 60) {
+            return response()->json(['message' => 'Aguarde 1 minuto entre os registros.'], 422);
+        }
+
         $entry = TimeEntry::create([
             'user_id'    => $request->user()->id,
             'clocked_at' => now(),

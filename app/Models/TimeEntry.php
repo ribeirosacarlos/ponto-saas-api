@@ -22,6 +22,10 @@ class TimeEntry extends Model
         'source',
     ];
 
+    protected $casts = [
+        'clocked_at' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
