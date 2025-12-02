@@ -15,9 +15,9 @@ class UserFactory extends Factory
     {
         return [
             'id' => Str::uuid(),
-            'company_id' => Company::factory(), // ou null dependendo da seed
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'company_id' => Company::factory(),
+            'name' => 'User ' . Str::random(5),
+            'email' => Str::lower(Str::random(5)) . '@example.com',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
