@@ -17,9 +17,7 @@ return new class extends Migration
         });
 
         // Backfill existing rows with the company id from the owning user
-        DB::table('time_entries')
-            ->join('users', 'time_entries.user_id', '=', 'users.id')
-            ->update(['time_entries.company_id' => DB::raw('users.company_id')]);
+        DB::statement('UPDATE time_entries SET company_id = users.company_id FROM users WHERE time_entries.user_id = users.id');
 
         DB::statement('ALTER TABLE time_entries ALTER COLUMN company_id SET NOT NULL');
 
