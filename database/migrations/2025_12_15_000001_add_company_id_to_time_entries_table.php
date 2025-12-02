@@ -13,15 +13,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('time_entries', function (Blueprint $table) {
-            $table->uuid('company_id')->after('id');
-            $table->foreign('company_id')->references('id')->on('companies')->cascadeOnDelete();
-            $table->index('company_id');
+            $table->uuid('company_id')->nullable()->after('id');
         });
 
         // Backfill existing rows with the company id from the owning user
         DB::table('time_entries')
             ->join('users', 'time_entries.user_id', '=', 'users.id')
             ->update(['time_entries.company_id' => DB::raw('users.company_id')]);
+
+        DB::statement('ALTER TABLE time_entries ALTER COLUMN company_id SET NOT NULL');
+
+        Schema::table('time_entries', function (Blueprint $table) {
+            $table->foreign('company_id')->references('id')->on('companies')->cascadeOnDelete();
+            $table->index('company_id');
+        });
     }
 
     /**
