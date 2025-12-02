@@ -29,6 +29,7 @@ class TimeEntryController extends Controller
         }
 
         $entry = TimeEntry::create([
+            'company_id' => $request->user()->company_id,
             'user_id'    => $request->user()->id,
             'clocked_at' => now(),
             'type'       => $request->type,

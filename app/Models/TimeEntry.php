@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\CompanyScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class TimeEntry extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, CompanyScoped;
 
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
+        'company_id',
         'user_id',
         'clocked_at',
         'type',
