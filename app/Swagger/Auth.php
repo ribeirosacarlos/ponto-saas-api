@@ -27,7 +27,7 @@ class Auth {}
  *         description="Dados de login",
  *         @OA\JsonContent(
  *             required={"email","password"},
- *             @OA\Property(property="email", type="string", format="email", example="usuario@empresa.com"),
+ *             @OA\Property(property="email", type="string", format="email", example="admin@teste.com"),
  *             @OA\Property(property="password", type="string", example="123456")
  *         )
  *     ),
