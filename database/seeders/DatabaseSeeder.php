@@ -22,8 +22,6 @@ class DatabaseSeeder extends Seeder
             TestUsersSeeder::class,
 
             ShiftSeeder::class,
-            TimeEntrySeeder::class,
-            AdjustmentSeeder::class,
         ]);
     }
 
