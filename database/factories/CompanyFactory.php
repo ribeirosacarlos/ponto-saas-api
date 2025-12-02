@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Faker\Factory as FakerFactory;
+use Illuminate\Support\Str;
 
 class CompanyFactory extends Factory
 {
@@ -12,11 +12,9 @@ class CompanyFactory extends Factory
 
     public function definition(): array
     {
-        $faker = FakerFactory::create(); // instancia o Faker "na mão"
-
         return [
-            'name' => $faker->company(),
-            'slug' => $faker->unique()->slug(),
+            'name' => 'Empresa ' . Str::random(5),
+            'slug' => Str::slug('empresa-' . Str::random(5)),
         ];
     }
 }
