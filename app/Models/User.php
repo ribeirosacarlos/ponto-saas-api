@@ -8,6 +8,7 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Traits\HasUuid;
 use App\Traits\CompanyScoped;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Arr;
 
 class User extends Authenticatable
 {
@@ -48,6 +49,11 @@ class User extends Authenticatable
         return $this->hasMany(Adjustment::class);
     }
 
+    public function userShifts()
+    {
+        return $this->hasMany(UserShift::class);
+    }
+
     public function hasRole($role): bool
     {
         $roles = $this->roles->pluck('name')->toArray();
@@ -57,5 +63,25 @@ class User extends Authenticatable
         }
 
         return in_array($role, $roles);
+    }
+
+    public function assignRole(string $role): void
+    {
+        $roleModel = Role::where('name', $role)->first();
+
+        if ($roleModel) {
+            $this->roles()->syncWithoutDetaching([$roleModel->id]);
+        }
+    }
+
+    public function syncRoles(array $roles): void
+    {
+        $roleNames = Arr::wrap($roles);
+
+        $roleIds = Role::whereIn('name', $roleNames)->pluck('id')->toArray();
+
+        if (! empty($roleIds)) {
+            $this->roles()->sync($roleIds);
+        }
     }
 }

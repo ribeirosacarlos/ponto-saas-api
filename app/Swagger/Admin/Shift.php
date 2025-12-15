@@ -38,12 +38,26 @@ class Shift {}
  *                 property="data",
  *                 type="array",
  *                 @OA\Items(
- *                     @OA\Property(property="id", type="integer", example=1),
- *                     @OA\Property(property="company_id", type="integer", example=3),
- *                     @OA\Property(property="name", type="string", example="Turno Normal"),
- *                     @OA\Property(property="start_time", type="string", example="08:00"),
- *                     @OA\Property(property="end_time", type="string", example="17:00"),
- *                     @OA\Property(property="is_flexible", type="boolean", example=false)
+ *                     @OA\Property(property="id", type="string", format="uuid"),
+ *                     @OA\Property(property="company_id", type="string", format="uuid"),
+ *                     @OA\Property(property="name", type="string", example="Jornada Padrão (Seg–Sex)"),
+ *                     @OA\Property(property="start_time", type="string", example="09:00"),
+ *                     @OA\Property(property="end_time", type="string", example="18:00"),
+ *                     @OA\Property(property="is_flexible", type="boolean", example=false),
+ *                     @OA\Property(property="is_default", type="boolean", example=true),
+ *                     @OA\Property(
+ *                         property="shift_days",
+ *                         type="array",
+ *                         @OA\Items(
+ *                             @OA\Property(property="weekday", type="integer", example=1),
+ *                             @OA\Property(property="is_working_day", type="boolean", example=true),
+ *                             @OA\Property(property="start_time", type="string", example="09:00", nullable=true),
+ *                             @OA\Property(property="end_time", type="string", example="18:00", nullable=true),
+ *                             @OA\Property(property="break_start_time", type="string", example="13:00", nullable=true),
+ *                             @OA\Property(property="break_end_time", type="string", example="14:00", nullable=true),
+ *                             @OA\Property(property="break_minutes", type="integer", example=60, nullable=true)
+ *                         )
+ *                     )
  *                 )
  *             )
  *         )
@@ -64,11 +78,26 @@ class ShiftIndex {}
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
- *             required={"name","start_time","end_time"},
- *             @OA\Property(property="name", type="string", example="Turno Manhã"),
- *             @OA\Property(property="start_time", type="string", example="06:00"),
- *             @OA\Property(property="end_time", type="string", example="14:00"),
- *             @OA\Property(property="is_flexible", type="boolean", example=false)
+ *             required={"name","days"},
+ *             @OA\Property(property="name", type="string", example="Jornada Padrão (Seg–Sex)"),
+ *             @OA\Property(property="is_flexible", type="boolean", example=false),
+ *             @OA\Property(property="is_default", type="boolean", example=true),
+ *             @OA\Property(
+ *                 property="days",
+ *                 type="array",
+ *                 minItems=7,
+ *                 maxItems=7,
+ *                 @OA\Items(
+ *                     required={"weekday","is_working_day"},
+ *                     @OA\Property(property="weekday", type="integer", minimum=1, maximum=7, example=1),
+ *                     @OA\Property(property="is_working_day", type="boolean", example=true),
+ *                     @OA\Property(property="start_time", type="string", example="09:00", nullable=true),
+ *                     @OA\Property(property="end_time", type="string", example="18:00", nullable=true),
+ *                     @OA\Property(property="break_start_time", type="string", example="13:00", nullable=true),
+ *                     @OA\Property(property="break_end_time", type="string", example="14:00", nullable=true),
+ *                     @OA\Property(property="break_minutes", type="integer", example=60, nullable=true)
+ *                 )
+ *             )
  *         )
  *     ),
  *
@@ -76,12 +105,15 @@ class ShiftIndex {}
  *         response=201,
  *         description="Criado com sucesso",
  *         @OA\JsonContent(
- *             @OA\Property(property="id", type="integer", example=4),
- *             @OA\Property(property="company_id", type="integer", example=3),
- *             @OA\Property(property="name", type="string", example="Turno Manhã"),
- *             @OA\Property(property="start_time", type="string", example="06:00"),
- *             @OA\Property(property="end_time", type="string", example="14:00"),
- *             @OA\Property(property="is_flexible", type="boolean", example=false)
+ *             @OA\Property(property="id", type="string", format="uuid"),
+ *             @OA\Property(property="company_id", type="string", format="uuid"),
+ *             @OA\Property(property="name", type="string", example="Jornada Padrão (Seg–Sex)"),
+ *             @OA\Property(property="start_time", type="string", example="09:00"),
+ *             @OA\Property(property="end_time", type="string", example="18:00"),
+ *             @OA\Property(property="is_flexible", type="boolean", example=false),
+ *             @OA\Property(property="is_default", type="boolean", example=true),
+ *             @OA\Property(property="shift_days", type="array",
+ *                 @OA\Items(ref="#/components/schemas/ShiftDay"))
  *         )
  *     )
  * )
@@ -101,19 +133,22 @@ class ShiftStore {}
  *         name="id",
  *         in="path",
  *         required=true,
- *         @OA\Schema(type="integer", example=3)
+ *         @OA\Schema(type="string", format="uuid")
  *     ),
  *
  *     @OA\Response(
  *         response=200,
  *         description="Detalhes da jornada",
  *         @OA\JsonContent(
- *             @OA\Property(property="id", type="integer", example=3),
- *             @OA\Property(property="company_id", type="integer", example=3),
- *             @OA\Property(property="name", type="string", example="Turno Manhã"),
- *             @OA\Property(property="start_time", type="string", example="06:00"),
- *             @OA\Property(property="end_time", type="string", example="14:00"),
- *             @OA\Property(property="is_flexible", type="boolean", example=false)
+ *             @OA\Property(property="id", type="string", format="uuid"),
+ *             @OA\Property(property="company_id", type="string", format="uuid"),
+ *             @OA\Property(property="name", type="string", example="Jornada Padrão (Seg–Sex)"),
+ *             @OA\Property(property="start_time", type="string", example="09:00"),
+ *             @OA\Property(property="end_time", type="string", example="18:00"),
+ *             @OA\Property(property="is_flexible", type="boolean", example=false),
+ *             @OA\Property(property="is_default", type="boolean", example=true),
+ *             @OA\Property(property="shift_days", type="array",
+ *                 @OA\Items(ref="#/components/schemas/ShiftDay"))
  *         )
  *     ),
  *
@@ -135,16 +170,22 @@ class ShiftShow {}
  *         name="id",
  *         in="path",
  *         required=true,
- *         @OA\Schema(type="integer", example=3)
+ *         @OA\Schema(type="string", format="uuid")
  *     ),
  *
  *     @OA\RequestBody(
  *         required=false,
  *         @OA\JsonContent(
- *             @OA\Property(property="name", type="string", example="Turno Atualizado"),
- *             @OA\Property(property="start_time", type="string", example="07:00"),
- *             @OA\Property(property="end_time", type="string", example="15:00"),
- *             @OA\Property(property="is_flexible", type="boolean", example=true)
+ *             @OA\Property(property="name", type="string", example="Jornada Flex"),
+ *             @OA\Property(property="is_flexible", type="boolean", example=true),
+ *             @OA\Property(property="is_default", type="boolean", example=false),
+ *             @OA\Property(
+ *                 property="days",
+ *                 type="array",
+ *                 minItems=7,
+ *                 maxItems=7,
+ *                 @OA\Items(ref="#/components/schemas/ShiftDayPayload")
+ *             )
  *         )
  *     ),
  *
@@ -152,7 +193,7 @@ class ShiftShow {}
  *         response=200,
  *         description="Atualizado com sucesso",
  *         @OA\JsonContent(
- *             @OA\Property(property="id", type="integer", example=3),
+ *             @OA\Property(property="id", type="string", format="uuid"),
  *             @OA\Property(property="name", type="string", example="Turno Atualizado")
  *         )
  *     )
@@ -173,7 +214,7 @@ class ShiftUpdate {}
  *         name="id",
  *         in="path",
  *         required=true,
- *         @OA\Schema(type="integer", example=3)
+ *         @OA\Schema(type="string", format="uuid")
  *     ),
  *
  *     @OA\Response(
@@ -186,3 +227,32 @@ class ShiftUpdate {}
  * )
  */
 class ShiftDestroy {}
+
+/**
+ * @OA\Schema(
+ *     schema="ShiftDay",
+ *     @OA\Property(property="weekday", type="integer", example=1),
+ *     @OA\Property(property="is_working_day", type="boolean", example=true),
+ *     @OA\Property(property="start_time", type="string", nullable=true, example="09:00"),
+ *     @OA\Property(property="end_time", type="string", nullable=true, example="18:00"),
+ *     @OA\Property(property="break_start_time", type="string", nullable=true, example="13:00"),
+ *     @OA\Property(property="break_end_time", type="string", nullable=true, example="14:00"),
+ *     @OA\Property(property="break_minutes", type="integer", nullable=true, example=60)
+ * )
+ */
+class ShiftDaySchema {}
+
+/**
+ * @OA\Schema(
+ *     schema="ShiftDayPayload",
+ *     required={"weekday","is_working_day"},
+ *     @OA\Property(property="weekday", type="integer", minimum=1, maximum=7, example=1),
+ *     @OA\Property(property="is_working_day", type="boolean", example=true),
+ *     @OA\Property(property="start_time", type="string", nullable=true, example="09:00"),
+ *     @OA\Property(property="end_time", type="string", nullable=true, example="18:00"),
+ *     @OA\Property(property="break_start_time", type="string", nullable=true, example="13:00"),
+ *     @OA\Property(property="break_end_time", type="string", nullable=true, example="14:00"),
+ *     @OA\Property(property="break_minutes", type="integer", nullable=true, example=60)
+ * )
+ */
+class ShiftDayPayloadSchema {}

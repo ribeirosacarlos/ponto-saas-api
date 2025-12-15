@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-class Shift extends Model
+class Holiday extends Model
 {
     use HasFactory, HasUuids;
 
@@ -15,30 +15,17 @@ class Shift extends Model
 
     protected $fillable = [
         'company_id',
+        'date',
         'name',
-        'start_time',
-        'end_time',
-        'is_flexible',
-        'is_default',
+        'scope',
     ];
 
     protected $casts = [
-        'is_flexible' => 'boolean',
-        'is_default' => 'boolean',
+        'date' => 'date',
     ];
 
     public function company()
     {
         return $this->belongsTo(Company::class);
-    }
-
-    public function shiftDays()
-    {
-        return $this->hasMany(ShiftDay::class);
-    }
-
-    public function userShifts()
-    {
-        return $this->hasMany(UserShift::class);
     }
 }

@@ -19,6 +19,68 @@
         }
     ],
     "paths": {
+        "/v1/admin/employees/{id}/shift": {
+            "post": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Atribui uma jornada ao colaborador",
+                "operationId": "ac2333af0cc83002122bc48fd4841efb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "shift_id"
+                                ],
+                                "properties": {
+                                    "shift_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "start_date": {
+                                        "description": "Data efetiva (default: hoje)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Associação criada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserShiftResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/admin/employees/{id}": {
             "get": {
                 "tags": [
@@ -32,8 +94,8 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 10
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -43,29 +105,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer",
-                                            "example": 10
-                                        },
-                                        "company_id": {
-                                            "type": "integer",
-                                            "example": 3
-                                        },
-                                        "name": {
-                                            "type": "string",
-                                            "example": "Maria Santos"
-                                        },
-                                        "email": {
-                                            "type": "string",
-                                            "example": "maria@empresa.com"
-                                        },
-                                        "created_at": {
-                                            "type": "string",
-                                            "example": "2025-02-10T14:32:20Z"
-                                        }
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/EmployeeResource"
                                 }
                             }
                         }
@@ -89,8 +129,8 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 10
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -110,6 +150,20 @@
                                     "password": {
                                         "type": "string",
                                         "example": "novaSenha123"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "admin",
+                                            "manager",
+                                            "area_manager",
+                                            "employee"
+                                        ]
+                                    },
+                                    "shift_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -119,7 +173,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Atualizado"
+                        "description": "Atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EmployeeResource"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -140,8 +201,8 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 10
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -214,12 +275,12 @@
                                             "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer",
-                                                        "example": 10
+                                                        "type": "string",
+                                                        "format": "uuid"
                                                     },
                                                     "company_id": {
-                                                        "type": "integer",
-                                                        "example": 3
+                                                        "type": "string",
+                                                        "format": "uuid"
                                                     },
                                                     "name": {
                                                         "type": "string",
@@ -287,6 +348,12 @@
                                             "area_manager",
                                             "employee"
                                         ]
+                                    },
+                                    "shift_id": {
+                                        "description": "Opcional: força vínculo com jornada específica",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -300,22 +367,201 @@
                         "content": {
                             "application/json": {
                                 "schema": {
+                                    "$ref": "#/components/schemas/EmployeeResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/holidays": {
+            "get": {
+                "tags": [
+                    "Admin - Holidays"
+                ],
+                "summary": "Lista feriados da empresa",
+                "operationId": "f1cd170e283202984729ba1b9e1607d0",
+                "parameters": [
+                    {
+                        "name": "start",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "national",
+                                "regional",
+                                "local",
+                                "company"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
                                     "properties": {
-                                        "id": {
+                                        "current_page": {
                                             "type": "integer",
-                                            "example": 15
+                                            "example": 1
                                         },
-                                        "company_id": {
+                                        "per_page": {
                                             "type": "integer",
-                                            "example": 3
+                                            "example": 50
                                         },
-                                        "name": {
-                                            "type": "string",
-                                            "example": "João Silva"
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 9
                                         },
-                                        "email": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/HolidayResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Holidays"
+                ],
+                "summary": "Cria um feriado",
+                "operationId": "13f4af5c77ae2530772956a4b4d7c9d4",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/HolidayPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HolidayResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/holidays/{id}": {
+            "put": {
+                "tags": [
+                    "Admin - Holidays"
+                ],
+                "summary": "Atualiza um feriado",
+                "operationId": "6573335a6745bc17f0a07a26275ed553",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/HolidayPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HolidayResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Holidays"
+                ],
+                "summary": "Remove um feriado",
+                "operationId": "b40230aa62805313d4e2e99315549d85",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Removido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
                                             "type": "string",
-                                            "example": "joao@empresa.com"
+                                            "example": "Feriado removido."
                                         }
                                     },
                                     "type": "object"
@@ -479,28 +725,73 @@
                                             "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer",
-                                                        "example": 1
+                                                        "type": "string",
+                                                        "format": "uuid"
                                                     },
                                                     "company_id": {
-                                                        "type": "integer",
-                                                        "example": 3
+                                                        "type": "string",
+                                                        "format": "uuid"
                                                     },
                                                     "name": {
                                                         "type": "string",
-                                                        "example": "Turno Normal"
+                                                        "example": "Jornada Padrão (Seg–Sex)"
                                                     },
                                                     "start_time": {
                                                         "type": "string",
-                                                        "example": "08:00"
+                                                        "example": "09:00"
                                                     },
                                                     "end_time": {
                                                         "type": "string",
-                                                        "example": "17:00"
+                                                        "example": "18:00"
                                                     },
                                                     "is_flexible": {
                                                         "type": "boolean",
                                                         "example": false
+                                                    },
+                                                    "is_default": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "shift_days": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "weekday": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "is_working_day": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "start_time": {
+                                                                    "type": "string",
+                                                                    "example": "09:00",
+                                                                    "nullable": true
+                                                                },
+                                                                "end_time": {
+                                                                    "type": "string",
+                                                                    "example": "18:00",
+                                                                    "nullable": true
+                                                                },
+                                                                "break_start_time": {
+                                                                    "type": "string",
+                                                                    "example": "13:00",
+                                                                    "nullable": true
+                                                                },
+                                                                "break_end_time": {
+                                                                    "type": "string",
+                                                                    "example": "14:00",
+                                                                    "nullable": true
+                                                                },
+                                                                "break_minutes": {
+                                                                    "type": "integer",
+                                                                    "example": 60,
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
                                                     }
                                                 },
                                                 "type": "object"
@@ -533,25 +824,69 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "start_time",
-                                    "end_time"
+                                    "days"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Turno Manhã"
-                                    },
-                                    "start_time": {
-                                        "type": "string",
-                                        "example": "06:00"
-                                    },
-                                    "end_time": {
-                                        "type": "string",
-                                        "example": "14:00"
+                                        "example": "Jornada Padrão (Seg–Sex)"
                                     },
                                     "is_flexible": {
                                         "type": "boolean",
                                         "example": false
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "days": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "weekday",
+                                                "is_working_day"
+                                            ],
+                                            "properties": {
+                                                "weekday": {
+                                                    "type": "integer",
+                                                    "maximum": 7,
+                                                    "minimum": 1,
+                                                    "example": 1
+                                                },
+                                                "is_working_day": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "start_time": {
+                                                    "type": "string",
+                                                    "example": "09:00",
+                                                    "nullable": true
+                                                },
+                                                "end_time": {
+                                                    "type": "string",
+                                                    "example": "18:00",
+                                                    "nullable": true
+                                                },
+                                                "break_start_time": {
+                                                    "type": "string",
+                                                    "example": "13:00",
+                                                    "nullable": true
+                                                },
+                                                "break_end_time": {
+                                                    "type": "string",
+                                                    "example": "14:00",
+                                                    "nullable": true
+                                                },
+                                                "break_minutes": {
+                                                    "type": "integer",
+                                                    "example": 60,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "maxItems": 7,
+                                        "minItems": 7
                                     }
                                 },
                                 "type": "object"
@@ -567,28 +902,38 @@
                                 "schema": {
                                     "properties": {
                                         "id": {
-                                            "type": "integer",
-                                            "example": 4
+                                            "type": "string",
+                                            "format": "uuid"
                                         },
                                         "company_id": {
-                                            "type": "integer",
-                                            "example": 3
+                                            "type": "string",
+                                            "format": "uuid"
                                         },
                                         "name": {
                                             "type": "string",
-                                            "example": "Turno Manhã"
+                                            "example": "Jornada Padrão (Seg–Sex)"
                                         },
                                         "start_time": {
                                             "type": "string",
-                                            "example": "06:00"
+                                            "example": "09:00"
                                         },
                                         "end_time": {
                                             "type": "string",
-                                            "example": "14:00"
+                                            "example": "18:00"
                                         },
                                         "is_flexible": {
                                             "type": "boolean",
                                             "example": false
+                                        },
+                                        "is_default": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "shift_days": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ShiftDay"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -618,8 +963,8 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 3
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -631,28 +976,38 @@
                                 "schema": {
                                     "properties": {
                                         "id": {
-                                            "type": "integer",
-                                            "example": 3
+                                            "type": "string",
+                                            "format": "uuid"
                                         },
                                         "company_id": {
-                                            "type": "integer",
-                                            "example": 3
+                                            "type": "string",
+                                            "format": "uuid"
                                         },
                                         "name": {
                                             "type": "string",
-                                            "example": "Turno Manhã"
+                                            "example": "Jornada Padrão (Seg–Sex)"
                                         },
                                         "start_time": {
                                             "type": "string",
-                                            "example": "06:00"
+                                            "example": "09:00"
                                         },
                                         "end_time": {
                                             "type": "string",
-                                            "example": "14:00"
+                                            "example": "18:00"
                                         },
                                         "is_flexible": {
                                             "type": "boolean",
                                             "example": false
+                                        },
+                                        "is_default": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "shift_days": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ShiftDay"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -683,8 +1038,8 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 3
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -696,19 +1051,23 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Turno Atualizado"
-                                    },
-                                    "start_time": {
-                                        "type": "string",
-                                        "example": "07:00"
-                                    },
-                                    "end_time": {
-                                        "type": "string",
-                                        "example": "15:00"
+                                        "example": "Jornada Flex"
                                     },
                                     "is_flexible": {
                                         "type": "boolean",
                                         "example": true
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "days": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/ShiftDayPayload"
+                                        },
+                                        "maxItems": 7,
+                                        "minItems": 7
                                     }
                                 },
                                 "type": "object"
@@ -724,8 +1083,8 @@
                                 "schema": {
                                     "properties": {
                                         "id": {
-                                            "type": "integer",
-                                            "example": 3
+                                            "type": "string",
+                                            "format": "uuid"
                                         },
                                         "name": {
                                             "type": "string",
@@ -757,8 +1116,8 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 3
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -1071,7 +1430,7 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "usuario@empresa.com"
+                                        "example": "admin@teste.com"
                                     },
                                     "password": {
                                         "type": "string",
@@ -1443,6 +1802,210 @@
         }
     },
     "components": {
+        "schemas": {
+            "UserShiftResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "shift_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "shift": {
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "is_default": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "user_shifts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UserShiftResource"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "HolidayResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-12-25"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Navidad"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "example": "national"
+                    }
+                },
+                "type": "object"
+            },
+            "HolidayPayload": {
+                "required": [
+                    "date",
+                    "name"
+                ],
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-08-15"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Asunción de la Virgen"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "national",
+                            "regional",
+                            "local",
+                            "company"
+                        ],
+                        "example": "national"
+                    }
+                },
+                "type": "object"
+            },
+            "ShiftDay": {
+                "properties": {
+                    "weekday": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_working_day": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "example": "09:00",
+                        "nullable": true
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "example": "18:00",
+                        "nullable": true
+                    },
+                    "break_start_time": {
+                        "type": "string",
+                        "example": "13:00",
+                        "nullable": true
+                    },
+                    "break_end_time": {
+                        "type": "string",
+                        "example": "14:00",
+                        "nullable": true
+                    },
+                    "break_minutes": {
+                        "type": "integer",
+                        "example": 60,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ShiftDayPayload": {
+                "required": [
+                    "weekday",
+                    "is_working_day"
+                ],
+                "properties": {
+                    "weekday": {
+                        "type": "integer",
+                        "maximum": 7,
+                        "minimum": 1,
+                        "example": 1
+                    },
+                    "is_working_day": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "example": "09:00",
+                        "nullable": true
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "example": "18:00",
+                        "nullable": true
+                    },
+                    "break_start_time": {
+                        "type": "string",
+                        "example": "13:00",
+                        "nullable": true
+                    },
+                    "break_end_time": {
+                        "type": "string",
+                        "example": "14:00",
+                        "nullable": true
+                    },
+                    "break_minutes": {
+                        "type": "integer",
+                        "example": 60,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
@@ -1455,6 +2018,10 @@
         {
             "name": "Admin - Employees",
             "description": "Gestão de funcionários da empresa (CRUD)"
+        },
+        {
+            "name": "Admin - Holidays",
+            "description": "Gestão de feriados corporativos"
         },
         {
             "name": "Admin - Reports",

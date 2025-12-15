@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdju
 use App\Http\Controllers\Api\Admin\EmployeeController;
 use App\Http\Controllers\Api\Admin\ShiftController;
 use App\Http\Controllers\Api\Admin\ReportController;
+use App\Http\Controllers\Api\Admin\HolidayController;
 
 Route::prefix('v1')->group(function () {
 
@@ -53,19 +54,28 @@ Route::prefix('v1')->group(function () {
 
 
         // ADMIN AREA
-        Route::prefix('admin')
-            ->middleware(['role:admin'])
-            ->group(function () {
+        Route::prefix('admin')->group(function () {
+
+            Route::middleware(['role:admin'])->group(function () {
 
                 // Funcionários
                 Route::apiResource('employees', EmployeeController::class);
 
-                // Jornadas
-                Route::apiResource('shifts', ShiftController::class);
-
                 // Relatórios
                 Route::get('/reports/time', [ReportController::class, 'timeReport']);
             });
+
+            Route::middleware(['role:area_manager|manager|admin'])->group(function () {
+
+                // Jornadas
+                Route::apiResource('shifts', ShiftController::class);
+                Route::get('/users/{user}/shifts', [ShiftController::class, 'byUser']);
+                Route::post('/employees/{employee}/shift', [EmployeeController::class, 'assignShift']);
+
+                // Feriados
+                Route::apiResource('holidays', HolidayController::class)->except(['create', 'edit']);
+            });
+        });
 
 
         // DEBUG / TESTE DO TENANT

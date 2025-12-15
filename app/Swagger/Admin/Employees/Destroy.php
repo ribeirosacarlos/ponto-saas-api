@@ -13,7 +13,7 @@ namespace App\Swagger\Admin\Employees;
  *         name="id",
  *         in="path",
  *         required=true,
- *         @OA\Schema(type="integer", example=10)
+ *         @OA\Schema(type="string", format="uuid")
  *     ),
  *
  *     @OA\Response(
