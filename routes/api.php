@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
+use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
 
 use App\Http\Controllers\Api\AreaManager\TimeEntryController as AreaManagerTimeEntryController;
 use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdjustmentController;
@@ -14,6 +15,8 @@ use App\Http\Controllers\Api\Admin\EmployeeController;
 use App\Http\Controllers\Api\Admin\ShiftController;
 use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\HolidayController;
+use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
+use App\Http\Controllers\Api\Admin\LeavePolicyController;
 
 Route::prefix('v1')->group(function () {
 
@@ -36,6 +39,12 @@ Route::prefix('v1')->group(function () {
 
                 // Solicitar ajuste
                 Route::post('/adjustments', [EmployeeAdjustmentController::class, 'request']);
+
+                // Férias
+                Route::get('/vacations', [EmployeeVacationController::class, 'index']);
+                Route::post('/vacations', [EmployeeVacationController::class, 'store']);
+                Route::get('/vacations/balance', [EmployeeVacationController::class, 'balance']);
+                Route::delete('/vacations/{vacation}', [EmployeeVacationController::class, 'destroy']);
             });
 
 
@@ -74,6 +83,17 @@ Route::prefix('v1')->group(function () {
 
                 // Feriados
                 Route::apiResource('holidays', HolidayController::class)->except(['create', 'edit']);
+
+                // Férias
+                Route::get('/vacations', [AdminVacationController::class, 'index']);
+                Route::post('/vacations', [AdminVacationController::class, 'store']);
+                Route::post('/vacations/{vacation}/approve', [AdminVacationController::class, 'approve']);
+                Route::post('/vacations/{vacation}/reject', [AdminVacationController::class, 'reject']);
+                Route::delete('/vacations/{vacation}', [AdminVacationController::class, 'destroy']);
+                Route::get('/vacations/balance/{employee}', [AdminVacationController::class, 'balance']);
+
+                // Políticas de férias
+                Route::apiResource('leave-policies', LeavePolicyController::class)->only(['index', 'store', 'update', 'destroy']);
             });
         });
 

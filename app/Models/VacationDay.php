@@ -5,10 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 
-class UserShift extends Model
+class VacationDay extends Model
 {
     use HasFactory, HasUuids;
 
@@ -18,14 +16,13 @@ class UserShift extends Model
     protected $fillable = [
         'company_id',
         'user_id',
-        'shift_id',
-        'start_date',
-        'end_date',
+        'vacation_request_id',
+        'date',
+        'day_type',
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date'   => 'date',
+        'date' => 'date',
     ];
 
     public function company()
@@ -38,16 +35,18 @@ class UserShift extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function shift()
+    public function vacationRequest()
     {
-        return $this->belongsTo(Shift::class);
+        return $this->belongsTo(VacationRequest::class);
     }
 
-    public function scopeActive(Builder $query): Builder
+    public function scopeForDate($query, $date)
     {
-        return $query->whereDate('start_date', '<=', Carbon::today())
-            ->where(function ($q) {
-                $q->whereNull('end_date')->orWhere('end_date', '>=', Carbon::today());
-            });
+        return $query->whereDate('date', $date);
+    }
+
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }

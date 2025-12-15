@@ -19,7 +19,9 @@ class DatabaseSeeder extends Seeder
             CompanySeeder::class,
             ShiftSeeder::class,
             HolidaySeeder::class,
+            LeavePolicySeeder::class,
             TestUsersSeeder::class,
+            VacationExampleSeeder::class,
         ]);
     }
 

@@ -54,6 +54,26 @@ class User extends Authenticatable
         return $this->hasMany(UserShift::class);
     }
 
+    public function vacationRequests()
+    {
+        return $this->hasMany(VacationRequest::class);
+    }
+
+    public function vacationDays()
+    {
+        return $this->hasMany(VacationDay::class);
+    }
+
+    public function userLeavePolicies()
+    {
+        return $this->hasMany(UserLeavePolicy::class);
+    }
+
+    public function leaveBalances()
+    {
+        return $this->hasMany(LeaveBalance::class);
+    }
+
     public function hasRole($role): bool
     {
         $roles = $this->roles->pluck('name')->toArray();

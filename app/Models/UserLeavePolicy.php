@@ -5,10 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 
-class UserShift extends Model
+class UserLeavePolicy extends Model
 {
     use HasFactory, HasUuids;
 
@@ -18,7 +16,7 @@ class UserShift extends Model
     protected $fillable = [
         'company_id',
         'user_id',
-        'shift_id',
+        'leave_policy_id',
         'start_date',
         'end_date',
     ];
@@ -38,16 +36,8 @@ class UserShift extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function shift()
+    public function leavePolicy()
     {
-        return $this->belongsTo(Shift::class);
-    }
-
-    public function scopeActive(Builder $query): Builder
-    {
-        return $query->whereDate('start_date', '<=', Carbon::today())
-            ->where(function ($q) {
-                $q->whereNull('end_date')->orWhere('end_date', '>=', Carbon::today());
-            });
+        return $this->belongsTo(LeavePolicy::class);
     }
 }
