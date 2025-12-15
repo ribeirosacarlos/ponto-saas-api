@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use App\Models\TimeEntry;
 use App\Http\Requests\TimeEntryStoreRequest;
+use App\Models\VacationDay;
 
 class TimeEntryController extends Controller
 {
@@ -22,6 +23,19 @@ class TimeEntryController extends Controller
             'longitude' => 'nullable|string',
         ]);
 
+        $user = $request->user();
+
+        $isOnVacation = VacationDay::where('company_id', $user->company_id)
+            ->where('user_id', $user->id)
+            ->whereDate('date', now()->toDateString())
+            ->exists();
+
+        if ($isOnVacation) {
+            return response()->json([
+                'message' => 'Você está de férias e não pode registrar ponto neste dia.'
+            ], 422);
+        }
+
         $lastEntry = $request->user()->timeEntries()->latest('clocked_at')->first();
 
         if ($lastEntry && $lastEntry->clocked_at->diffInSeconds(now()) < 60) {
@@ -29,8 +43,8 @@ class TimeEntryController extends Controller
         }
 
         $entry = TimeEntry::create([
-            'company_id' => $request->user()->company_id,
-            'user_id'    => $request->user()->id,
+            'company_id' => $user->company_id,
+            'user_id'    => $user->id,
             'clocked_at' => now(),
             'type'       => $request->type,
             'latitude'   => $request->latitude,

@@ -577,6 +577,130 @@
                 ]
             }
         },
+        "/v1/admin/leave-policies": {
+            "get": {
+                "tags": [
+                    "Admin - Leave Policies"
+                ],
+                "summary": "Lista políticas de férias",
+                "operationId": "afc65c72e853cfba4b838e325288d007",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Leave Policies"
+                ],
+                "summary": "Cria nova política",
+                "operationId": "e80c270e883523554fa87a5fcda5edd2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Política Padrão Espanha"
+                                    },
+                                    "days_per_year": {
+                                        "type": "number",
+                                        "example": 30
+                                    },
+                                    "counting_method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "calendar_days",
+                                            "working_days"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Criado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/leave-policies/{id}": {
+            "put": {
+                "tags": [
+                    "Admin - Leave Policies"
+                ],
+                "summary": "Atualiza política",
+                "operationId": "f35cfcc06a3ecf4b4a90ae8adfdb915b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Atualizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Leave Policies"
+                ],
+                "summary": "Remove política",
+                "operationId": "11c40a634b18bea7ac6c96ae1a72a4b8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Removido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/admin/reports/time": {
             "get": {
                 "tags": [
@@ -1137,6 +1261,205 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/vacations": {
+            "get": {
+                "tags": [
+                    "Admin - Vacations"
+                ],
+                "summary": "Lista solicitações de férias da empresa",
+                "operationId": "78d8f190cacd36bdfc0782e1f8d33a9b",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Vacations"
+                ],
+                "summary": "Cria férias para um colaborador",
+                "operationId": "f1069e5cd1d44be11342579b03965b0e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "start_date",
+                                    "end_date"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "approved"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Criado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/vacations/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin - Vacations"
+                ],
+                "summary": "Aprova solicitação de férias",
+                "operationId": "92d296518b7826c2dbff29d4d428f760",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Aprovado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/vacations/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin - Vacations"
+                ],
+                "summary": "Rejeita solicitação",
+                "operationId": "ab65dbb003dc8f77d6d7f981ad9977cb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rejection_reason"
+                                ],
+                                "properties": {
+                                    "rejection_reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rejeitado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/vacations/balance/{user_id}": {
+            "get": {
+                "tags": [
+                    "Admin - Vacations"
+                ],
+                "summary": "Consulta saldo de férias do colaborador",
+                "operationId": "3aef580b6c1fc18ead52a28f15a702dc",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saldo atual"
                     }
                 },
                 "security": [
@@ -1799,6 +2122,143 @@
                     }
                 ]
             }
+        },
+        "/v1/employee/vacations": {
+            "get": {
+                "tags": [
+                    "Employee - Vacations"
+                ],
+                "summary": "Lista meus pedidos de férias",
+                "operationId": "633c5020e13760ecc5c1634a4a3a1692",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Employee - Vacations"
+                ],
+                "summary": "Solicita novas férias",
+                "operationId": "d1a2867d6d3f4a5878d848a3522464ce",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "start_date",
+                                    "end_date"
+                                ],
+                                "properties": {
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-07-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-07-10"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Solicitação criada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/vacations/balance": {
+            "get": {
+                "tags": [
+                    "Employee - Vacations"
+                ],
+                "summary": "Consulta saldo de férias",
+                "operationId": "b10686842b1f95fb6e56444eec6a60dd",
+                "responses": {
+                    "200": {
+                        "description": "Saldo corrente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "accrued": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 15
+                                        },
+                                        "used": {
+                                            "type": "number",
+                                            "example": 5
+                                        },
+                                        "available": {
+                                            "type": "number",
+                                            "example": 10
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/vacations/{id}": {
+            "delete": {
+                "tags": [
+                    "Employee - Vacations"
+                ],
+                "summary": "Cancela solicitação pendente",
+                "operationId": "0560a5ade2686e4470b2183fc9cd7f52",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -2024,12 +2484,20 @@
             "description": "Gestão de feriados corporativos"
         },
         {
+            "name": "Admin - Leave Policies",
+            "description": "Políticas de férias por empresa"
+        },
+        {
             "name": "Admin - Reports",
             "description": "Relatórios administrativos"
         },
         {
             "name": "Admin - Shifts",
             "description": "Gestão de jornadas de trabalho"
+        },
+        {
+            "name": "Admin - Vacations",
+            "description": "Gestão de solicitações de férias"
         },
         {
             "name": "Area Manager - Adjustments",
@@ -2050,6 +2518,10 @@
         {
             "name": "Employee - Time Entries",
             "description": "Rotas de registro e consulta de batidas de ponto do funcionário"
+        },
+        {
+            "name": "Employee - Vacations",
+            "description": "Solicitação e acompanhamento de férias do colaborador"
         }
     ]
 }
