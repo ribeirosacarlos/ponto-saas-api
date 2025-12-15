@@ -103,3 +103,48 @@ class TimeEntryClock {}
  * )
  */
 class TimeEntryMyEntries {}
+
+
+/**
+ * ==========================================
+ * Status de ponto aberto
+ * ==========================================
+ *
+ * @OA\Get(
+ *     path="/v1/employee/time-entries/open-status",
+ *     summary="Consulta se existe uma batida pendente para hoje",
+ *     description="Retorna o status do dia atual do funcionário, incluindo próximo passo esperado e dados da jornada.",
+ *     tags={"Employee - Time Entries"},
+ *     security={{"bearerAuth":{}}},
+ *
+ *     @OA\Response(
+ *         response=200,
+ *         description="Status da jornada do dia atual",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="date", type="string", format="date", example="2025-12-15"),
+ *             @OA\Property(property="has_open_entry", type="boolean", example=true),
+ *             @OA\Property(property="open_type", type="string", nullable=true, example="work"),
+ *             @OA\Property(
+ *                 property="last_entry",
+ *                 type="object",
+ *                 nullable=true,
+ *                 @OA\Property(property="id", type="string", format="uuid"),
+ *                 @OA\Property(property="type", type="string", example="in"),
+ *                 @OA\Property(property="clocked_at", type="string", format="date-time", example="2025-12-15T08:12:00-03:00")
+ *             ),
+ *             @OA\Property(property="next_action", type="string", example="clock_out"),
+ *             @OA\Property(
+ *                 property="shift",
+ *                 type="object",
+ *                 nullable=true,
+ *                 @OA\Property(property="start", type="string", example="08:00"),
+ *                 @OA\Property(property="end", type="string", example="17:00"),
+ *                 @OA\Property(property="is_within_shift_window", type="boolean", nullable=true),
+ *                 @OA\Property(property="late", type="boolean", nullable=true),
+ *                 @OA\Property(property="tolerance_minutes", type="integer", example=10)
+ *             )
+ *         )
+ *     )
+ * )
+ */
+class TimeEntryOpenStatus {}

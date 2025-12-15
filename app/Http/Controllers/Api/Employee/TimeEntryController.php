@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\TimeEntry;
 use App\Http\Requests\TimeEntryStoreRequest;
 use App\Models\VacationDay;
+use App\Services\TimeEntry\OpenStatusService;
 
 class TimeEntryController extends Controller
 {
@@ -67,5 +68,12 @@ class TimeEntryController extends Controller
         }
 
         return response()->json($entries);
+    }
+
+    public function openStatus(Request $request, OpenStatusService $service)
+    {
+        $status = $service->getStatus($request->user());
+
+        return response()->json($status);
     }
 }
