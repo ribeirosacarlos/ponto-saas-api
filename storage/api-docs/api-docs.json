@@ -586,7 +586,48 @@
                 "operationId": "afc65c72e853cfba4b838e325288d007",
                 "responses": {
                     "200": {
-                        "description": "Lista paginada"
+                        "description": "Lista paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Política Padrão Espanha"
+                                                    },
+                                                    "days_per_year": {
+                                                        "type": "number",
+                                                        "example": 30
+                                                    },
+                                                    "accrual_rate_per_month": {
+                                                        "type": "number",
+                                                        "example": 2.5
+                                                    },
+                                                    "counting_method": {
+                                                        "type": "string",
+                                                        "example": "calendar_days"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -633,7 +674,52 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Criado"
+                        "description": "Criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Política Padrão Espanha"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validação",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "O campo name é obrigatório."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -664,6 +750,9 @@
                 "responses": {
                     "200": {
                         "description": "Atualizado"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
                     }
                 },
                 "security": [
@@ -692,6 +781,9 @@
                 "responses": {
                     "200": {
                         "description": "Removido"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
                     }
                 },
                 "security": [
@@ -1298,7 +1390,44 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada"
+                        "description": "Lista paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "user_id": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "start_date": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "approved"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1351,7 +1480,52 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Criado"
+                        "description": "Criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Saldo insuficiente ou conflito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "dates": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Já existe um pedido de férias que conflita com este período."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1381,7 +1555,52 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Aprovado"
+                        "description": "Aprovado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "approved"
+                                        },
+                                        "approved_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Saldo insuficiente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "requested_days": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Você não possui saldo suficiente para este período."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1429,7 +1648,24 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Rejeitado"
+                        "description": "Rejeitado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "rejected"
+                                        },
+                                        "rejection_reason": {
+                                            "type": "string",
+                                            "example": "Período crítico de operação."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1459,7 +1695,44 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Saldo atual"
+                        "description": "Saldo atual",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "policy": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Política Padrão Espanha"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "accrued": {
+                                            "type": "number",
+                                            "example": 12.5
+                                        },
+                                        "used": {
+                                            "type": "number",
+                                            "example": 5
+                                        },
+                                        "adjustment": {
+                                            "type": "number",
+                                            "example": 0.5
+                                        },
+                                        "available": {
+                                            "type": "number",
+                                            "example": 8
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Funcionário não encontrado"
                     }
                 },
                 "security": [
@@ -2123,6 +2396,98 @@
                 ]
             }
         },
+        "/v1/employee/time-entries/open-status": {
+            "get": {
+                "tags": [
+                    "Employee - Time Entries"
+                ],
+                "summary": "Consulta se existe uma batida pendente para hoje",
+                "description": "Retorna o status do dia atual do funcionário, incluindo próximo passo esperado e dados da jornada.",
+                "operationId": "b482944fc22ae3dd9082d65f77ad5f30",
+                "responses": {
+                    "200": {
+                        "description": "Status da jornada do dia atual",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "date": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2025-12-15"
+                                        },
+                                        "has_open_entry": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "open_type": {
+                                            "type": "string",
+                                            "example": "work",
+                                            "nullable": true
+                                        },
+                                        "last_entry": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "in"
+                                                },
+                                                "clocked_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-15T08:12:00-03:00"
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "next_action": {
+                                            "type": "string",
+                                            "example": "clock_out"
+                                        },
+                                        "shift": {
+                                            "properties": {
+                                                "start": {
+                                                    "type": "string",
+                                                    "example": "08:00"
+                                                },
+                                                "end": {
+                                                    "type": "string",
+                                                    "example": "17:00"
+                                                },
+                                                "is_within_shift_window": {
+                                                    "type": "boolean",
+                                                    "nullable": true
+                                                },
+                                                "late": {
+                                                    "type": "boolean",
+                                                    "nullable": true
+                                                },
+                                                "tolerance_minutes": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/employee/vacations": {
             "get": {
                 "tags": [
@@ -2132,7 +2497,50 @@
                 "operationId": "633c5020e13760ecc5c1634a4a3a1692",
                 "responses": {
                     "200": {
-                        "description": "Lista paginada"
+                        "description": "Lista paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "start_date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2025-07-01"
+                                                    },
+                                                    "end_date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2025-07-10"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    },
+                                                    "requested_days": {
+                                                        "type": "number",
+                                                        "example": 7
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2179,7 +2587,56 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Solicitação criada"
+                        "description": "Solicitação criada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        },
+                                        "requested_days": {
+                                            "type": "number",
+                                            "example": 8
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Saldo insuficiente ou conflito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "requested_days": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Você não possui saldo suficiente para este período."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2203,6 +2660,19 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "policy": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Política Padrão Espanha"
+                                                },
+                                                "counting_method": {
+                                                    "type": "string",
+                                                    "example": "calendar_days"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
                                         "accrued": {
                                             "type": "number",
                                             "format": "float",
@@ -2211,6 +2681,10 @@
                                         "used": {
                                             "type": "number",
                                             "example": 5
+                                        },
+                                        "adjustment": {
+                                            "type": "number",
+                                            "example": 0
                                         },
                                         "available": {
                                             "type": "number",
@@ -2251,6 +2725,34 @@
                 "responses": {
                     "200": {
                         "description": "Cancelado"
+                    },
+                    "422": {
+                        "description": "Não é possível cancelar",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Somente pedidos pendentes podem ser cancelados."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [

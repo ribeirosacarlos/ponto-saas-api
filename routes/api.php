@@ -37,6 +37,8 @@ Route::prefix('v1')->group(function () {
                 // Listar batidas do próprio usuário
                 Route::get('/entries', [EmployeeTimeEntryController::class, 'myEntries']);
 
+                Route::get('/time-entries/open-status', [EmployeeTimeEntryController::class, 'openStatus']);
+
                 // Solicitar ajuste
                 Route::post('/adjustments', [EmployeeAdjustmentController::class, 'request']);
 
