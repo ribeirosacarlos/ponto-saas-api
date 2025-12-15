@@ -46,4 +46,14 @@ class Company extends Model
     {
         return $this->hasMany(Adjustment::class);
     }
+
+    public function userShifts()
+    {
+        return $this->hasMany(UserShift::class);
+    }
+
+    public function holidays()
+    {
+        return $this->hasMany(Holiday::class);
+    }
 }

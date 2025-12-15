@@ -13,19 +13,13 @@ namespace App\Swagger\Admin\Employees;
  *         name="id",
  *         in="path",
  *         required=true,
- *         @OA\Schema(type="integer", example=10)
+ *         @OA\Schema(type="string", format="uuid")
  *     ),
  *
  *     @OA\Response(
  *         response=200,
  *         description="OK",
- *         @OA\JsonContent(
- *             @OA\Property(property="id", type="integer", example=10),
- *             @OA\Property(property="company_id", type="integer", example=3),
- *             @OA\Property(property="name", type="string", example="Maria Santos"),
- *             @OA\Property(property="email", type="string", example="maria@empresa.com"),
- *             @OA\Property(property="created_at", type="string", example="2025-02-10T14:32:20Z")
- *         )
+ *         @OA\JsonContent(ref="#/components/schemas/EmployeeResource")
  *     )
  * )
  */

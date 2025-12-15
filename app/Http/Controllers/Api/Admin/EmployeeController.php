@@ -3,16 +3,24 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\EmployeeStoreRequest;
+use App\Models\Shift;
+use App\Models\User;
+use App\Services\UserShiftService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class EmployeeController extends Controller
 {
+    public function __construct(
+        protected UserShiftService $userShiftService
+    ) {
+    }
+
     public function index(Request $request)
     {
-        // Admin can list all employees of the company
         return User::where('company_id', $request->user()->company_id)->paginate(20);
     }
 
@@ -20,24 +28,22 @@ class EmployeeController extends Controller
     {
         $this->authorize('create', User::class);
 
-        $request->validate([
-            'name'     => 'required',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required|min:6',
-        ]);
+        $data = $request->validated();
 
         $user = User::create([
             'company_id' => $request->user()->company_id,
-            'name'       => $request->name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
+            'name'       => $data['name'],
+            'email'      => $data['email'],
+            'password'   => Hash::make($data['password']),
         ]);
 
-        if ($request->role) {
-            $user->assignRole($request->role);
+        if (! empty($data['role'])) {
+            $user->assignRole($data['role']);
         }
 
-        return response()->json($user, 201);
+        $this->assignShiftFromRequest($user, $data['shift_id'] ?? null);
+
+        return response()->json($user->load(['userShifts.shift']), 201);
     }
 
     public function show($id)
@@ -45,7 +51,7 @@ class EmployeeController extends Controller
         $employee = User::findOrFail($id);
         $this->authorize('view', $employee);
 
-        return $employee;
+        return $employee->load(['userShifts.shift']);
     }
 
     public function update($id, EmployeeStoreRequest $request)
@@ -53,13 +59,31 @@ class EmployeeController extends Controller
         $employee = User::findOrFail($id);
         $this->authorize('update', $employee);
 
-        $employee->update($request->only(['name','email']));
+        $data = $request->validated();
 
-        if ($request->password) {
-            $employee->update(['password' => Hash::make($request->password)]);
+        $changes = collect([
+            'name'  => $data['name'] ?? null,
+            'email' => $data['email'] ?? null,
+        ])->filter(fn ($value) => ! is_null($value))->toArray();
+
+        if (! empty($changes)) {
+            $employee->update($changes);
         }
 
-        return $employee;
+        if (! empty($data['password'])) {
+            $employee->update(['password' => Hash::make($data['password'])]);
+        }
+
+        if (! empty($data['role'])) {
+            $employee->syncRoles([$data['role']]);
+        }
+
+        if (array_key_exists('shift_id', $data) && $data['shift_id']) {
+            $shift = $this->resolveShift($request->user()->company_id, $data['shift_id']);
+            $this->userShiftService->assign($employee, $shift);
+        }
+
+        return $employee->load(['userShifts.shift']);
     }
 
     public function destroy($id)
@@ -70,5 +94,50 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return response()->json(['message' => 'Deletado']);
+    }
+
+    public function assignShift(Request $request, User $employee)
+    {
+        $this->authorize('update', $employee);
+
+        if ($employee->company_id !== $request->user()->company_id) {
+            abort(403, 'Funcionário não pertence à empresa atual.');
+        }
+
+        $data = $request->validate([
+            'shift_id'   => 'required|uuid|exists:shifts,id',
+            'start_date' => 'nullable|date',
+        ]);
+
+        $shift = $this->resolveShift($request->user()->company_id, $data['shift_id']);
+        $startDate = ! empty($data['start_date']) ? Carbon::parse($data['start_date']) : null;
+
+        $assignment = $this->userShiftService->assign($employee, $shift, $startDate);
+
+        return $assignment->load('shift');
+    }
+
+    protected function assignShiftFromRequest(User $user, ?string $shiftId): void
+    {
+        if ($shiftId) {
+            $shift = $this->resolveShift($user->company_id, $shiftId);
+            $this->userShiftService->assign($user, $shift);
+            return;
+        }
+
+        $this->userShiftService->assignDefaultIfAvailable($user);
+    }
+
+    protected function resolveShift(?string $companyId, string $shiftId): Shift
+    {
+        $shift = Shift::where('company_id', $companyId)->where('id', $shiftId)->first();
+
+        if (! $shift) {
+            throw ValidationException::withMessages([
+                'shift_id' => 'Jornada inexistente para esta empresa.',
+            ]);
+        }
+
+        return $shift;
     }
 }
