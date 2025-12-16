@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Company extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -25,6 +26,17 @@ class Company extends Model
         'plan',
         'trial_ends_at',
         'subscription_ends_at',
+        'is_blocked',
+        'blocked_at',
+        'blocked_reason',
+    ];
+
+    protected $casts = [
+        'trial_ends_at' => 'datetime',
+        'subscription_ends_at' => 'datetime',
+        'is_blocked' => 'boolean',
+        'blocked_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function users()

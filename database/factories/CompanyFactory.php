@@ -12,9 +12,23 @@ class CompanyFactory extends Factory
 
     public function definition(): array
     {
+        $name = 'Empresa ' . Str::random(5);
+
         return [
-            'name' => 'Empresa ' . Str::random(5),
-            'slug' => Str::slug('empresa-' . Str::random(5)),
+            'name' => $name,
+            'slug' => Str::slug($name),
+            'document' => $this->faker->numerify('##############'),
+            'email' => $this->faker->unique()->safeEmail(),
+            'phone' => $this->faker->phoneNumber(),
+            'address' => $this->faker->streetAddress(),
+            'city' => $this->faker->city(),
+            'state' => $this->faker->stateAbbr(),
+            'plan' => $this->faker->randomElement(['free', 'pro', 'enterprise']),
+            'trial_ends_at' => $this->faker->optional()->dateTimeBetween('-7 days', '+30 days'),
+            'subscription_ends_at' => $this->faker->optional()->dateTimeBetween('now', '+60 days'),
+            'is_blocked' => false,
+            'blocked_at' => null,
+            'blocked_reason' => null,
         ];
     }
 }

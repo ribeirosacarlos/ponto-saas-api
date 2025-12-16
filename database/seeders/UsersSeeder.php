@@ -11,7 +11,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-class TestUsersSeeder extends Seeder
+class UsersSeeder extends Seeder
 {
     public function run(): void
     {
@@ -26,7 +26,7 @@ class TestUsersSeeder extends Seeder
             return;
         }
 
-        $roles = Role::whereIn('name', ['admin', 'manager', 'area_manager', 'employee'])
+        $roles = Role::whereIn('name', ['super_admin', 'admin', 'manager', 'area_manager', 'employee'])
             ->get()
             ->keyBy('name');
 
@@ -69,6 +69,21 @@ class TestUsersSeeder extends Seeder
             } else {
                 $userShiftService->assignDefaultIfAvailable($user);
             }
+        }
+
+        if (isset($roles['super_admin'])) {
+            $superAdmin = User::firstOrNew(['email' => 'superadmin@empresa.com']);
+
+            if (! $superAdmin->exists) {
+                $superAdmin->id = (string) Str::uuid();
+            }
+
+            $superAdmin->company_id = null;
+            $superAdmin->name = 'Plataforma Super Admin';
+            $superAdmin->password = Hash::make('123456');
+            $superAdmin->save();
+
+            $superAdmin->syncRoles(['super_admin']);
         }
     }
 }

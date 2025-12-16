@@ -10,6 +10,7 @@ class RolesTableSeeder extends Seeder
     public function run()
     {
         $roles = [
+            ['name' => 'super_admin', 'display_name' => 'Platform Administrator'],
             ['name' => 'admin', 'display_name' => 'Administrator'],
             ['name' => 'manager', 'display_name' => 'Manager'],
             ['name' => 'area_manager', 'display_name' => 'Area Manager'],

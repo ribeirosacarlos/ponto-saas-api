@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             ShiftSeeder::class,
             HolidaySeeder::class,
             LeavePolicySeeder::class,
-            TestUsersSeeder::class,
+            UsersSeeder::class,
             TimeEntriesSeeder::class,
             VacationExampleSeeder::class,
         ]);
