@@ -9,6 +9,7 @@ use App\Models\TimeEntry;
 use App\Http\Requests\TimeEntryStoreRequest;
 use App\Models\VacationDay;
 use App\Services\TimeEntry\OpenStatusService;
+use App\Services\UserShiftResolver;
 
 class TimeEntryController extends Controller
 {
@@ -75,5 +76,50 @@ class TimeEntryController extends Controller
         $status = $service->getStatus($request->user());
 
         return response()->json($status);
+    }
+
+    public function shift(Request $request, UserShiftResolver $shiftResolver)
+    {
+        $result = $shiftResolver->resolve($request->user());
+        $shift = $result['shift'];
+        $assignment = $result['assignment'];
+
+        if (! $shift) {
+            return response()->json([
+                'shift' => null,
+                'assignment' => null,
+            ]);
+        }
+
+        $shiftDays = collect($shift->shiftDays)
+            ->sortBy('weekday')
+            ->values()
+            ->map(fn ($day) => [
+                'id' => $day->id,
+                'weekday' => (int) $day->weekday,
+                'is_working_day' => (bool) $day->is_working_day,
+                'start_time' => $day->start_time,
+                'end_time' => $day->end_time,
+                'break_start_time' => $day->break_start_time,
+                'break_end_time' => $day->break_end_time,
+                'break_minutes' => $day->break_minutes,
+            ]);
+
+        return response()->json([
+            'shift' => [
+                'id' => $shift->id,
+                'name' => $shift->name,
+                'start_time' => $shift->start_time,
+                'end_time' => $shift->end_time,
+                'is_flexible' => $shift->is_flexible,
+                'is_default' => $shift->is_default,
+                'shift_days' => $shiftDays,
+            ],
+            'assignment' => $assignment ? [
+                'id' => $assignment->id,
+                'start_date' => $assignment->start_date?->toDateString(),
+                'end_date' => $assignment->end_date?->toDateString(),
+            ] : null,
+        ]);
     }
 }

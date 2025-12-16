@@ -39,6 +39,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/entries', [EmployeeTimeEntryController::class, 'myEntries']);
 
                 Route::get('/time-entries/open-status', [EmployeeTimeEntryController::class, 'openStatus']);
+                Route::get('/shift', [EmployeeTimeEntryController::class, 'shift']);
 
                 // Solicitar ajuste
                 Route::post('/adjustments', [EmployeeAdjustmentController::class, 'request']);

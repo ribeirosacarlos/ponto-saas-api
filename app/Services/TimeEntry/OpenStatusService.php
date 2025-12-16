@@ -7,10 +7,15 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use App\Services\UserShiftResolver;
 
 class OpenStatusService
 {
     private const SHIFT_TOLERANCE_MINUTES = 10;
+    public function __construct(
+        protected UserShiftResolver $shiftResolver
+    ) {
+    }
 
     public function getStatus(User $user): array
     {
@@ -24,7 +29,7 @@ class OpenStatusService
             ->orderBy('clocked_at')
             ->get();
 
-        $shift = $this->resolveShiftForUser($user);
+        $shift = $this->shiftResolver->resolve($user)['shift'];
         $shiftContext = $this->buildShiftContext($shift, $today);
         $status = $this->determineStatus($entries, $shiftContext['break_expected'], $timezone);
         $shiftPayload = $this->buildShiftPayload($shift, $today, $timezone, $status['first_in']);
@@ -37,28 +42,6 @@ class OpenStatusService
             'next_action' => $status['next_action'],
             'shift' => $shiftPayload,
         ];
-    }
-
-    private function resolveShiftForUser(User $user): ?Shift
-    {
-        $assignment = $user->userShifts()
-            ->active()
-            ->with('shift.shiftDays')
-            ->orderByDesc('start_date')
-            ->first();
-
-        $shift = $assignment?->shift;
-
-        if (! $shift && $user->company_id) {
-            $shift = Shift::where('company_id', $user->company_id)
-                ->where('is_default', true)
-                ->with('shiftDays')
-                ->first();
-        }
-
-        $shift?->loadMissing('shiftDays');
-
-        return $shift;
     }
 
     private function buildShiftContext(?Shift $shift, CarbonImmutable $today): array
