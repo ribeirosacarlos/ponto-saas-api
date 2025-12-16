@@ -148,3 +148,70 @@ class TimeEntryMyEntries {}
  * )
  */
 class TimeEntryOpenStatus {}
+
+/**
+ * ==========================================
+ * Jornada atual do funcionário
+ * ==========================================
+ *
+ * @OA\Get(
+ *     path="/v1/employee/shift",
+ *     summary="Retorna a jornada atualmente atribuída ao funcionário",
+ *     description="Fornece os dados da jornada e da atribuição de turno em vigor, incluindo horários por dia útil.",
+ *     tags={"Employee - Time Entries"},
+ *     security={{"bearerAuth":{}}},
+ *
+ *     @OA\Response(
+ *         response=200,
+ *         description="Jornada atual e dados da atribuição",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="shift", ref="#/components/schemas/EmployeeShift", nullable=true),
+ *             @OA\Property(property="assignment", ref="#/components/schemas/EmployeeShiftAssignment", nullable=true)
+ *         )
+ *     )
+ * )
+ */
+class EmployeeShiftShow {}
+
+/**
+ * @OA\Schema(
+ *     schema="EmployeeShift",
+ *     @OA\Property(property="id", type="string", format="uuid"),
+ *     @OA\Property(property="name", type="string", example="Turno Manhã"),
+ *     @OA\Property(property="start_time", type="string", nullable=true, example="08:00"),
+ *     @OA\Property(property="end_time", type="string", nullable=true, example="17:00"),
+ *     @OA\Property(property="is_flexible", type="boolean", example=false),
+ *     @OA\Property(property="is_default", type="boolean", example=true),
+ *     @OA\Property(
+ *         property="shift_days",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/EmployeeShiftDay")
+ *     )
+ * )
+ */
+class EmployeeShiftSchema {}
+
+/**
+ * @OA\Schema(
+ *     schema="EmployeeShiftDay",
+ *     @OA\Property(property="id", type="string", format="uuid"),
+ *     @OA\Property(property="weekday", type="integer", example=1),
+ *     @OA\Property(property="is_working_day", type="boolean", example=true),
+ *     @OA\Property(property="start_time", type="string", nullable=true, example="08:00"),
+ *     @OA\Property(property="end_time", type="string", nullable=true, example="17:00"),
+ *     @OA\Property(property="break_start_time", type="string", nullable=true, example="12:00"),
+ *     @OA\Property(property="break_end_time", type="string", nullable=true, example="13:00"),
+ *     @OA\Property(property="break_minutes", type="integer", nullable=true, example=60)
+ * )
+ */
+class EmployeeShiftDaySchema {}
+
+/**
+ * @OA\Schema(
+ *     schema="EmployeeShiftAssignment",
+ *     @OA\Property(property="id", type="string", format="uuid"),
+ *     @OA\Property(property="start_date", type="string", format="date", example="2025-12-01"),
+ *     @OA\Property(property="end_date", type="string", format="date", nullable=true, example="2025-12-31")
+ * )
+ */
+class EmployeeShiftAssignmentSchema {}
