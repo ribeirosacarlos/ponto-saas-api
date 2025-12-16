@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
+use App\Http\Controllers\Api\Platform\CompanyController;
 
 Route::prefix('v1')->group(function () {
 
@@ -38,6 +39,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/entries', [EmployeeTimeEntryController::class, 'myEntries']);
 
                 Route::get('/time-entries/open-status', [EmployeeTimeEntryController::class, 'openStatus']);
+                Route::get('/shift', [EmployeeTimeEntryController::class, 'shift']);
 
                 // Solicitar ajuste
                 Route::post('/adjustments', [EmployeeAdjustmentController::class, 'request']);
@@ -97,6 +99,13 @@ Route::prefix('v1')->group(function () {
                 // Políticas de férias
                 Route::apiResource('leave-policies', LeavePolicyController::class)->only(['index', 'store', 'update', 'destroy']);
             });
+        });
+
+        Route::prefix('platform')->middleware(['role:super_admin'])->group(function () {
+            Route::apiResource('companies', CompanyController::class);
+            Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
+            Route::post('/companies/{company}/block', [CompanyController::class, 'block']);
+            Route::post('/companies/{company}/unblock', [CompanyController::class, 'unblock']);
         });
 
 

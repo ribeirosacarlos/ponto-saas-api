@@ -17,9 +17,17 @@ return new class extends Migration
         });
 
         // Backfill existing rows with the company id from the owning user
-        DB::statement('UPDATE time_entries SET company_id = users.company_id FROM users WHERE time_entries.user_id = users.id');
+        $connection = Schema::getConnection();
+        $driver = $connection->getConfig('driver');
 
-        DB::statement('ALTER TABLE time_entries ALTER COLUMN company_id SET NOT NULL');
+        if ($driver === 'sqlite') {
+            // sqlite cannot run ALTER COLUMN easily, so we just populate the column.
+            DB::statement('UPDATE time_entries SET company_id = (SELECT company_id FROM users WHERE users.id = time_entries.user_id)');
+        } else {
+            // Postgres is the production database and supports ALTER COLUMN.
+            DB::statement('UPDATE time_entries SET company_id = users.company_id FROM users WHERE time_entries.user_id = users.id');
+            DB::statement('ALTER TABLE time_entries ALTER COLUMN company_id SET NOT NULL');
+        }
 
         Schema::table('time_entries', function (Blueprint $table) {
             $table->foreign('company_id')->references('id')->on('companies')->cascadeOnDelete();

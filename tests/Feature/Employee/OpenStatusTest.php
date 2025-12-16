@@ -6,6 +6,7 @@ use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Models\Role;
 use App\Models\UserShift;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,9 +17,19 @@ class OpenStatusTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Role::updateOrCreate(
+            ['name' => 'employee'],
+            ['display_name' => 'Employee']
+        );
+    }
+
     public function test_returns_clock_in_when_no_entries()
     {
-        $user = User::factory()->create();
+        $user = $this->createEmployee();
         $this->assignShift($user);
 
         $response = $this->actingAs($user)->getJson('/api/v1/employee/time-entries/open-status');
@@ -40,7 +51,7 @@ class OpenStatusTest extends TestCase
 
     public function test_reports_open_work_when_last_entry_is_in()
     {
-        $user = User::factory()->create();
+        $user = $this->createEmployee();
         $this->assignShift($user, ['break_start_time' => null, 'break_end_time' => null]);
         $this->createTimeEntry($user, 'in', CarbonImmutable::now()->subHour());
 
@@ -59,7 +70,7 @@ class OpenStatusTest extends TestCase
 
     public function test_returns_clock_in_after_completing_entries()
     {
-        $user = User::factory()->create();
+        $user = $this->createEmployee();
         $this->assignShift($user);
         $this->createTimeEntry($user, 'in', CarbonImmutable::now()->setTime(8, 0));
         $this->createTimeEntry($user, 'out', CarbonImmutable::now()->setTime(17, 0));
@@ -79,7 +90,7 @@ class OpenStatusTest extends TestCase
 
     public function test_detects_open_break_when_break_started_without_ending()
     {
-        $user = User::factory()->create();
+        $user = $this->createEmployee();
         $this->assignShift($user, [
             'break_start_time' => '12:00',
             'break_end_time' => '13:00',
@@ -98,6 +109,31 @@ class OpenStatusTest extends TestCase
                     'type' => 'break_start',
                 ],
             ]);
+    }
+
+    public function test_shift_endpoint_returns_shift_rules()
+    {
+        $user = $this->createEmployee();
+        $shift = $this->assignShift($user, [
+            'break_start_time' => '12:00',
+            'break_end_time' => '13:00',
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/v1/employee/shift');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('shift.id', $shift->id);
+        $response->assertJsonPath('shift.shift_days.0.weekday', CarbonImmutable::now()->isoWeekday());
+        $response->assertJsonPath('shift.shift_days.0.break_start_time', '12:00');
+        $response->assertJsonPath('assignment.start_date', CarbonImmutable::now()->toDateString());
+        $this->assertNotNull($response->json('assignment.id'));
+    }
+
+    private function createEmployee(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole('employee');
+        return $user;
     }
 
     private function assignShift(User $user, array $options = []): Shift
