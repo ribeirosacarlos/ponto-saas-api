@@ -24,7 +24,7 @@ namespace App\Swagger\Admin\Employees;
  *         response=201,
  *         description="Criado",
  *         @OA\JsonContent(ref="#/components/schemas/EmployeeResource")
- *     )
+ *     ),
  *     @OA\Response(
  *         response=422,
  *         description="Erro de validação de e-mail",
