@@ -25,37 +25,47 @@ class EnsureSubscriptionTrialOrActive
             return response()->json(['message' => 'Empresa não encontrada.'], 403);
         }
 
-        $subscription = $this->billingService->getCompanySubscription($company);
+        try {
+            $subscription = $this->billingService->getCompanySubscription($company);
 
-        if (! $subscription) {
-            return response()->json(['message' => 'Assinatura necessária.'], 403);
-        }
-
-        $subscription = $this->subscriptionService->syncStatus($subscription);
-
-        if ($subscription->status === SubscriptionStatus::TRIALING
-            && $subscription->trial_ends_at
-            && now()->greaterThan($subscription->trial_ends_at)) {
-            $subscription = $this->billingService->markPastDue($subscription, now());
-
-            if ($this->billingService->isBlocked($company)) {
-                $this->blockCompany($company, 'Trial expirado.');
+            if (! $subscription) {
+                return response()->json(['message' => 'Assinatura necessária.'], 403);
             }
 
-            return response()->json(['message' => 'Trial expirado.'], 402);
+            $subscription = $this->subscriptionService->syncStatus($subscription);
+
+            if ($subscription->status === SubscriptionStatus::TRIALING
+                && $subscription->trial_ends_at
+                && now()->greaterThan($subscription->trial_ends_at)) {
+                $subscription = $this->billingService->markPastDue($subscription, now());
+
+                if ($this->billingService->isBlocked($company)) {
+                    $this->blockCompany($company, 'Trial expirado.');
+                }
+
+                return response()->json(['message' => 'Trial expirado.'], 402);
+            }
+
+            if ($subscription->status === SubscriptionStatus::CANCELED) {
+                return response()->json(['message' => 'Assinatura cancelada.'], 402);
+            }
+
+            if ($subscription->status === SubscriptionStatus::PAST_DUE && $this->billingService->isBlocked($company)) {
+                $this->blockCompany($company, 'Pagamento em atraso.');
+
+                return response()->json(['message' => 'Assinatura em atraso.'], 402);
+            }
+
+            return $next($request);
+        } catch (\Throwable $e) {
+            \Log::error('subscription.active exception', [
+                'company_id' => $company->id ?? null,
+                'error' => $e->getMessage(),
+                'class' => get_class($e),
+            ]);
+        
+            return response()->json(['message' => 'Erro ao validar assinatura.'], 500);
         }
-
-        if ($subscription->status === SubscriptionStatus::CANCELED) {
-            return response()->json(['message' => 'Assinatura cancelada.'], 402);
-        }
-
-        if ($subscription->status === SubscriptionStatus::PAST_DUE && $this->billingService->isBlocked($company)) {
-            $this->blockCompany($company, 'Pagamento em atraso.');
-
-            return response()->json(['message' => 'Assinatura em atraso.'], 402);
-        }
-
-        return $next($request);
     }
 
     protected function blockCompany(Company $company, string $reason): void

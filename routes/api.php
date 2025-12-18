@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
-
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
 use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
@@ -22,6 +22,8 @@ use App\Http\Controllers\Api\Admin\LeavePolicyController;
 use App\Http\Controllers\Api\Platform\CompanyController;
 
 Route::prefix('v1')->group(function () {
+
+    Route::post('/invites/accept', [InviteController::class, 'accept']);
 
     Route::post('/auth/login', [AuthController::class, 'login']);
 
@@ -116,7 +118,7 @@ Route::prefix('v1')->group(function () {
             });
         });
 
-        Route::prefix('platform')->middleware(['role:super_admin'])->group(function () {
+        Route::prefix('platform')->middleware(['role:super_admin|admin'])->group(function () {
             Route::apiResource('companies', CompanyController::class);
             Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
             Route::post('/companies/{company}/block', [CompanyController::class, 'block']);

@@ -16,6 +16,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\TenantManager::class, function ($app) {
             return new \App\Services\TenantManager();
         });
+        $this->app->singleton(
+            \Illuminate\Contracts\Debug\ExceptionHandler::class,
+            \App\Exceptions\Handler::class
+        );
     }
 
 

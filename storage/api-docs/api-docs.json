@@ -559,7 +559,7 @@
                 "tags": [
                     "Admin - Employees"
                 ],
-                "summary": "Cria um novo funcionário",
+                "summary": "Cria um novo funcionário e dispara um convite",
                 "operationId": "003b07c984533abdca4dba95b0f6e1bc",
                 "requestBody": {
                     "required": true,
@@ -568,8 +568,7 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "email",
-                                    "password"
+                                    "email"
                                 ],
                                 "properties": {
                                     "name": {
@@ -579,10 +578,6 @@
                                     "email": {
                                         "type": "string",
                                         "example": "joao@empresa.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "example": "12345678"
                                     },
                                     "role": {
                                         "type": "string",
@@ -3051,6 +3046,80 @@
                 ]
             }
         },
+        "/v1/invites/accept": {
+            "post": {
+                "tags": [
+                    "Invites"
+                ],
+                "summary": "Aceita o convite enviado pelo administrador e define uma nova senha",
+                "operationId": "237e4b10074ecddf6bc7584a0656184d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "Token recebido no convite",
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "nova-senha-segura"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "nova-senha-segura"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Senha criada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Senha definida com sucesso."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Token inválido ou expirado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token inválido."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/platform/companies": {
             "get": {
                 "tags": [
@@ -4243,6 +4312,10 @@
         {
             "name": "Employee - Vacations",
             "description": "Solicitação e acompanhamento de férias do colaborador"
+        },
+        {
+            "name": "Invites",
+            "description": "Endpoints públicos para aceitar convites de funcionários."
         },
         {
             "name": "Platform - Companies",

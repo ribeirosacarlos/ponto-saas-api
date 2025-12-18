@@ -22,6 +22,11 @@ class User extends Authenticatable
         'email',
         'password',
         'company_id',
+        'invited_at',
+        'password_set_at',
+        'invite_token_hash',
+        'invite_expires_at',
+        'must_change_password',
     ];
 
     protected $hidden = [
