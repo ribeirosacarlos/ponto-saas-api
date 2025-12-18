@@ -21,9 +21,6 @@ class PlatformCompanyUpdateRequest extends FormRequest
             'address' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:255',
             'state' => 'sometimes|nullable|string|max:255',
-            'plan' => 'sometimes|nullable|string|max:255',
-            'trial_ends_at' => 'sometimes|nullable|date',
-            'subscription_ends_at' => 'sometimes|nullable|date',
         ];
     }
 }
