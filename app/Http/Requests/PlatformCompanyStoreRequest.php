@@ -21,9 +21,6 @@ class PlatformCompanyStoreRequest extends FormRequest
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
-            'plan' => 'nullable|string|max:255',
-            'trial_ends_at' => 'nullable|date',
-            'subscription_ends_at' => 'nullable|date',
         ];
     }
 }

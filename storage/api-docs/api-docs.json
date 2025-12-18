@@ -19,6 +19,250 @@
         }
     ],
     "paths": {
+        "/v1/admin/billing/plans": {
+            "get": {
+                "tags": [
+                    "Admin - Billing"
+                ],
+                "summary": "Lista planos disponíveis",
+                "operationId": "8dabc3a46d315c62fbe241eb29da58dc",
+                "responses": {
+                    "200": {
+                        "description": "Planos paginados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminBillingPlanResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Billing"
+                ],
+                "summary": "Cria um novo plano",
+                "operationId": "88a982243daa446a178da5c037df0a4c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AdminBillingPlanPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Plano criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdminBillingPlanResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/billing/plans/{plan}": {
+            "get": {
+                "tags": [
+                    "Admin - Billing"
+                ],
+                "summary": "Exibe um plano",
+                "operationId": "00a061a6cde902e08356ddf362267def",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plano",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdminBillingPlanResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Admin - Billing"
+                ],
+                "summary": "Atualiza um plano",
+                "operationId": "c137ee2dc4a5ae8f43aabba0bf61735f",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AdminBillingPlanPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Plano atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdminBillingPlanResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/billing/companies/{company}/subscription": {
+            "get": {
+                "tags": [
+                    "Admin - Billing"
+                ],
+                "summary": "Exibe assinatura de uma empresa",
+                "operationId": "014a30183c7d3e86f05b6d058e23a261",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assinatura",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdminBillingSubscriptionResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Admin - Billing"
+                ],
+                "summary": "Atualiza assinatura da empresa",
+                "operationId": "8574ef302ae6ff4aee586a11d89858a4",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AdminBillingSubscriptionPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Assinatura atualizada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdminBillingSubscriptionResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/admin/employees/{id}/shift": {
             "post": {
                 "tags": [
@@ -2488,6 +2732,51 @@
                 ]
             }
         },
+        "/v1/employee/shift": {
+            "get": {
+                "tags": [
+                    "Employee - Time Entries"
+                ],
+                "summary": "Retorna a jornada atualmente atribuída ao funcionário",
+                "description": "Fornece os dados da jornada e da atribuição de turno em vigor, incluindo horários por dia útil.",
+                "operationId": "b22f53efbddd924b7540aacaa60dba15",
+                "responses": {
+                    "200": {
+                        "description": "Jornada atual e dados da atribuição",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "shift": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/EmployeeShift"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        },
+                                        "assignment": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/EmployeeShiftAssignment"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/employee/vacations": {
             "get": {
                 "tags": [
@@ -2761,10 +3050,641 @@
                     }
                 ]
             }
+        },
+        "/v1/platform/companies": {
+            "get": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Lista empresas gerenciadas pela plataforma",
+                "description": "LISTAR EMPRESAS\n---------------------------------------------------------",
+                "operationId": "54560913f69c8413f853f19c58a9ba8d",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filtra por status (active, blocked ou deleted). Valor vazio retorna todas.",
+                        "schema": {
+                            "type": "string",
+                            "example": "active"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Pesquisa por nome, slug, e-mail ou documento.",
+                        "schema": {
+                            "type": "string",
+                            "example": "empresa"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Campo de ordenação, use '-' para ordenar descendente (ex.: '-created_at').",
+                        "schema": {
+                            "type": "string",
+                            "example": "-created_at"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Quantidade de itens por página (1-100)",
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número da página",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de empresas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 54
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Company"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Cria uma nova empresa",
+                "description": "CRIAR EMPRESA\n---------------------------------------------------------",
+                "operationId": "5f4f27850fb0187b34762d97d7a924f3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformCompanyStore"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Empresa criada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Company"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/platform/companies/{company}": {
+            "get": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Exibe os dados de uma empresa específica",
+                "description": "VER DETALHES DE UMA EMPRESA\n---------------------------------------------------------",
+                "operationId": "6e62e55b811fe0dc3005c85480d59a12",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "description": "ID ou slug da empresa",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dados da empresa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Company"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Empresa não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Atualiza os dados de uma empresa",
+                "description": "ATUALIZAR EMPRESA\n---------------------------------------------------------",
+                "operationId": "6aa19abcf65d1014e81c18fd56c2306b",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "description": "ID ou slug da empresa",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformCompanyUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Empresa atualizada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Company"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Remove uma empresa",
+                "description": "DELETAR EMPRESA\n---------------------------------------------------------",
+                "operationId": "a6cf639cf759dae4479a7e4e2e389c97",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "description": "ID da empresa",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Empresa removida"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/platform/companies/{company}/restore": {
+            "post": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Restaura uma empresa deletada",
+                "description": "RESTAURAR EMPRESA\n---------------------------------------------------------",
+                "operationId": "efa2d975e2609d62d9975c74a894daea",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "description": "ID da empresa",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Empresa restaurada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Company"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Empresa não está deletada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/platform/companies/{company}/block": {
+            "post": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Bloqueia o acesso de uma empresa",
+                "description": "BLOQUEAR EMPRESA\n---------------------------------------------------------",
+                "operationId": "db9af93c0d9e3b468e4455f7f84f8772",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformCompanyBlockPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Empresa bloqueada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Company"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/platform/companies/{company}/unblock": {
+            "post": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Remove o bloqueio de uma empresa",
+                "description": "DESBLOQUEAR EMPRESA\n---------------------------------------------------------",
+                "operationId": "68688f370f2f2e55b889a53a4553900d",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Empresa desbloqueada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Company"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
         "schemas": {
+            "AdminBillingPlanResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price_cents": {
+                        "type": "integer"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "billing_interval": {
+                        "type": "string",
+                        "enum": [
+                            "month",
+                            "year",
+                            "one_time"
+                        ],
+                        "nullable": true
+                    },
+                    "trial_days": {
+                        "type": "integer"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    },
+                    "features": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "schema": "AdminBillingPlanFeatureValue",
+                            "type": "boolean"
+                        }
+                    },
+                    "quotas": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "schema": "AdminBillingPlanQuotaValue",
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "AdminBillingPlanFeatureValue": {
+                "type": "boolean"
+            },
+            "AdminBillingPlanQuotaValue": {
+                "type": "integer"
+            },
+            "AdminBillingPlanPayload": {
+                "required": [
+                    "name",
+                    "slug",
+                    "price_cents",
+                    "currency"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price_cents": {
+                        "type": "integer"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "billing_interval": {
+                        "type": "string",
+                        "enum": [
+                            "month",
+                            "year",
+                            "one_time"
+                        ],
+                        "nullable": true
+                    },
+                    "trial_days": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "features": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "schema": "AdminBillingPlanPayloadFeatureValue",
+                            "type": "boolean"
+                        }
+                    },
+                    "quotas": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "schema": "AdminBillingPlanPayloadQuotaValue",
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "AdminBillingPlanPayloadFeatureValue": {
+                "type": "boolean"
+            },
+            "AdminBillingPlanPayloadQuotaValue": {
+                "type": "integer"
+            },
+            "AdminBillingSubscriptionResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "plan": {
+                        "$ref": "#/components/schemas/AdminBillingPlanResource"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "trialing",
+                            "active",
+                            "past_due",
+                            "canceled"
+                        ]
+                    },
+                    "trial_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "current_period_start": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "current_period_end": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "canceled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "past_due_since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "grace_period_days": {
+                        "type": "integer"
+                    },
+                    "stripe_customer_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "stripe_subscription_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {}
+                    }
+                },
+                "type": "object"
+            },
+            "AdminBillingSubscriptionPayload": {
+                "properties": {
+                    "plan_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "trialing",
+                            "active",
+                            "past_due",
+                            "canceled"
+                        ],
+                        "nullable": true
+                    },
+                    "trial_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "current_period_start": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "current_period_end": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "canceled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "past_due_since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "grace_period_days": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "stripe_customer_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "stripe_subscription_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {}
+                    }
+                },
+                "type": "object"
+            },
             "UserShiftResource": {
                 "properties": {
                     "id": {
@@ -2966,6 +3886,301 @@
                     }
                 },
                 "type": "object"
+            },
+            "EmployeeShift": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Turno Manhã"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "example": "08:00",
+                        "nullable": true
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "example": "17:00",
+                        "nullable": true
+                    },
+                    "is_flexible": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "shift_days": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EmployeeShiftDay"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeShiftDay": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "weekday": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_working_day": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "example": "08:00",
+                        "nullable": true
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "example": "17:00",
+                        "nullable": true
+                    },
+                    "break_start_time": {
+                        "type": "string",
+                        "example": "12:00",
+                        "nullable": true
+                    },
+                    "break_end_time": {
+                        "type": "string",
+                        "example": "13:00",
+                        "nullable": true
+                    },
+                    "break_minutes": {
+                        "type": "integer",
+                        "example": 60,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeShiftAssignment": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-12-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-12-31",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Company": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Empresa Exemplo"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "empresa-exemplo"
+                    },
+                    "document": {
+                        "type": "string",
+                        "example": "00.000.000/0001-00",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "contato@empresa.com",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+5511999999999",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "Rua Principal, 100",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "example": "São Paulo",
+                        "nullable": true
+                    },
+                    "state": {
+                        "type": "string",
+                        "example": "SP",
+                        "nullable": true
+                    },
+                    "plan": {
+                        "type": "string",
+                        "example": "enterprise",
+                        "nullable": true
+                    },
+                    "trial_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "subscription_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "is_blocked": {
+                        "type": "boolean"
+                    },
+                    "blocked_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "blocked_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PlatformCompanyStore": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Empresa Padrão"
+                    },
+                    "document": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "state": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "plan": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "trial_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "subscription_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PlatformCompanyUpdate": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "document": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "state": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "plan": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "trial_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "subscription_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PlatformCompanyBlockPayload": {
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -2977,6 +4192,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Admin - Billing",
+            "description": "Gestão interna de planos e assinaturas"
+        },
         {
             "name": "Admin - Employees",
             "description": "Gestão de funcionários da empresa (CRUD)"
@@ -3024,6 +4243,10 @@
         {
             "name": "Employee - Vacations",
             "description": "Solicitação e acompanhamento de férias do colaborador"
+        },
+        {
+            "name": "Platform - Companies",
+            "description": "Rotas de gerenciamento de empresas acessíveis ao super admin"
         }
     ]
 }

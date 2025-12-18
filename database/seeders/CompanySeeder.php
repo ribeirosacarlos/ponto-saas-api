@@ -14,19 +14,16 @@ class CompanySeeder extends Seeder
                 'slug' => 'empresa-teste',
                 'name' => 'Empresa Teste',
                 'email' => 'contato@empresa.com',
-                'plan' => 'pro',
             ],
             [
                 'slug' => 'empresa-alpha',
                 'name' => 'Empresa Alpha',
                 'email' => 'alpha@empresa.com',
-                'plan' => 'enterprise',
             ],
             [
                 'slug' => 'empresa-beta',
                 'name' => 'Empresa Beta',
                 'email' => 'beta@empresa.com',
-                'plan' => 'free',
             ],
         ];
 

@@ -23,17 +23,12 @@ class Company extends Model
         'address',
         'city',
         'state',
-        'plan',
-        'trial_ends_at',
-        'subscription_ends_at',
         'is_blocked',
         'blocked_at',
         'blocked_reason',
     ];
 
     protected $casts = [
-        'trial_ends_at' => 'datetime',
-        'subscription_ends_at' => 'datetime',
         'is_blocked' => 'boolean',
         'blocked_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -92,5 +87,22 @@ class Company extends Model
     public function leaveBalances()
     {
         return $this->hasMany(LeaveBalance::class);
+    }
+
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
+    public function plan()
+    {
+        return $this->hasOneThrough(
+            Plan::class,
+            Subscription::class,
+            'company_id',
+            'id',
+            'id',
+            'plan_id'
+        );
     }
 }

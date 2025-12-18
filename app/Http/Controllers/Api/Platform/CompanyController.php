@@ -16,11 +16,11 @@ class CompanyController extends Controller
     {
         $status = strtolower($request->input('status', ''));
 
-        if ($status === 'deleted') {
-            $query = Company::onlyTrashed();
-        } else {
-            $query = Company::query();
+        $query = Company::with('subscription.plan');
 
+        if ($status === 'deleted') {
+            $query = $query->onlyTrashed();
+        } else {
             if ($status === 'blocked') {
                 $query->where('is_blocked', true);
             } elseif ($status === 'active') {
@@ -46,7 +46,7 @@ class CompanyController extends Controller
             $sort = ltrim($sort, '-');
         }
 
-        $allowedSorts = ['name', 'slug', 'plan', 'created_at', 'updated_at'];
+        $allowedSorts = ['name', 'slug', 'created_at', 'updated_at'];
 
         if (! in_array($sort, $allowedSorts, true)) {
             $sort = 'name';
@@ -97,7 +97,7 @@ class CompanyController extends Controller
 
     public function destroy(string $company)
     {
-        $company = Company::findOrFail($company);
+        $company = Company::with('subscription.plan')->findOrFail($company);
         $company->delete();
 
         return response()->noContent();
@@ -122,7 +122,7 @@ class CompanyController extends Controller
             'reason' => 'nullable|string|max:255',
         ]);
 
-        $company = Company::findOrFail($company);
+        $company = Company::with('subscription.plan')->findOrFail($company);
 
         if ($company->is_blocked) {
             return new CompanyResource($company);
@@ -156,7 +156,7 @@ class CompanyController extends Controller
 
     protected function findWithTrashed(string $id): Company
     {
-        return Company::withTrashed()->findOrFail($id);
+        return Company::withTrashed()->with('subscription.plan')->findOrFail($id);
     }
 
     protected function buildSlug(string $name, ?string $ignoreId = null): string

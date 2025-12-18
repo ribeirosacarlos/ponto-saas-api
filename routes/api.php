@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationCont
 use App\Http\Controllers\Api\AreaManager\TimeEntryController as AreaManagerTimeEntryController;
 use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdjustmentController;
 
+use App\Http\Controllers\Api\Admin\Billing\CompanySubscriptionController;
+use App\Http\Controllers\Api\Admin\Billing\PlanController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
 use App\Http\Controllers\Api\Admin\ShiftController;
 use App\Http\Controllers\Api\Admin\ReportController;
@@ -98,6 +100,18 @@ Route::prefix('v1')->group(function () {
 
                 // Políticas de férias
                 Route::apiResource('leave-policies', LeavePolicyController::class)->only(['index', 'store', 'update', 'destroy']);
+            });
+
+            Route::middleware(['role:super_admin'])->group(function () {
+                Route::prefix('billing')->group(function () {
+                    Route::get('plans', [PlanController::class, 'index']);
+                    Route::post('plans', [PlanController::class, 'store']);
+                    Route::get('plans/{plan}', [PlanController::class, 'show']);
+                    Route::patch('plans/{plan}', [PlanController::class, 'update']);
+
+                    Route::get('companies/{company}/subscription', [CompanySubscriptionController::class, 'show']);
+                    Route::patch('companies/{company}/subscription', [CompanySubscriptionController::class, 'update']);
+                });
             });
         });
 

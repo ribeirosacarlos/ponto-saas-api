@@ -1,5 +1,7 @@
 <?php
 
+use App\Console\Commands\BillingMarkPastDue;
+use App\Console\Commands\BillingSyncSubscriptions;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,15 +14,21 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware) {
-        $middleware->appendToGroup('api', [
-            \App\Http\Middleware\IdentifyTenant::class,
-        ]);
-        $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
-        ]);
-        $middleware->prepend(HandleCors::class);
-    })   
+        ->withMiddleware(function (Middleware $middleware) {
+            $middleware->appendToGroup('api', [
+                \App\Http\Middleware\IdentifyTenant::class,
+            ]);
+            $middleware->alias([
+                'role' => \App\Http\Middleware\RoleMiddleware::class,
+                'subscription.active' => \App\Http\Middleware\EnsureSubscriptionTrialOrActive::class,
+                'plan.feature' => \App\Http\Middleware\EnsurePlanFeature::class,
+            ]);
+            $middleware->prepend(HandleCors::class);
+        })
+    ->withCommands([
+        BillingSyncSubscriptions::class,
+        BillingMarkPastDue::class,
+    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
