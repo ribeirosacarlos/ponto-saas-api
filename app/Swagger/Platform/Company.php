@@ -10,6 +10,32 @@ namespace App\Swagger\Platform;
  */
 class Company {}
 
+/**
+ * REGISTRAR EMPRESA + ADMIN
+ * ---------------------------------------------------------
+ * @OA\Post(
+ *     path="/v1/platform/companies/register",
+ *     summary="Cria empresa e usuário admin via super admin",
+ *     tags={"Platform - Companies"},
+ *     security={{"bearerAuth":{}}},
+ *
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformCompanyRegistrationPayload")
+ *     ),
+ *
+ *     @OA\Response(
+ *         response=201,
+ *         description="Empresa criada e administrador configurado",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="company", ref="#/components/schemas/Company"),
+ *             @OA\Property(property="admin_user", ref="#/components/schemas/PlatformCompanyRegistrationAdmin")
+ *         )
+ *     )
+ * )
+ */
+class PlatformCompanyRegister {}
+
 
 /**
  * LISTAR EMPRESAS
@@ -341,3 +367,34 @@ class PlatformCompanyUpdateSchema {}
  * )
  */
 class PlatformCompanyBlockPayloadSchema {}
+
+
+/**
+ * @OA\Schema(
+ *     schema="PlatformCompanyRegistrationPayload",
+ *     required={"company_name","admin_name","admin_email","admin_password","admin_password_confirmation"},
+ *     @OA\Property(property="company_name", type="string", example="Empresa Nova"),
+ *     @OA\Property(property="company_document", type="string", nullable=true, example="00.000.000/0001-00"),
+ *     @OA\Property(property="company_email", type="string", format="email", nullable=true, example="contato@empresa.com"),
+ *     @OA\Property(property="company_phone", type="string", nullable=true, example="+55 11 99999-9999"),
+ *     @OA\Property(property="company_address", type="string", nullable=true, example="Rua dos Testes, 123"),
+ *     @OA\Property(property="company_city", type="string", nullable=true, example="São Paulo"),
+ *     @OA\Property(property="company_state", type="string", nullable=true, example="SP"),
+ *     @OA\Property(property="admin_name", type="string", example="Maria Fernanda"),
+ *     @OA\Property(property="admin_email", type="string", format="email", example="maria@empresa.com"),
+ *     @OA\Property(property="admin_password", type="string", format="password", example="SenhaSegura123"),
+ *     @OA\Property(property="admin_password_confirmation", type="string", format="password", example="SenhaSegura123")
+ * )
+ */
+class PlatformCompanyRegistrationPayloadSchema {}
+
+
+/**
+ * @OA\Schema(
+ *     schema="PlatformCompanyRegistrationAdmin",
+ *     @OA\Property(property="id", type="string", format="uuid"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="email", type="string", format="email")
+ * )
+ */
+class PlatformCompanyRegistrationAdminSchema {}

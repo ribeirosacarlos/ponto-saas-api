@@ -3120,6 +3120,51 @@
                 }
             }
         },
+        "/v1/platform/companies/register": {
+            "post": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Cria empresa e usuário admin via super admin",
+                "description": "REGISTRAR EMPRESA + ADMIN\n---------------------------------------------------------",
+                "operationId": "487d32e70c91f88fdb3bff31f1645d54",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformCompanyRegistrationPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Empresa criada e administrador configurado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "company": {
+                                            "$ref": "#/components/schemas/Company"
+                                        },
+                                        "admin_user": {
+                                            "$ref": "#/components/schemas/PlatformCompanyRegistrationAdmin"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/platform/companies": {
             "get": {
                 "tags": [
@@ -4247,6 +4292,88 @@
                         "type": "string",
                         "maxLength": 255,
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PlatformCompanyRegistrationPayload": {
+                "required": [
+                    "company_name",
+                    "admin_name",
+                    "admin_email",
+                    "admin_password",
+                    "admin_password_confirmation"
+                ],
+                "properties": {
+                    "company_name": {
+                        "type": "string",
+                        "example": "Empresa Nova"
+                    },
+                    "company_document": {
+                        "type": "string",
+                        "example": "00.000.000/0001-00",
+                        "nullable": true
+                    },
+                    "company_email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "contato@empresa.com",
+                        "nullable": true
+                    },
+                    "company_phone": {
+                        "type": "string",
+                        "example": "+55 11 99999-9999",
+                        "nullable": true
+                    },
+                    "company_address": {
+                        "type": "string",
+                        "example": "Rua dos Testes, 123",
+                        "nullable": true
+                    },
+                    "company_city": {
+                        "type": "string",
+                        "example": "São Paulo",
+                        "nullable": true
+                    },
+                    "company_state": {
+                        "type": "string",
+                        "example": "SP",
+                        "nullable": true
+                    },
+                    "admin_name": {
+                        "type": "string",
+                        "example": "Maria Fernanda"
+                    },
+                    "admin_email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "maria@empresa.com"
+                    },
+                    "admin_password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "SenhaSegura123"
+                    },
+                    "admin_password_confirmation": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "SenhaSegura123"
+                    }
+                },
+                "type": "object"
+            },
+            "PlatformCompanyRegistrationAdmin": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
                     }
                 },
                 "type": "object"

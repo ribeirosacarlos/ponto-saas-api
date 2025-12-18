@@ -7,11 +7,18 @@ use App\Http\Requests\PlatformCompanyStoreRequest;
 use App\Http\Requests\PlatformCompanyUpdateRequest;
 use App\Http\Resources\CompanyResource;
 use App\Models\Company;
+use App\Services\CompanySlugService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class CompanyController extends Controller
 {
+    private CompanySlugService $slugService;
+
+    public function __construct(CompanySlugService $slugService)
+    {
+        $this->slugService = $slugService;
+    }
+
     public function index(Request $request)
     {
         $status = strtolower($request->input('status', ''));
@@ -62,7 +69,7 @@ class CompanyController extends Controller
     public function store(PlatformCompanyStoreRequest $request)
     {
         $payload = $request->validated();
-        $payload['slug'] = $this->buildSlug($payload['name']);
+        $payload['slug'] = $this->slugService->generate($payload['name']);
 
         $company = Company::create($payload);
 
@@ -87,7 +94,7 @@ class CompanyController extends Controller
         $payload = $request->validated();
 
         if (array_key_exists('name', $payload)) {
-            $payload['slug'] = $this->buildSlug($payload['name'], $company->id);
+            $payload['slug'] = $this->slugService->generate($payload['name'], $company->id);
         }
 
         $company->update($payload);
@@ -159,18 +166,4 @@ class CompanyController extends Controller
         return Company::withTrashed()->with('subscription.plan')->findOrFail($id);
     }
 
-    protected function buildSlug(string $name, ?string $ignoreId = null): string
-    {
-        $base = Str::slug($name);
-        $slug = $base;
-        $counter = 1;
-
-        while (Company::withTrashed()->where('slug', $slug)
-            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
-            ->exists()) {
-            $slug = $base . '-' . $counter++;
-        }
-
-        return $slug;
-    }
 }
