@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
 use App\Http\Controllers\Api\Platform\CompanyController;
+use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 
 Route::prefix('v1')->group(function () {
 
@@ -118,11 +119,18 @@ Route::prefix('v1')->group(function () {
             });
         });
 
-        Route::prefix('platform')->middleware(['role:super_admin|admin'])->group(function () {
-            Route::apiResource('companies', CompanyController::class);
-            Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
-            Route::post('/companies/{company}/block', [CompanyController::class, 'block']);
-            Route::post('/companies/{company}/unblock', [CompanyController::class, 'unblock']);
+        Route::prefix('platform')->group(function () {
+
+            Route::middleware(['role:super_admin'])->group(function () {
+                Route::post('/companies/register', [CompanyRegistrationController::class, 'store']);
+            });
+
+            Route::middleware(['role:super_admin|admin'])->group(function () {
+                Route::apiResource('companies', CompanyController::class);
+                Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
+                Route::post('/companies/{company}/block', [CompanyController::class, 'block']);
+                Route::post('/companies/{company}/unblock', [CompanyController::class, 'unblock']);
+            });
         });
 
 

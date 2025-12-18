@@ -24,6 +24,18 @@ namespace App\Swagger\Admin\Employees;
  *         response=201,
  *         description="Criado",
  *         @OA\JsonContent(ref="#/components/schemas/EmployeeResource")
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Erro de validação de e-mail",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+ *             @OA\Property(property="errors", type="object",
+ *                 @OA\Property(property="email", type="array",
+ *                     @OA\Items(type="string", example="The email has already been taken.")
+ *                 )
+ *             )
+ *         )
  *     )
  * )
  */
