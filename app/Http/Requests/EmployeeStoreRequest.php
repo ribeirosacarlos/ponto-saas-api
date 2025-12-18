@@ -23,7 +23,7 @@ class EmployeeStoreRequest extends FormRequest
         return [
             'name'     => [$this->isMethod('POST') ? 'required' : 'sometimes', 'string', 'max:255'],
             'email'    => [($this->isMethod('POST') ? 'required' : 'sometimes'), 'email', $emailRule],
-            'password' => [$this->isMethod('POST') ? 'required' : 'nullable', 'min:6'],
+            'password' => ['sometimes', 'nullable', 'min:6'],
             'role'     => 'nullable|string|in:admin,manager,area_manager,employee',
             'shift_id' => 'nullable|uuid|exists:shifts,id',
         ];

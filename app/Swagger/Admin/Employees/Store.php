@@ -5,17 +5,16 @@ namespace App\Swagger\Admin\Employees;
 /**
  * @OA\Post(
  *     path="/v1/admin/employees",
- *     summary="Cria um novo funcionário",
+ *     summary="Cria um novo funcionário e dispara um convite",
  *     tags={"Admin - Employees"},
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
- *             required={"name","email","password"},
+ *             required={"name","email"},
  *             @OA\Property(property="name", type="string", example="João Silva"),
  *             @OA\Property(property="email", type="string", example="joao@empresa.com"),
- *             @OA\Property(property="password", type="string", example="12345678"),
  *             @OA\Property(property="role", type="string", enum={"admin","manager","area_manager","employee"}),
  *             @OA\Property(property="shift_id", type="string", format="uuid", nullable=true, description="Opcional: força vínculo com jornada específica")
  *         )

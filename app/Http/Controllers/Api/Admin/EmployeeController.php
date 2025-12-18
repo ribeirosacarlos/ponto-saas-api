@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Jobs\SendEmployeeInviteJob;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmployeeStoreRequest;
 use App\Models\Shift;
@@ -9,6 +10,7 @@ use App\Models\User;
 use App\Services\UserShiftService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -30,11 +32,20 @@ class EmployeeController extends Controller
 
         $data = $request->validated();
 
+        // Prepare invite metadata before creating the worker record.
+        $temporaryPasswordPlain = Str::password(12);
+        $inviteTokenPlain = Str::random(64);
+        $inviteTokenHash = hash('sha256', $inviteTokenPlain);
+
         $user = User::create([
             'company_id' => $request->user()->company_id,
             'name'       => $data['name'],
             'email'      => $data['email'],
-            'password'   => Hash::make($data['password']),
+            'password'   => Hash::make($temporaryPasswordPlain),
+            'invited_at' => now(),
+            'invite_token_hash' => $inviteTokenHash,
+            'invite_expires_at' => now()->addDays(7),
+            'must_change_password' => true,
         ]);
 
         if (! empty($data['role'])) {
@@ -42,6 +53,8 @@ class EmployeeController extends Controller
         }
 
         $this->assignShiftFromRequest($user, $data['shift_id'] ?? null);
+
+        SendEmployeeInviteJob::dispatch($user->id, $inviteTokenPlain, $temporaryPasswordPlain);
 
         return response()->json($user->load(['userShifts.shift']), 201);
     }
