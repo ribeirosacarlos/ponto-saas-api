@@ -31,7 +31,7 @@ Route::prefix('v1')->group(function () {
 
         // EMPLOYEE
         Route::prefix('employee')
-            ->middleware(['role:employee|area_manager|manager|admin'])
+            ->middleware(['role:employee|area_manager|manager|admin', 'subscription.active'])
             ->group(function () {
 
                 // Registrar batida
@@ -56,7 +56,7 @@ Route::prefix('v1')->group(function () {
 
         // AREA MANAGER
         Route::prefix('area-manager')
-            ->middleware(['role:area_manager|manager|admin'])
+            ->middleware(['role:area_manager|manager|admin', 'subscription.active'])
             ->group(function () {
 
                 // Ver batidas da equipe
@@ -71,16 +71,17 @@ Route::prefix('v1')->group(function () {
         // ADMIN AREA
         Route::prefix('admin')->group(function () {
 
-            Route::middleware(['role:admin'])->group(function () {
+            Route::middleware(['role:admin', 'subscription.active'])->group(function () {
 
                 // Funcionários
                 Route::apiResource('employees', EmployeeController::class);
 
                 // Relatórios
-                Route::get('/reports/time', [ReportController::class, 'timeReport']);
+                Route::get('/reports/time', [ReportController::class, 'timeReport'])
+                    ->middleware('plan.feature:reports');
             });
 
-            Route::middleware(['role:area_manager|manager|admin'])->group(function () {
+            Route::middleware(['role:area_manager|manager|admin', 'subscription.active'])->group(function () {
 
                 // Jornadas
                 Route::apiResource('shifts', ShiftController::class);
