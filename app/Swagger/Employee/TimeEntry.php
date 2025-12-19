@@ -215,3 +215,63 @@ class EmployeeShiftDaySchema {}
  * )
  */
 class EmployeeShiftAssignmentSchema {}
+
+/**
+ * ==========================================
+ * Horas trabalhadas hoje
+ * ==========================================
+ *
+ * @OA\Get(
+ *     path="/v1/employee/worked-today",
+ *     summary="Resumo das horas trabalhadas hoje pelo funcionário autenticado",
+ *     description="Calcula pares IN/OUT do dia e apura horas descontando intervalos esperados/registrados.",
+ *     tags={"Employee - Time Entries"},
+ *     security={{"bearerAuth":{}}},
+ *
+ *     @OA\Response(
+ *         response=200,
+ *         description="Resumo diário das horas trabalhadas",
+ *         @OA\JsonContent(
+ *             @OA\Property(
+ *                 property="data",
+ *                 type="object",
+ *                 ref="#/components/schemas/EmployeeWorkedToday"
+ *             )
+ *         )
+ *     )
+ * )
+ */
+class EmployeeWorkedToday {}
+
+/**
+ * @OA\Schema(
+ *     schema="EmployeeWorkedToday",
+ *     @OA\Property(property="date", type="string", format="date", example="2025-12-19"),
+ *     @OA\Property(property="worked_seconds", type="integer", example=28800),
+ *     @OA\Property(property="worked_minutes", type="integer", example=480),
+ *     @OA\Property(property="worked_hours_decimal", type="number", format="float", example=8.0),
+ *     @OA\Property(property="expected_break_minutes", type="integer", example=60),
+ *     @OA\Property(property="break_seconds_deducted", type="integer", example=3600),
+ *     @OA\Property(property="open_session", type="boolean", example=false),
+ *     @OA\Property(
+ *         property="details",
+ *         type="object",
+ *         @OA\Property(
+ *             property="pairs",
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/EmployeeWorkedTodayPair")
+ *         )
+ *     )
+ * )
+ */
+class EmployeeWorkedTodaySchema {}
+
+/**
+ * @OA\Schema(
+ *     schema="EmployeeWorkedTodayPair",
+ *     @OA\Property(property="in", type="string", format="date-time", example="2025-12-19T09:00:00-03:00"),
+ *     @OA\Property(property="out", type="string", format="date-time", example="2025-12-19T12:30:00-03:00"),
+ *     @OA\Property(property="seconds", type="integer", example=12600)
+ * )
+ */
+class EmployeeWorkedTodayPairSchema {}
