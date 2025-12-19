@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
 use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
@@ -45,6 +46,7 @@ Route::prefix('v1')->group(function () {
 
                 Route::get('/time-entries/open-status', [EmployeeTimeEntryController::class, 'openStatus']);
                 Route::get('/shift', [EmployeeTimeEntryController::class, 'shift']);
+                Route::get('/worked-today', [EmployeeWorkedTodayController::class, 'show']);
 
                 // Solicitar ajuste
                 Route::post('/adjustments', [EmployeeAdjustmentController::class, 'request']);

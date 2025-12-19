@@ -2800,6 +2800,38 @@
                 ]
             }
         },
+        "/v1/employee/worked-today": {
+            "get": {
+                "tags": [
+                    "Employee - Time Entries"
+                ],
+                "summary": "Resumo das horas trabalhadas hoje pelo funcionário autenticado",
+                "description": "Calcula pares IN/OUT do dia e apura horas descontando intervalos esperados/registrados.",
+                "operationId": "2cd877406bda4ff73fd0eb5233131b8d",
+                "responses": {
+                    "200": {
+                        "description": "Resumo diário das horas trabalhadas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EmployeeWorkedToday"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/employee/vacations": {
             "get": {
                 "tags": [
@@ -4124,6 +4156,71 @@
                         "format": "date",
                         "example": "2025-12-31",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeWorkedToday": {
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-12-19"
+                    },
+                    "worked_seconds": {
+                        "type": "integer",
+                        "example": 28800
+                    },
+                    "worked_minutes": {
+                        "type": "integer",
+                        "example": 480
+                    },
+                    "worked_hours_decimal": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 8
+                    },
+                    "expected_break_minutes": {
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "break_seconds_deducted": {
+                        "type": "integer",
+                        "example": 3600
+                    },
+                    "open_session": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "details": {
+                        "properties": {
+                            "pairs": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/EmployeeWorkedTodayPair"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeWorkedTodayPair": {
+                "properties": {
+                    "in": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-12-19T09:00:00-03:00"
+                    },
+                    "out": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-12-19T12:30:00-03:00"
+                    },
+                    "seconds": {
+                        "type": "integer",
+                        "example": 12600
                     }
                 },
                 "type": "object"
