@@ -3087,13 +3087,13 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "token",
+                                    "invite_code",
                                     "password",
                                     "password_confirmation"
                                 ],
                                 "properties": {
-                                    "token": {
-                                        "description": "Token recebido no convite",
+                                    "invite_code": {
+                                        "description": "Código recebido no convite",
                                         "type": "string"
                                     },
                                     "password": {
@@ -3130,14 +3130,14 @@
                         }
                     },
                     "422": {
-                        "description": "Token inválido ou expirado",
+                        "description": "Código inválido ou expirado",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Token inválido."
+                                            "example": "Código inválido."
                                         }
                                     },
                                     "type": "object"

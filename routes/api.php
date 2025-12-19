@@ -125,7 +125,7 @@ Route::prefix('v1')->group(function () {
                 Route::post('/companies/register', [CompanyRegistrationController::class, 'store']);
             });
 
-            Route::middleware(['role:super_admin|admin'])->group(function () {
+            Route::middleware(['role:super_admin'])->group(function () {
                 Route::apiResource('companies', CompanyController::class);
                 Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
                 Route::post('/companies/{company}/block', [CompanyController::class, 'block']);
