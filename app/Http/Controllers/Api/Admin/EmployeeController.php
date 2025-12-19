@@ -32,10 +32,9 @@ class EmployeeController extends Controller
 
         $data = $request->validated();
 
-        // Prepare invite metadata before creating the worker record.
         $temporaryPasswordPlain = Str::password(12);
-        $inviteTokenPlain = Str::random(64);
-        $inviteTokenHash = hash('sha256', $inviteTokenPlain);
+        $inviteCodePlain = $this->generateInviteCode();
+        $inviteCodeHash = hash('sha256', $inviteCodePlain);
 
         $user = User::create([
             'company_id' => $request->user()->company_id,
@@ -43,7 +42,7 @@ class EmployeeController extends Controller
             'email'      => $data['email'],
             'password'   => Hash::make($temporaryPasswordPlain),
             'invited_at' => now(),
-            'invite_token_hash' => $inviteTokenHash,
+            'invite_code_hash' => $inviteCodeHash,
             'invite_expires_at' => now()->addDays(7),
             'must_change_password' => true,
         ]);
@@ -54,7 +53,7 @@ class EmployeeController extends Controller
 
         $this->assignShiftFromRequest($user, $data['shift_id'] ?? null);
 
-        SendEmployeeInviteJob::dispatch($user->id, $inviteTokenPlain, $temporaryPasswordPlain);
+        SendEmployeeInviteJob::dispatch($user->id, $inviteCodePlain);
 
         return response()->json($user->load(['userShifts.shift']), 201);
     }
@@ -152,5 +151,18 @@ class EmployeeController extends Controller
         }
 
         return $shift;
+    }
+
+    private function generateInviteCode(): string
+    {
+        $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $length = strlen($characters);
+        $inviteCode = '';
+
+        for ($i = 0; $i < 8; $i++) {
+            $inviteCode .= $characters[random_int(0, $length - 1)];
+        }
+
+        return $inviteCode;
     }
 }

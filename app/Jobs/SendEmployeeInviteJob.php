@@ -16,8 +16,7 @@ class SendEmployeeInviteJob implements ShouldQueue
 
     public function __construct(
         public string $userId,
-        public string $inviteTokenPlain,
-        public string $temporaryPasswordPlain,
+        public string $inviteCodePlain,
     ) {}
 
     public function handle(): void
@@ -34,8 +33,7 @@ class SendEmployeeInviteJob implements ShouldQueue
             'company_id' => $user->company_id,
             'user_id' => $user->id,
             'email' => $user->email,
-            'invite_token' => $this->inviteTokenPlain,
-            'temporary_password' => $this->temporaryPasswordPlain,
+            'invite_code' => $this->inviteCodePlain,
         ]);
     }
 }

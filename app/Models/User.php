@@ -24,7 +24,7 @@ class User extends Authenticatable
         'company_id',
         'invited_at',
         'password_set_at',
-        'invite_token_hash',
+        'invite_code_hash',
         'invite_expires_at',
         'must_change_password',
     ];

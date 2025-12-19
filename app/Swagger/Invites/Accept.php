@@ -11,8 +11,8 @@ namespace App\Swagger\Invites;
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
- *             required={"token","password","password_confirmation"},
- *             @OA\Property(property="token", type="string", description="Token recebido no convite"),
+ *             required={"invite_code","password","password_confirmation"},
+ *             @OA\Property(property="invite_code", type="string", description="Código recebido no convite"),
  *             @OA\Property(property="password", type="string", minLength=8, example="nova-senha-segura"),
  *             @OA\Property(property="password_confirmation", type="string", minLength=8, example="nova-senha-segura")
  *         )
@@ -28,9 +28,9 @@ namespace App\Swagger\Invites;
  *
  *     @OA\Response(
  *         response=422,
- *         description="Token inválido ou expirado",
+ *         description="Código inválido ou expirado",
  *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Token inválido.")
+ *             @OA\Property(property="message", type="string", example="Código inválido.")
  *         )
  *     )
  * )
