@@ -6,7 +6,6 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
         ->withMiddleware(function (Middleware $middleware) {
             $middleware->appendToGroup('api', [
-                EnsureFrontendRequestsAreStateful::class,
                 \App\Http\Middleware\IdentifyTenant::class,
             ]);
             $middleware->alias([
