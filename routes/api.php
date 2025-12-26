@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
 use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
+use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
 
 use App\Http\Controllers\Api\AreaManager\TimeEntryController as AreaManagerTimeEntryController;
 use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdjustmentController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
+use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Api\Platform\CompanyController;
 use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 
@@ -56,6 +58,11 @@ Route::prefix('v1')->group(function () {
                 Route::post('/vacations', [EmployeeVacationController::class, 'store']);
                 Route::get('/vacations/balance', [EmployeeVacationController::class, 'balance']);
                 Route::delete('/vacations/{vacation}', [EmployeeVacationController::class, 'destroy']);
+
+                Route::get('/announcements', [EmployeeAnnouncementController::class, 'index']);
+                Route::get('/announcements/pending-count', [EmployeeAnnouncementController::class, 'pendingCount']);
+                Route::get('/announcements/{announcement}', [EmployeeAnnouncementController::class, 'show']);
+                Route::post('/announcements/{announcement}/seen', [EmployeeAnnouncementController::class, 'markAsSeen']);
             });
 
 
@@ -106,6 +113,8 @@ Route::prefix('v1')->group(function () {
 
                 // Políticas de férias
                 Route::apiResource('leave-policies', LeavePolicyController::class)->only(['index', 'store', 'update', 'destroy']);
+
+                Route::apiResource('announcements', AdminAnnouncementController::class);
             });
 
             Route::middleware(['role:super_admin'])->group(function () {
