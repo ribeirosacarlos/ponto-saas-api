@@ -2009,6 +2009,577 @@
                 ]
             }
         },
+        "/v1/employee/announcements": {
+            "get": {
+                "tags": [
+                    "Employee - Announcements"
+                ],
+                "summary": "Lista comunicados visíveis para o colaborador",
+                "operationId": "29c09d1d83ee607ccedc3677a75316de",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Data mínima de envio (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Data máxima de envio (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Status do comunicado",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "seen"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de comunicados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AnnouncementResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/announcements/{announcement}": {
+            "get": {
+                "tags": [
+                    "Employee - Announcements"
+                ],
+                "summary": "Consulta um comunicado específico",
+                "operationId": "29062a4fa0d837ba63d225a1af27cbd3",
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comunicado retornado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnouncementResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/announcements/{announcement}/seen": {
+            "post": {
+                "tags": [
+                    "Employee - Announcements"
+                ],
+                "summary": "Marca um comunicado como lido",
+                "operationId": "09a1881bc5f2cb977e6230c2344f97e4",
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnouncementSeenResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/announcements/pending-count": {
+            "get": {
+                "tags": [
+                    "Employee - Announcements"
+                ],
+                "summary": "Conta comunicados pendentes do colaborador",
+                "operationId": "8b25b2ca2c38a8c41d1df50b93c9597b",
+                "responses": {
+                    "200": {
+                        "description": "Quantidade pendente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnouncementPendingCount"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/announcements": {
+            "get": {
+                "tags": [
+                    "Admin - Announcements"
+                ],
+                "summary": "Lista comunicados da empresa (admin)",
+                "operationId": "cbc5b00cf8933dd7981f954bb582a864",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Data mínima de envio (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Data máxima de envio (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Tipo de comunicado",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "general",
+                                "holiday",
+                                "vacation",
+                                "tip"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Busca por título",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AnnouncementResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Announcements"
+                ],
+                "summary": "Cria um novo comunicado",
+                "operationId": "b9de2230722c1207c1f0afe1655c4bff",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Novas orientações para o expediente"
+                                    },
+                                    "summary": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "body": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "general",
+                                            "holiday",
+                                            "vacation",
+                                            "tip"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "sent_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Comunicado criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnouncementResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/announcements/{announcement}": {
+            "get": {
+                "tags": [
+                    "Admin - Announcements"
+                ],
+                "summary": "Recupera os detalhes de um comunicado (admin)",
+                "operationId": "5c8f7e4dc26a421d98c1aaad4d4366e6",
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comunicado retornado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnouncementResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Announcements"
+                ],
+                "summary": "Atualiza um comunicado",
+                "operationId": "c2ebf1bcd241b3fe0f18aba4a7ca035d",
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "summary": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "body": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "general",
+                                            "holiday",
+                                            "vacation",
+                                            "tip"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "sent_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Comunicado atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnouncementResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Announcements"
+                ],
+                "summary": "Remove um comunicado",
+                "operationId": "d8982d77ba3d595532b79759d096a186",
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comunicado removido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Comunicado removido."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Admin - Announcements"
+                ],
+                "summary": "Atualiza parcialmente um comunicado",
+                "operationId": "68ed6b531ff438700f9df19562a047bc",
+                "parameters": [
+                    {
+                        "name": "announcement",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "summary": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "body": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "general",
+                                            "holiday",
+                                            "vacation",
+                                            "tip"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "sent_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Comunicado atualizado parcialmente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnnouncementResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/area-manager/adjustments/{id}/approve": {
             "post": {
                 "tags": [
@@ -4061,6 +4632,80 @@
                 },
                 "type": "object"
             },
+            "AnnouncementResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Feriado prolongado confirmado"
+                    },
+                    "summary": {
+                        "type": "string",
+                        "example": "Expediente suspenso na sexta",
+                        "nullable": true
+                    },
+                    "body": {
+                        "type": "string",
+                        "example": "O escritório ficará fechado para manutenção.",
+                        "nullable": true
+                    },
+                    "sentAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-05T12:00:00Z"
+                    },
+                    "seenAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-05T13:00:00Z",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "senderName": {
+                        "type": "string",
+                        "example": "Ana Pereira"
+                    },
+                    "senderRole": {
+                        "type": "string",
+                        "example": "manager"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "holiday",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AnnouncementSeenResponse": {
+                "properties": {
+                    "seenAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-05T13:00:00Z"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "seen"
+                    }
+                },
+                "type": "object"
+            },
+            "AnnouncementPendingCount": {
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 3
+                    }
+                },
+                "type": "object"
+            },
             "EmployeeShift": {
                 "properties": {
                     "id": {
@@ -4540,6 +5185,14 @@
         {
             "name": "Admin - Vacations",
             "description": "Gestão de solicitações de férias"
+        },
+        {
+            "name": "Employee - Announcements",
+            "description": "Comunicados internos disponíveis para o colaborador"
+        },
+        {
+            "name": "Admin - Announcements",
+            "description": "Administração dos comunicados internos"
         },
         {
             "name": "Area Manager - Adjustments",

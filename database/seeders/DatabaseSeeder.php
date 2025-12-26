@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             UsersSeeder::class,
             TimeEntriesSeeder::class,
             VacationExampleSeeder::class,
+            AnnouncementSeeder::class,
         ]);
     }
 
