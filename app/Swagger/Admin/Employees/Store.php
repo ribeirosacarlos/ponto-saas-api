@@ -6,6 +6,7 @@ namespace App\Swagger\Admin\Employees;
  * @OA\Post(
  *     path="/v1/admin/employees",
  *     summary="Cria um novo funcionário e dispara um convite",
+ *     description="O convite chega por e-mail (Resend) e pode conter link ou senha provisória, tudo via job em fila.",
  *     tags={"Admin - Employees"},
  *     security={{"bearerAuth":{}}},
  *

@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Invitation URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used when generating the link that employees click to
+    | accept their invite. You can include "{code}" or let the system
+    | append the invite_code query parameter automatically.
+    |
+    */
+
+    'invite_url' => env('APP_INVITE_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

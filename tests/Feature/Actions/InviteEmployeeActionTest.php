@@ -1,0 +1,38 @@
+<?php
+
+namespace Tests\Feature\Actions;
+
+use App\Actions\Employees\InviteEmployeeAction;
+use App\Jobs\SendEmployeeInviteJob;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
+use Tests\TestCase;
+
+class InviteEmployeeActionTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_it_creates_employee_and_dispatches_invite_job()
+    {
+        Bus::fake();
+
+        $inviter = User::factory()->create();
+
+        $data = [
+            'name' => 'Convite',
+            'email' => 'convite@example.com',
+            'role' => 'employee',
+        ];
+
+        $action = app(InviteEmployeeAction::class);
+
+        $employee = $action->execute($inviter, $data);
+
+        $this->assertEquals($inviter->company_id, $employee->company_id);
+        $this->assertTrue($employee->must_change_password);
+        $this->assertNotNull($employee->invite_code_hash);
+
+        Bus::assertDispatched(SendEmployeeInviteJob::class, fn (SendEmployeeInviteJob $job) => $job->userId === $employee->id);
+    }
+}
