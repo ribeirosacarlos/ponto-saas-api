@@ -19,250 +19,6 @@
         }
     ],
     "paths": {
-        "/v1/admin/billing/plans": {
-            "get": {
-                "tags": [
-                    "Admin - Billing"
-                ],
-                "summary": "Lista planos disponíveis",
-                "operationId": "8dabc3a46d315c62fbe241eb29da58dc",
-                "responses": {
-                    "200": {
-                        "description": "Planos paginados",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "current_page": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "per_page": {
-                                            "type": "integer",
-                                            "example": 20
-                                        },
-                                        "total": {
-                                            "type": "integer",
-                                            "example": 3
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/AdminBillingPlanResource"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Admin - Billing"
-                ],
-                "summary": "Cria um novo plano",
-                "operationId": "88a982243daa446a178da5c037df0a4c",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AdminBillingPlanPayload"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Plano criado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AdminBillingPlanResource"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/v1/admin/billing/plans/{plan}": {
-            "get": {
-                "tags": [
-                    "Admin - Billing"
-                ],
-                "summary": "Exibe um plano",
-                "operationId": "00a061a6cde902e08356ddf362267def",
-                "parameters": [
-                    {
-                        "name": "plan",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Plano",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AdminBillingPlanResource"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "patch": {
-                "tags": [
-                    "Admin - Billing"
-                ],
-                "summary": "Atualiza um plano",
-                "operationId": "c137ee2dc4a5ae8f43aabba0bf61735f",
-                "parameters": [
-                    {
-                        "name": "plan",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AdminBillingPlanPayload"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Plano atualizado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AdminBillingPlanResource"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/v1/admin/billing/companies/{company}/subscription": {
-            "get": {
-                "tags": [
-                    "Admin - Billing"
-                ],
-                "summary": "Exibe assinatura de uma empresa",
-                "operationId": "014a30183c7d3e86f05b6d058e23a261",
-                "parameters": [
-                    {
-                        "name": "company",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Assinatura",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AdminBillingSubscriptionResource"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "patch": {
-                "tags": [
-                    "Admin - Billing"
-                ],
-                "summary": "Atualiza assinatura da empresa",
-                "operationId": "8574ef302ae6ff4aee586a11d89858a4",
-                "parameters": [
-                    {
-                        "name": "company",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AdminBillingSubscriptionPayload"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Assinatura atualizada",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AdminBillingSubscriptionResource"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/v1/admin/employees/{id}/shift": {
             "post": {
                 "tags": [
@@ -560,6 +316,7 @@
                     "Admin - Employees"
                 ],
                 "summary": "Cria um novo funcionário e dispara um convite",
+                "description": "O convite chega por e-mail (Resend) e pode conter link ou senha provisória, tudo via job em fila.",
                 "operationId": "003b07c984533abdca4dba95b0f6e1bc",
                 "requestBody": {
                     "required": true,
@@ -3751,6 +3508,250 @@
                 }
             }
         },
+        "/v1/platform/billing/plans": {
+            "get": {
+                "tags": [
+                    "Platform - Billing"
+                ],
+                "summary": "Lista planos disponíveis",
+                "operationId": "69955f855f43d9b4d27186a983c55a50",
+                "responses": {
+                    "200": {
+                        "description": "Planos paginados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PlatformBillingPlanResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Platform - Billing"
+                ],
+                "summary": "Cria um novo plano",
+                "operationId": "db05ebf33d8b369090c837dcab3b7b6c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformBillingPlanPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Plano criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlatformBillingPlanResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/platform/billing/plans/{plan}": {
+            "get": {
+                "tags": [
+                    "Platform - Billing"
+                ],
+                "summary": "Exibe um plano",
+                "operationId": "71a279c431157e2657bb524ff3e772d0",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plano",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlatformBillingPlanResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Platform - Billing"
+                ],
+                "summary": "Atualiza um plano",
+                "operationId": "316597cbeb2e167a077c1983f0a93d8e",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformBillingPlanPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Plano atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlatformBillingPlanResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/platform/billing/companies/{company}/subscription": {
+            "get": {
+                "tags": [
+                    "Platform - Billing"
+                ],
+                "summary": "Exibe assinatura de uma empresa",
+                "operationId": "c9511039f5339113408e3d167752bd34",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assinatura",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlatformBillingSubscriptionResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Platform - Billing"
+                ],
+                "summary": "Atualiza assinatura da empresa",
+                "operationId": "bb1d70ab127cc2be3a41d0f5cc5fbbb1",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformBillingSubscriptionPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Assinatura atualizada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlatformBillingSubscriptionResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/platform/companies/register": {
             "post": {
                 "tags": [
@@ -4169,267 +4170,6 @@
     },
     "components": {
         "schemas": {
-            "AdminBillingPlanResource": {
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "slug": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "price_cents": {
-                        "type": "integer"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "billing_interval": {
-                        "type": "string",
-                        "enum": [
-                            "month",
-                            "year",
-                            "one_time"
-                        ],
-                        "nullable": true
-                    },
-                    "trial_days": {
-                        "type": "integer"
-                    },
-                    "is_active": {
-                        "type": "boolean"
-                    },
-                    "sort_order": {
-                        "type": "integer"
-                    },
-                    "features": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "schema": "AdminBillingPlanFeatureValue",
-                            "type": "boolean"
-                        }
-                    },
-                    "quotas": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "schema": "AdminBillingPlanQuotaValue",
-                            "type": "integer"
-                        }
-                    }
-                },
-                "type": "object"
-            },
-            "AdminBillingPlanFeatureValue": {
-                "type": "boolean"
-            },
-            "AdminBillingPlanQuotaValue": {
-                "type": "integer"
-            },
-            "AdminBillingPlanPayload": {
-                "required": [
-                    "name",
-                    "slug",
-                    "price_cents",
-                    "currency"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "slug": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "price_cents": {
-                        "type": "integer"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "billing_interval": {
-                        "type": "string",
-                        "enum": [
-                            "month",
-                            "year",
-                            "one_time"
-                        ],
-                        "nullable": true
-                    },
-                    "trial_days": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "is_active": {
-                        "type": "boolean",
-                        "nullable": true
-                    },
-                    "sort_order": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "features": {
-                        "type": "object",
-                        "nullable": true,
-                        "additionalProperties": {
-                            "schema": "AdminBillingPlanPayloadFeatureValue",
-                            "type": "boolean"
-                        }
-                    },
-                    "quotas": {
-                        "type": "object",
-                        "nullable": true,
-                        "additionalProperties": {
-                            "schema": "AdminBillingPlanPayloadQuotaValue",
-                            "type": "integer"
-                        }
-                    }
-                },
-                "type": "object"
-            },
-            "AdminBillingPlanPayloadFeatureValue": {
-                "type": "boolean"
-            },
-            "AdminBillingPlanPayloadQuotaValue": {
-                "type": "integer"
-            },
-            "AdminBillingSubscriptionResource": {
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "company_id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "plan": {
-                        "$ref": "#/components/schemas/AdminBillingPlanResource"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "trialing",
-                            "active",
-                            "past_due",
-                            "canceled"
-                        ]
-                    },
-                    "trial_ends_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "current_period_start": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "current_period_end": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "canceled_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "past_due_since": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "grace_period_days": {
-                        "type": "integer"
-                    },
-                    "stripe_customer_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "stripe_subscription_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "nullable": true,
-                        "additionalProperties": {}
-                    }
-                },
-                "type": "object"
-            },
-            "AdminBillingSubscriptionPayload": {
-                "properties": {
-                    "plan_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "nullable": true
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "trialing",
-                            "active",
-                            "past_due",
-                            "canceled"
-                        ],
-                        "nullable": true
-                    },
-                    "trial_ends_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "current_period_start": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "current_period_end": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "canceled_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "past_due_since": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "grace_period_days": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "stripe_customer_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "stripe_subscription_id": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "nullable": true,
-                        "additionalProperties": {}
-                    }
-                },
-                "type": "object"
-            },
             "UserShiftResource": {
                 "properties": {
                     "id": {
@@ -4870,6 +4610,267 @@
                 },
                 "type": "object"
             },
+            "PlatformBillingPlanResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price_cents": {
+                        "type": "integer"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "billing_interval": {
+                        "type": "string",
+                        "enum": [
+                            "month",
+                            "year",
+                            "one_time"
+                        ],
+                        "nullable": true
+                    },
+                    "trial_days": {
+                        "type": "integer"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    },
+                    "features": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "schema": "PlatformBillingPlanFeatureValue",
+                            "type": "boolean"
+                        }
+                    },
+                    "quotas": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "schema": "PlatformBillingPlanQuotaValue",
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "PlatformBillingPlanFeatureValue": {
+                "type": "boolean"
+            },
+            "PlatformBillingPlanQuotaValue": {
+                "type": "integer"
+            },
+            "PlatformBillingPlanPayload": {
+                "required": [
+                    "name",
+                    "slug",
+                    "price_cents",
+                    "currency"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price_cents": {
+                        "type": "integer"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "billing_interval": {
+                        "type": "string",
+                        "enum": [
+                            "month",
+                            "year",
+                            "one_time"
+                        ],
+                        "nullable": true
+                    },
+                    "trial_days": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "features": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "schema": "PlatformBillingPlanPayloadFeatureValue",
+                            "type": "boolean"
+                        }
+                    },
+                    "quotas": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "schema": "PlatformBillingPlanPayloadQuotaValue",
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "PlatformBillingPlanPayloadFeatureValue": {
+                "type": "boolean"
+            },
+            "PlatformBillingPlanPayloadQuotaValue": {
+                "type": "integer"
+            },
+            "PlatformBillingSubscriptionResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "plan": {
+                        "$ref": "#/components/schemas/PlatformBillingPlanResource"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "trialing",
+                            "active",
+                            "past_due",
+                            "canceled"
+                        ]
+                    },
+                    "trial_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "current_period_start": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "current_period_end": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "canceled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "past_due_since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "grace_period_days": {
+                        "type": "integer"
+                    },
+                    "stripe_customer_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "stripe_subscription_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {}
+                    }
+                },
+                "type": "object"
+            },
+            "PlatformBillingSubscriptionPayload": {
+                "properties": {
+                    "plan_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "trialing",
+                            "active",
+                            "past_due",
+                            "canceled"
+                        ],
+                        "nullable": true
+                    },
+                    "trial_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "current_period_start": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "current_period_end": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "canceled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "past_due_since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "grace_period_days": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "stripe_customer_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "stripe_subscription_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {}
+                    }
+                },
+                "type": "object"
+            },
             "Company": {
                 "properties": {
                     "id": {
@@ -5159,10 +5160,6 @@
     },
     "tags": [
         {
-            "name": "Admin - Billing",
-            "description": "Gestão interna de planos e assinaturas"
-        },
-        {
             "name": "Admin - Employees",
             "description": "Gestão de funcionários da empresa (CRUD)"
         },
@@ -5221,6 +5218,10 @@
         {
             "name": "Invites",
             "description": "Endpoints públicos para aceitar convites de funcionários."
+        },
+        {
+            "name": "Platform - Billing",
+            "description": "Cobrança e assinaturas gerenciadas pela plataforma para o super admin"
         },
         {
             "name": "Platform - Companies",
