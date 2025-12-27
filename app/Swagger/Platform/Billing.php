@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Swagger\Admin;
+namespace App\Swagger\Platform;
 
 /**
  * @OA\Tag(
- *     name="Admin - Billing",
- *     description="Gestão interna de planos e assinaturas"
+ *     name="Platform - Billing",
+ *     description="Cobrança e assinaturas gerenciadas pela plataforma para o super admin"
  * )
  */
 class Billing {}
 
 /**
  * @OA\Get(
- *     path="/v1/admin/billing/plans",
+ *     path="/v1/platform/billing/plans",
  *     summary="Lista planos disponíveis",
- *     tags={"Admin - Billing"},
+ *     tags={"Platform - Billing"},
  *     security={{"bearerAuth":{}}},
  *     @OA\Response(
  *         response=200,
@@ -26,7 +26,7 @@ class Billing {}
  *             @OA\Property(
  *                 property="data",
  *                 type="array",
- *                 @OA\Items(ref="#/components/schemas/AdminBillingPlanResource")
+ *                 @OA\Items(ref="#/components/schemas/PlatformBillingPlanResource")
  *             )
  *         )
  *     )
@@ -36,18 +36,18 @@ class BillingPlansIndex {}
 
 /**
  * @OA\Post(
- *     path="/v1/admin/billing/plans",
+ *     path="/v1/platform/billing/plans",
  *     summary="Cria um novo plano",
- *     tags={"Admin - Billing"},
+ *     tags={"Platform - Billing"},
  *     security={{"bearerAuth":{}}},
  *     @OA\RequestBody(
  *         required=true,
- *         @OA\JsonContent(ref="#/components/schemas/AdminBillingPlanPayload")
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformBillingPlanPayload")
  *     ),
  *     @OA\Response(
  *         response=201,
  *         description="Plano criado",
- *         @OA\JsonContent(ref="#/components/schemas/AdminBillingPlanResource")
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformBillingPlanResource")
  *     )
  * )
  */
@@ -55,15 +55,15 @@ class BillingPlansStore {}
 
 /**
  * @OA\Get(
- *     path="/v1/admin/billing/plans/{plan}",
+ *     path="/v1/platform/billing/plans/{plan}",
  *     summary="Exibe um plano",
- *     tags={"Admin - Billing"},
+ *     tags={"Platform - Billing"},
  *     security={{"bearerAuth":{}}},
  *     @OA\Parameter(name="plan", in="path", required=true, @OA\Schema(type="string", format="uuid")),
  *     @OA\Response(
  *         response=200,
  *         description="Plano",
- *         @OA\JsonContent(ref="#/components/schemas/AdminBillingPlanResource")
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformBillingPlanResource")
  *     )
  * )
  */
@@ -71,19 +71,19 @@ class BillingPlansShow {}
 
 /**
  * @OA\Patch(
- *     path="/v1/admin/billing/plans/{plan}",
+ *     path="/v1/platform/billing/plans/{plan}",
  *     summary="Atualiza um plano",
- *     tags={"Admin - Billing"},
+ *     tags={"Platform - Billing"},
  *     security={{"bearerAuth":{}}},
  *     @OA\Parameter(name="plan", in="path", required=true, @OA\Schema(type="string", format="uuid")),
  *     @OA\RequestBody(
  *         required=true,
- *         @OA\JsonContent(ref="#/components/schemas/AdminBillingPlanPayload")
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformBillingPlanPayload")
  *     ),
  *     @OA\Response(
  *         response=200,
  *         description="Plano atualizado",
- *         @OA\JsonContent(ref="#/components/schemas/AdminBillingPlanResource")
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformBillingPlanResource")
  *     )
  * )
  */
@@ -91,15 +91,15 @@ class BillingPlansUpdate {}
 
 /**
  * @OA\Get(
- *     path="/v1/admin/billing/companies/{company}/subscription",
+ *     path="/v1/platform/billing/companies/{company}/subscription",
  *     summary="Exibe assinatura de uma empresa",
- *     tags={"Admin - Billing"},
+ *     tags={"Platform - Billing"},
  *     security={{"bearerAuth":{}}},
  *     @OA\Parameter(name="company", in="path", required=true, @OA\Schema(type="string", format="uuid")),
  *     @OA\Response(
  *         response=200,
  *         description="Assinatura",
- *         @OA\JsonContent(ref="#/components/schemas/AdminBillingSubscriptionResource")
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformBillingSubscriptionResource")
  *     )
  * )
  */
@@ -107,19 +107,19 @@ class BillingCompanySubscriptionShow {}
 
 /**
  * @OA\Patch(
- *     path="/v1/admin/billing/companies/{company}/subscription",
+ *     path="/v1/platform/billing/companies/{company}/subscription",
  *     summary="Atualiza assinatura da empresa",
- *     tags={"Admin - Billing"},
+ *     tags={"Platform - Billing"},
  *     security={{"bearerAuth":{}}},
  *     @OA\Parameter(name="company", in="path", required=true, @OA\Schema(type="string", format="uuid")),
  *     @OA\RequestBody(
  *         required=true,
- *         @OA\JsonContent(ref="#/components/schemas/AdminBillingSubscriptionPayload")
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformBillingSubscriptionPayload")
  *     ),
  *     @OA\Response(
  *         response=200,
  *         description="Assinatura atualizada",
- *         @OA\JsonContent(ref="#/components/schemas/AdminBillingSubscriptionResource")
+ *         @OA\JsonContent(ref="#/components/schemas/PlatformBillingSubscriptionResource")
  *     )
  * )
  */
@@ -128,7 +128,7 @@ class BillingCompanySubscriptionUpdate {}
 
 /**
  * @OA\Schema(
- *     schema="AdminBillingPlanResource",
+ *     schema="PlatformBillingPlanResource",
  *     @OA\Property(property="id", type="string", format="uuid"),
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="slug", type="string"),
@@ -143,7 +143,7 @@ class BillingCompanySubscriptionUpdate {}
  *         property="features",
  *         type="object",
  *         additionalProperties=@OA\Schema(
- *             schema="AdminBillingPlanFeatureValue",
+ *             schema="PlatformBillingPlanFeatureValue",
  *             type="boolean"
  *         )
  *     ),
@@ -151,18 +151,18 @@ class BillingCompanySubscriptionUpdate {}
  *         property="quotas",
  *         type="object",
  *         additionalProperties=@OA\Schema(
- *             schema="AdminBillingPlanQuotaValue",
+ *             schema="PlatformBillingPlanQuotaValue",
  *             type="integer"
  *         )
  *     )
  * )
  */
-class AdminBillingPlanResourceDoc {}
+class PlatformBillingPlanResourceDoc {}
 
 
 /**
  * @OA\Schema(
- *     schema="AdminBillingPlanPayload",
+ *     schema="PlatformBillingPlanPayload",
  *     required={"name","slug","price_cents","currency"},
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="slug", type="string"),
@@ -177,7 +177,7 @@ class AdminBillingPlanResourceDoc {}
  *         property="features",
  *         type="object",
  *         additionalProperties=@OA\Schema(
- *             schema="AdminBillingPlanPayloadFeatureValue",
+ *             schema="PlatformBillingPlanPayloadFeatureValue",
  *             type="boolean"
  *         ),
  *         nullable=true
@@ -186,22 +186,22 @@ class AdminBillingPlanResourceDoc {}
  *         property="quotas",
  *         type="object",
  *         additionalProperties=@OA\Schema(
- *             schema="AdminBillingPlanPayloadQuotaValue",
+ *             schema="PlatformBillingPlanPayloadQuotaValue",
  *             type="integer"
  *         ),
  *         nullable=true
  *     )
  * )
  */
-class AdminBillingPlanPayloadDoc {}
+class PlatformBillingPlanPayloadDoc {}
 
 
 /**
  * @OA\Schema(
- *     schema="AdminBillingSubscriptionResource",
+ *     schema="PlatformBillingSubscriptionResource",
  *     @OA\Property(property="id", type="string", format="uuid"),
  *     @OA\Property(property="company_id", type="string", format="uuid"),
- *     @OA\Property(property="plan", ref="#/components/schemas/AdminBillingPlanResource"),
+ *     @OA\Property(property="plan", ref="#/components/schemas/PlatformBillingPlanResource"),
  *     @OA\Property(property="status", type="string", enum={"trialing","active","past_due","canceled"}),
  *     @OA\Property(property="trial_ends_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="current_period_start", type="string", format="date-time", nullable=true),
@@ -212,17 +212,17 @@ class AdminBillingPlanPayloadDoc {}
  *     @OA\Property(property="stripe_customer_id", type="string", nullable=true),
  *     @OA\Property(property="stripe_subscription_id", type="string", nullable=true),
  *     @OA\Property(property="metadata", type="object", nullable=true, @OA\AdditionalProperties(@OA\Schema(
- *         schema="AdminBillingSubscriptionMetadataValue",
+ *         schema="PlatformBillingSubscriptionMetadataValue",
  *         type="string"
  *     )))
  * )
  */
-class AdminBillingSubscriptionResourceDoc {}
+class PlatformBillingSubscriptionResourceDoc {}
 
 
 /**
  * @OA\Schema(
- *     schema="AdminBillingSubscriptionPayload",
+ *     schema="PlatformBillingSubscriptionPayload",
  *     @OA\Property(property="plan_id", type="string", format="uuid", nullable=true),
  *     @OA\Property(property="status", type="string", enum={"trialing","active","past_due","canceled"}, nullable=true),
  *     @OA\Property(property="trial_ends_at", type="string", format="date-time", nullable=true),
@@ -234,9 +234,9 @@ class AdminBillingSubscriptionResourceDoc {}
  *     @OA\Property(property="stripe_customer_id", type="string", nullable=true),
  *     @OA\Property(property="stripe_subscription_id", type="string", nullable=true),
  *     @OA\Property(property="metadata", type="object", nullable=true, @OA\AdditionalProperties(@OA\Schema(
- *         schema="AdminBillingSubscriptionPayloadMetadataValue",
+ *         schema="PlatformBillingSubscriptionPayloadMetadataValue",
  *         type="string"
  *     )))
  * )
  */
-class AdminBillingSubscriptionPayloadDoc {}
+class PlatformBillingSubscriptionPayloadDoc {}

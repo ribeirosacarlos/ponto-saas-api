@@ -83,7 +83,7 @@ Route::prefix('v1')->group(function () {
         // ADMIN AREA
         Route::prefix('admin')->group(function () {
 
-            Route::middleware(['role:admin', 'subscription.active'])->group(function () {
+            Route::middleware(['role:admin|manager|area_manager', 'subscription.active'])->group(function () {
 
                 // Funcionários
                 Route::apiResource('employees', EmployeeController::class);
@@ -117,7 +117,18 @@ Route::prefix('v1')->group(function () {
                 Route::apiResource('announcements', AdminAnnouncementController::class);
             });
 
+        });
+
+        Route::prefix('platform')->group(function () {
+
             Route::middleware(['role:super_admin'])->group(function () {
+                Route::post('/companies/register', [CompanyRegistrationController::class, 'store']);
+
+                Route::apiResource('companies', CompanyController::class);
+                Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
+                Route::post('/companies/{company}/block', [CompanyController::class, 'block']);
+                Route::post('/companies/{company}/unblock', [CompanyController::class, 'unblock']);
+
                 Route::prefix('billing')->group(function () {
                     Route::get('plans', [PlanController::class, 'index']);
                     Route::post('plans', [PlanController::class, 'store']);
@@ -127,20 +138,6 @@ Route::prefix('v1')->group(function () {
                     Route::get('companies/{company}/subscription', [CompanySubscriptionController::class, 'show']);
                     Route::patch('companies/{company}/subscription', [CompanySubscriptionController::class, 'update']);
                 });
-            });
-        });
-
-        Route::prefix('platform')->group(function () {
-
-            Route::middleware(['role:super_admin'])->group(function () {
-                Route::post('/companies/register', [CompanyRegistrationController::class, 'store']);
-            });
-
-            Route::middleware(['role:super_admin'])->group(function () {
-                Route::apiResource('companies', CompanyController::class);
-                Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
-                Route::post('/companies/{company}/block', [CompanyController::class, 'block']);
-                Route::post('/companies/{company}/unblock', [CompanyController::class, 'unblock']);
             });
         });
 
