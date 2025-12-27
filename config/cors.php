@@ -10,6 +10,7 @@ return [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
         'https://yellowgreen-falcon-528249.hostingersite.com',
+        'https://gold-woodpecker-106546.hostingersite.com',
     ],
 
     'allowed_origins_patterns' => [],
