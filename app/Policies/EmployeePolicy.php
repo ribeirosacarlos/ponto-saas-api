@@ -29,7 +29,7 @@ class EmployeePolicy
      */
     public function update(User $user, User $employee): bool
     {
-        return $user->hasRole('admin') &&
+        return $user->hasRole(['admin', 'manager', 'area_manager']) &&
                $user->company_id === $employee->company_id;
     }
 
