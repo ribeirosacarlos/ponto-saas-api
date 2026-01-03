@@ -16,7 +16,7 @@ namespace App\Swagger;
      *     ),
      *
      *     @OA\Server(
-     *         url="https://yellowgreen-falcon-528249.hostingersite.com/api",
+     *         url="https://api.jornafy.com/api",
      *         description="Produção"
      *     ),
      *
