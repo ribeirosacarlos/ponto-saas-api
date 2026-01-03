@@ -37,7 +37,7 @@ class Adjustment {}
  *         @OA\JsonContent(
  *             @OA\Property(property="id", type="integer", example=5),
  *             @OA\Property(property="user_id", type="integer", example=12),
- *             @OA\Property(property="original_time", type="string", example="2025-02-10 08:00:00"),
+ *             @OA\Property(property="original_time", type="string", nullable=true, example=null),
  *             @OA\Property(property="corrected_time", type="string", example="2025-02-10 08:10:00"),
  *             @OA\Property(property="reason", type="string", example="Esqueci de bater o ponto"),
  *             @OA\Property(property="status", type="string", example="approved"),
@@ -86,7 +86,7 @@ class AdjustmentApprove {}
  *         @OA\JsonContent(
  *             @OA\Property(property="id", type="integer", example=5),
  *             @OA\Property(property="user_id", type="integer", example=12),
- *             @OA\Property(property="original_time", type="string", example="2025-02-10 08:00:00"),
+ *             @OA\Property(property="original_time", type="string", nullable=true, example=null),
  *             @OA\Property(property="corrected_time", type="string", example="2025-02-10 08:10:00"),
  *             @OA\Property(property="reason", type="string", example="Esqueci de bater o ponto"),
  *             @OA\Property(property="status", type="string", example="rejected"),

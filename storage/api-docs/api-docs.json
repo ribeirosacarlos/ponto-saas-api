@@ -2374,7 +2374,8 @@
                                         },
                                         "original_time": {
                                             "type": "string",
-                                            "example": "2025-02-10 08:00:00"
+                                            "nullable": true,
+                                            "example": null
                                         },
                                         "corrected_time": {
                                             "type": "string",
@@ -2449,7 +2450,8 @@
                                         },
                                         "original_time": {
                                             "type": "string",
-                                            "example": "2025-02-10 08:00:00"
+                                            "nullable": true,
+                                            "example": null
                                         },
                                         "corrected_time": {
                                             "type": "string",
@@ -2731,16 +2733,10 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "original_time",
                                     "corrected_time",
                                     "reason"
                                 ],
                                 "properties": {
-                                    "original_time": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "example": "2025-02-10 08:00:00"
-                                    },
                                     "corrected_time": {
                                         "type": "string",
                                         "format": "date-time",
@@ -2773,7 +2769,8 @@
                                         },
                                         "original_time": {
                                             "type": "string",
-                                            "example": "2025-02-10 08:00:00"
+                                            "nullable": true,
+                                            "example": null
                                         },
                                         "corrected_time": {
                                             "type": "string",

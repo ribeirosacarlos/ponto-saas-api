@@ -14,7 +14,6 @@ class AdjustmentStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'original_time'  => 'required|date',
             'corrected_time' => 'required|date',
             'reason'         => 'required|string|max:500',
         ];

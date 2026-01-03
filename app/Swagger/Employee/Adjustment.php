@@ -27,14 +27,8 @@ class Adjustment {}
  *         required=true,
  *         description="Dados do ajuste solicitado",
  *         @OA\JsonContent(
- *             required={"original_time","corrected_time","reason"},
+ *             required={"corrected_time","reason"},
  *
- *             @OA\Property(
- *                 property="original_time",
- *                 type="string",
- *                 format="date-time",
- *                 example="2025-02-10 08:00:00"
- *             ),
  *
  *             @OA\Property(
  *                 property="corrected_time",
@@ -57,7 +51,7 @@ class Adjustment {}
  *         @OA\JsonContent(
  *             @OA\Property(property="id", type="integer", example=1),
  *             @OA\Property(property="user_id", type="integer", example=10),
- *             @OA\Property(property="original_time", type="string", example="2025-02-10 08:00:00"),
+ *             @OA\Property(property="original_time", type="string", nullable=true, example=null),
  *             @OA\Property(property="corrected_time", type="string", example="2025-02-10 08:10:00"),
  *             @OA\Property(property="reason", type="string", example="Esqueci de registrar a entrada"),
  *             @OA\Property(property="status", type="string", example="pending")

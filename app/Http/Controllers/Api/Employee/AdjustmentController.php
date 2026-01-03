@@ -14,14 +14,12 @@ class AdjustmentController extends Controller
         $this->authorize('create', Adjustment::class);
 
         $request->validate([
-            'original_time'  => 'required|date',
             'corrected_time' => 'required|date',
-            'reason'         => 'required|string'
+            'reason'         => 'required|string|max:500'
         ]);
 
         $adj = Adjustment::create([
             'user_id'       => $request->user()->id,
-            'original_time' => $request->original_time,
             'corrected_time'=> $request->corrected_time,
             'reason'        => $request->reason,
             'status'        => 'pending'
