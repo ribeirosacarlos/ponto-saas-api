@@ -7,9 +7,6 @@ use App\Models\User;
 
 class AdjustmentPolicy
 {
-    /**
-     * Employees request adjustments only for themselves.
-     */
     public function create(User $user): bool
     {
         return $user->hasRole(['employee', 'area_manager', 'manager', 'admin']);
@@ -17,11 +14,11 @@ class AdjustmentPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['manager', 'area_manager', 'admin']);
+        return $user->hasRole(['manager', 'area_manager', 'admin']);
     }
 
     /**
-     * Employee can only view his own adjustments.
+     * Visualizar ajuste individual
      */
     public function view(User $user, Adjustment $adj): bool
     {
@@ -33,18 +30,21 @@ class AdjustmentPolicy
             return $adj->user_id === $user->id;
         }
 
-        return true; // manager / area_manager / admin
+        return true;
     }
 
-
     /**
-     * Only manager, area_manager or admin can approve/reject.
+     * Aprovar ajuste
      */
     public function approve(User $user, Adjustment $adj): bool
     {
-        if ($user->company_id !== $adj->company_id) return false;
+        if ($user->company_id !== $adj->company_id) {
+            return false;
+        }
 
-        if (!$user->hasAnyRole(['manager', 'area_manager', 'admin'])) return false;
+        if (!$user->hasRole(['manager', 'area_manager', 'admin'])) {
+            return false;
+        }
 
         return $adj->status === 'pending';
     }
