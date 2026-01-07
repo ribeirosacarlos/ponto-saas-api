@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Api\AreaManager;
 
 use App\Http\Controllers\Controller;
 use App\Models\TimeEntry;
-use App\Http\Requests\TimeEntryIndexRequest;
+use App\Http\Requests\TimeEntryStoreRequest;
 use Illuminate\Http\Request;
 
 class TimeEntryController extends Controller
 {
-    public function teamEntries(TimeEntryIndexRequest $request)
+    public function teamEntries(TimeEntryStoreRequest $request)
     {
         $user = $request->user();
 

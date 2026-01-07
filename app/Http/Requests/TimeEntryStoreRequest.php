@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class TimeEntryIndexRequest extends FormRequest
+class TimeEntryStoreRequest extends FormRequest
 {
     public function authorize(): bool
     {
