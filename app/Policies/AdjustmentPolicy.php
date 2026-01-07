@@ -15,6 +15,10 @@ class AdjustmentPolicy
         return $user->hasRole(['employee', 'area_manager', 'manager', 'admin']);
     }
 
+    public function viewAny(User $user): bool
+    {
+        return $user->hasAnyRole(['manager', 'area_manager', 'admin']);
+    }
 
     /**
      * Employee can only view his own adjustments.
@@ -38,13 +42,12 @@ class AdjustmentPolicy
      */
     public function approve(User $user, Adjustment $adj): bool
     {
-        if ($user->company_id !== $adj->company_id) {
-            return false;
-        }
+        if ($user->company_id !== $adj->company_id) return false;
 
-        return $user->hasRole(['manager', 'area_manager', 'admin']);
+        if (!$user->hasAnyRole(['manager', 'area_manager', 'admin'])) return false;
+
+        return $adj->status === 'pending';
     }
-
 
     public function reject(User $user, Adjustment $adj): bool
     {

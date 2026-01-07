@@ -2337,6 +2337,240 @@
                 ]
             }
         },
+        "/v1/area-manager/adjustments": {
+            "get": {
+                "tags": [
+                    "Area Manager - Adjustments"
+                ],
+                "summary": "Lista solicitações de ajuste da empresa",
+                "description": "Lista ajustes de ponto da empresa do usuário autenticado (area_manager/manager/admin). Por padrão retorna apenas ajustes com status 'pending'. Suporta filtros e paginação.",
+                "operationId": "1f0c5e7a8e55b7710cbefbea9c4ecb58",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filtrar por status. Se não informado, default = pending.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "rejected"
+                            ],
+                            "example": "pending"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filtrar pelos ajustes de um funcionário específico (UUID do usuário).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Página da paginação",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Quantidade de itens por página (se você implementar no backend). Se não, o Laravel usa o default do paginate().",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de ajustes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "019b9600-77ae-71dd-b912-4f26d4f2f354"
+                                                    },
+                                                    "company_id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "78f4ab91-296c-4fdb-a70c-c91415be1532"
+                                                    },
+                                                    "user_id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                                                    },
+                                                    "approver_id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "original_time": {
+                                                        "type": "string",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "corrected_time": {
+                                                        "type": "string",
+                                                        "example": "2026-01-06 13:03:00"
+                                                    },
+                                                    "reason": {
+                                                        "type": "string",
+                                                        "example": "Esqueci de marcar o ponto",
+                                                        "nullable": true
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2026-01-07 01:09:31",
+                                                        "nullable": true
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "example": "2026-01-07 01:09:31",
+                                                        "nullable": true
+                                                    },
+                                                    "user": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "format": "uuid",
+                                                                "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "João Silva"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "joao@empresa.com"
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "approver": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "format": "uuid",
+                                                                "example": "11111111-2222-3333-4444-555555555555"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Gestor Maria"
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "links": {
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "example": "https://api.jornafy.com/v1/area-manager/adjustments?page=1",
+                                                    "nullable": true
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "example": "https://api.jornafy.com/v1/area-manager/adjustments?page=3",
+                                                    "nullable": true
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "example": "https://api.jornafy.com/v1/area-manager/adjustments?page=2",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1,
+                                                    "nullable": true
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "path": {
+                                                    "type": "string",
+                                                    "example": "https://api.jornafy.com/v1/area-manager/adjustments"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15,
+                                                    "nullable": true
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 40
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Usuário não autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/area-manager/adjustments/{id}/approve": {
             "post": {
                 "tags": [
@@ -2374,8 +2608,8 @@
                                         },
                                         "original_time": {
                                             "type": "string",
-                                            "nullable": true,
-                                            "example": null
+                                            "example": null,
+                                            "nullable": true
                                         },
                                         "corrected_time": {
                                             "type": "string",
@@ -2450,8 +2684,8 @@
                                         },
                                         "original_time": {
                                             "type": "string",
-                                            "nullable": true,
-                                            "example": null
+                                            "example": null,
+                                            "nullable": true
                                         },
                                         "corrected_time": {
                                             "type": "string",
@@ -2769,8 +3003,8 @@
                                         },
                                         "original_time": {
                                             "type": "string",
-                                            "nullable": true,
-                                            "example": null
+                                            "example": null,
+                                            "nullable": true
                                         },
                                         "corrected_time": {
                                             "type": "string",

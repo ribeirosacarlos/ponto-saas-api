@@ -74,6 +74,9 @@ Route::prefix('v1')->group(function () {
                 // Ver batidas da equipe
                 Route::get('/team/entries', [AreaManagerTimeEntryController::class, 'teamEntries']);
 
+                // Listar solicitações de ajuste
+                Route::get('/adjustments', [AreaManagerAdjustmentController::class, 'index']);
+        
                 // Aprovar ajustes
                 Route::post('/adjustments/{id}/approve', [AreaManagerAdjustmentController::class, 'approve']);
                 Route::post('/adjustments/{id}/reject',  [AreaManagerAdjustmentController::class, 'reject']);
