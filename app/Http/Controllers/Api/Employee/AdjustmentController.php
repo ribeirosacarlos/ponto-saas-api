@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Employee;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Adjustment;
 use App\Http\Requests\AdjustmentStoreRequest;
 
@@ -13,16 +12,20 @@ class AdjustmentController extends Controller
     {
         $this->authorize('create', Adjustment::class);
 
-        $request->validate([
-            'corrected_time' => 'required|date',
-            'reason'         => 'required|string|max:500'
-        ]);
+        $user = $request->user();
+
+        if (!$user->company_id) {
+            return response()->json([
+                'message' => 'Usuário sem empresa vinculada (company_id).'
+            ], 422);
+        }
 
         $adj = Adjustment::create([
-            'user_id'       => $request->user()->id,
-            'corrected_time'=> $request->corrected_time,
-            'reason'        => $request->reason,
-            'status'        => 'pending'
+            'company_id'     => $user->company_id,
+            'user_id'        => $user->id,
+            'corrected_time' => $request->corrected_time,
+            'reason'         => $request->reason,
+            'status'         => 'pending',
         ]);
 
         return response()->json($adj, 201);
