@@ -4195,6 +4195,52 @@
                 ]
             }
         },
+        "/v1/public/companies/register": {
+            "post": {
+                "tags": [
+                    "Platform - Companies"
+                ],
+                "summary": "Registra empresa e admin via formulário público",
+                "description": "Endpoint público utilizado pelo site para criar empresas e administradores. Inclui proteção anti-spam (honeypot) e limite por IP.",
+                "operationId": "publicCompaniesRegister",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlatformCompanyRegistrationPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Empresa criada e administrador configurado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "company": {
+                                            "$ref": "#/components/schemas/Company"
+                                        },
+                                        "admin_user": {
+                                            "$ref": "#/components/schemas/PlatformCompanyRegistrationAdmin"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação ou detecção anti-spam"
+                    },
+                    "429": {
+                        "description": "Limite de requisições atingido, aguarde alguns segundos."
+                    }
+                }
+            }
+        },
         "/v1/platform/companies/register": {
             "post": {
                 "tags": [
@@ -5669,6 +5715,12 @@
                     "company_state": {
                         "type": "string",
                         "example": "SP",
+                        "nullable": true
+                    },
+                    "company_honeypot": {
+                        "description": "Campo invisível no formulário público; deve permanecer vazio.",
+                        "type": "string",
+                        "example": "",
                         "nullable": true
                     },
                     "admin_name": {

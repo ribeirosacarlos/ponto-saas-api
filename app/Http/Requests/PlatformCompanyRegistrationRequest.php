@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\Rule;
 
 class PlatformCompanyRegistrationRequest extends FormRequest
@@ -26,5 +27,14 @@ class PlatformCompanyRegistrationRequest extends FormRequest
             'admin_email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'admin_password' => 'required|string|min:8|confirmed',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if ($this->filled('company_honeypot')) {
+                $validator->errors()->add('company_honeypot', 'Detecção de spam acionada.');
+            }
+        });
     }
 }
