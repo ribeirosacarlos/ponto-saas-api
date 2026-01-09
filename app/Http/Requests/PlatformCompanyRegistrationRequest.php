@@ -25,7 +25,6 @@ class PlatformCompanyRegistrationRequest extends FormRequest
             'company_state' => 'nullable|string|max:255',
             'admin_name' => 'required|string|max:255',
             'admin_email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            'admin_password' => 'required|string|min:8|confirmed',
         ];
     }
 
