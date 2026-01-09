@@ -27,6 +27,7 @@ class Plan extends Model
         'sort_order',
         'features',
         'quotas',
+        'stripe_price_id',
     ];
 
     protected $casts = [

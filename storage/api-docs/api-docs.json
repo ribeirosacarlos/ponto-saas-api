@@ -2729,9 +2729,56 @@
                     "Area Manager - Time Entries"
                 ],
                 "summary": "Lista as batidas de ponto da equipe",
-                "description": "Retorna entradas de ponto de todos os funcionários da equipe que o gestor pode visualizar.",
+                "description": "Retorna entradas de ponto da empresa do gestor/admin. Por padrão lista tudo (in e out). Suporta filtros e paginação.",
                 "operationId": "b0cf11c2ba79f53e2cd53d6f8fbe77ad",
                 "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtra pelo tipo de batida. Se omitido, retorna todos.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "in",
+                                "out"
+                            ],
+                            "example": "in"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filtra por funcionário específico (UUID).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Data inicial (inclusive). Aceita qualquer formato parseável pelo Laravel, preferível ISO.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-01-01T00:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Data final (inclusive).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-01-31T23:59:59Z"
+                        }
+                    },
                     {
                         "name": "page",
                         "in": "query",
@@ -2740,6 +2787,16 @@
                         "schema": {
                             "type": "integer",
                             "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Quantidade de itens por página (máx 200). Default 30.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 30
                         }
                     }
                 ],
@@ -2767,16 +2824,23 @@
                                             "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer",
-                                                        "example": 25
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "019b9600-77ae-71dd-b912-4f26d4f2f354"
                                                     },
                                                     "user_id": {
-                                                        "type": "integer",
-                                                        "example": 12
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                                                    },
+                                                    "company_id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "78f4ab91-296c-4fdb-a70c-c91415be1532"
                                                     },
                                                     "clocked_at": {
                                                         "type": "string",
-                                                        "example": "2025-02-10T14:32:20Z"
+                                                        "example": "2026-01-06T13:03:00Z"
                                                     },
                                                     "type": {
                                                         "type": "string",
@@ -2800,8 +2864,9 @@
                                                         "description": "Informações do funcionário",
                                                         "properties": {
                                                             "id": {
-                                                                "type": "integer",
-                                                                "example": 12
+                                                                "type": "string",
+                                                                "format": "uuid",
+                                                                "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
                                                             },
                                                             "name": {
                                                                 "type": "string",
@@ -2824,8 +2889,14 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
                     "403": {
                         "description": "Usuário não autorizado a visualizar entradas da equipe"
+                    },
+                    "422": {
+                        "description": "Erro de validação (parâmetros inválidos)"
                     }
                 },
                 "security": [
@@ -2950,6 +3021,154 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/v1/billing/plans": {
+            "get": {
+                "tags": [
+                    "Billing"
+                ],
+                "summary": "Lista os planos ativos disponíveis para assinatura",
+                "operationId": "6fb38ad0d58739677009a74568be124c",
+                "responses": {
+                    "200": {
+                        "description": "Lista de planos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BillingPlanResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "500": {
+                        "description": "Erro interno"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/billing/checkout-session": {
+            "post": {
+                "tags": [
+                    "Billing"
+                ],
+                "summary": "Cria sessão do Stripe Checkout para um plano",
+                "operationId": "c3178daf1d99f43946cf282556bb2218",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BillingCheckoutSessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "URL do Checkout Session",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BillingCheckoutSessionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "422": {
+                        "description": "Dados inválidos ou plano sem price_id"
+                    },
+                    "500": {
+                        "description": "Erro ao gerar sessão de checkout"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/billing/portal": {
+            "post": {
+                "tags": [
+                    "Billing"
+                ],
+                "summary": "Cria link para o Stripe Billing Portal",
+                "operationId": "5dc2a3d450961e79b01f68794a938a77",
+                "responses": {
+                    "200": {
+                        "description": "Link do portal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BillingPortalResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "422": {
+                        "description": "Stripe customer não encontrado"
+                    },
+                    "500": {
+                        "description": "Erro ao abrir o portal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/billing/stripe/webhook": {
+            "post": {
+                "tags": [
+                    "Billing"
+                ],
+                "summary": "Recebe eventos da Stripe para atualizar assinaturas",
+                "description": "A Stripe envia os eventos definidos no webhook. A assinatura é validada pelo segredo configurado.",
+                "operationId": "6101dcf9c7e7cc37ee9c558ce5248bd9",
+                "requestBody": {
+                    "description": "Payload enviado pela Stripe",
+                    "required": true,
+                    "content": {
+                        "application/json": {}
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Evento processado"
+                    },
+                    "400": {
+                        "description": "Webhook inválido ou sem assinatura"
+                    },
+                    "500": {
+                        "description": "Erro interno ao processar evento"
+                    }
+                }
             }
         },
         "/v1/employee/adjustments": {
@@ -4677,6 +4896,123 @@
                 },
                 "type": "object"
             },
+            "BillingCheckoutSessionRequest": {
+                "required": [
+                    "plan_id"
+                ],
+                "properties": {
+                    "plan_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "00000000-0000-0000-0000-000000000000"
+                    }
+                },
+                "type": "object"
+            },
+            "BillingCheckoutSessionResponse": {
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "example": "https://checkout.stripe.com/c/session_id"
+                    }
+                },
+                "type": "object"
+            },
+            "BillingPlanResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price_cents": {
+                        "type": "integer",
+                        "example": 2900
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 29
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "EUR"
+                    },
+                    "billing_interval": {
+                        "type": "string",
+                        "enum": [
+                            "month",
+                            "year",
+                            "one_time"
+                        ],
+                        "nullable": true
+                    },
+                    "interval": {
+                        "type": "string",
+                        "enum": [
+                            "month",
+                            "year",
+                            "one_time"
+                        ],
+                        "nullable": true
+                    },
+                    "trial_days": {
+                        "type": "integer",
+                        "example": 14
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    },
+                    "stripe_price_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "features": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "schema": "BillingPlanFeatureValue",
+                            "type": "boolean"
+                        }
+                    },
+                    "quotas": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "schema": "BillingPlanQuotaValue",
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "BillingPlanFeatureValue": {
+                "type": "boolean"
+            },
+            "BillingPlanQuotaValue": {
+                "type": "integer"
+            },
+            "BillingPortalResponse": {
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "example": "https://billing.stripe.com/session_id"
+                    }
+                },
+                "type": "object"
+            },
             "EmployeeShift": {
                 "properties": {
                     "id": {
@@ -5433,6 +5769,10 @@
         {
             "name": "Auth",
             "description": "Autenticação do usuário"
+        },
+        {
+            "name": "Billing",
+            "description": "Rotas públicas de planos, sessões de checkout e portal de cobrança"
         },
         {
             "name": "Employee - Adjustments",

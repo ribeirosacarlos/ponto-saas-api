@@ -26,12 +26,17 @@ class Company extends Model
         'is_blocked',
         'blocked_at',
         'blocked_reason',
+        'stripe_customer_id',
+        'subscription_status',
+        'current_plan_id',
     ];
 
     protected $casts = [
         'is_blocked' => 'boolean',
         'blocked_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'current_plan_id' => 'string',
+        'subscription_status' => 'string',
     ];
 
     public function users()
@@ -104,5 +109,10 @@ class Company extends Model
             'id',
             'plan_id'
         );
+    }
+
+    public function currentPlan()
+    {
+        return $this->belongsTo(Plan::class, 'current_plan_id');
     }
 }
