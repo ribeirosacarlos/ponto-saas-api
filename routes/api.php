@@ -33,19 +33,18 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/billing/stripe/webhook', [StripeWebhookController::class, 'handle']);
 
-    Route::post('/invites/accept', [InviteController::class, 'accept']);
+    Route::get('/public/plans', [PublicPlanController::class, 'index']);
 
+    Route::post('/invites/accept', [InviteController::class, 'accept']);
     Route::post('/auth/login', [AuthController::class, 'login']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-            Route::post('/auth/logout', [AuthController::class, 'logout']);
-
-            Route::prefix('billing')->group(function () {
-                Route::get('plans', [PublicPlanController::class, 'index']);
-                Route::post('checkout-session', [CheckoutSessionController::class, 'store']);
-                Route::post('portal', [PortalController::class, 'store']);
-            });
+        Route::prefix('billing')->group(function () {
+            Route::post('checkout-session', [CheckoutSessionController::class, 'store']);
+            Route::post('portal', [PortalController::class, 'store']);
+        });
 
             // EMPLOYEE
         Route::prefix('employee')
