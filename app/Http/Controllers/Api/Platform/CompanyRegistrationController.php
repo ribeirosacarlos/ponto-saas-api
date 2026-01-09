@@ -8,7 +8,9 @@ use App\Http\Resources\CompanyResource;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\CompanySlugService;
+use App\Jobs\SendCompanyAdminInviteJob;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class CompanyRegistrationController extends Controller
 {
@@ -32,15 +34,30 @@ class CompanyRegistrationController extends Controller
             'state' => $payload['company_state'] ?? null,
         ]);
 
+        $adminPassword = Str::password(12);
+        $adminInviteCode = $this->generateInviteCode();
+
         $admin = User::create([
             'company_id' => $company->id,
             'name' => $payload['admin_name'],
             'email' => $payload['admin_email'],
-            'password' => Hash::make($payload['admin_password']),
+            'password' => Hash::make($adminPassword),
             'password_set_at' => now(),
+            'invited_at' => now(),
+            'invite_code_hash' => hash('sha256', $adminInviteCode),
+            'invite_expires_at' => now()->addDays(7),
+            'must_change_password' => true,
         ]);
 
         $admin->assignRole('admin');
+
+        $supportEmail = $company->email ?? config('mail.from.address');
+
+        SendCompanyAdminInviteJob::dispatch($admin->id, [
+            'companyName' => $company->name,
+            'inviteCode' => $adminInviteCode,
+            'supportEmail' => $supportEmail,
+        ]);
 
         return response()->json([
             'company' => new CompanyResource($company),
@@ -50,5 +67,18 @@ class CompanyRegistrationController extends Controller
                 'email' => $admin->email,
             ],
         ], 201);
+    }
+
+    protected function generateInviteCode(): string
+    {
+        $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $length = strlen($characters);
+        $inviteCode = '';
+
+        for ($i = 0; $i < 8; $i++) {
+            $inviteCode .= $characters[random_int(0, $length - 1)];
+        }
+
+        return $inviteCode;
     }
 }
