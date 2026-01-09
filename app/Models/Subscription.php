@@ -28,6 +28,8 @@ class Subscription extends Model
         'stripe_customer_id',
         'stripe_subscription_id',
         'metadata',
+        'cancel_at_period_end',
+        'stripe_price_id',
     ];
 
     protected $casts = [
@@ -39,6 +41,7 @@ class Subscription extends Model
         'past_due_since' => 'datetime',
         'grace_period_days' => 'integer',
         'metadata' => 'array',
+        'cancel_at_period_end' => 'boolean',
     ];
 
     public function company()

@@ -4,6 +4,10 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\Api\Billing\CheckoutSessionController;
+use App\Http\Controllers\Api\Billing\PortalController;
+use App\Http\Controllers\Api\Billing\PublicPlanController;
+use App\Http\Controllers\Api\Billing\StripeWebhookController;
 use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
@@ -27,15 +31,23 @@ use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 
 Route::prefix('v1')->group(function () {
 
+    Route::post('/billing/stripe/webhook', [StripeWebhookController::class, 'handle']);
+
     Route::post('/invites/accept', [InviteController::class, 'accept']);
 
     Route::post('/auth/login', [AuthController::class, 'login']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
 
-        Route::post('/auth/logout', [AuthController::class, 'logout']);
+            Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-        // EMPLOYEE
+            Route::prefix('billing')->group(function () {
+                Route::get('plans', [PublicPlanController::class, 'index']);
+                Route::post('checkout-session', [CheckoutSessionController::class, 'store']);
+                Route::post('portal', [PortalController::class, 'store']);
+            });
+
+            // EMPLOYEE
         Route::prefix('employee')
             ->middleware(['role:employee|area_manager|manager|admin', 'subscription.active'])
             ->group(function () {
