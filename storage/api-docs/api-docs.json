@@ -5677,9 +5677,7 @@
                 "required": [
                     "company_name",
                     "admin_name",
-                    "admin_email",
-                    "admin_password",
-                    "admin_password_confirmation"
+                    "admin_email"
                 ],
                 "properties": {
                     "company_name": {
@@ -5731,16 +5729,6 @@
                         "type": "string",
                         "format": "email",
                         "example": "maria@empresa.com"
-                    },
-                    "admin_password": {
-                        "type": "string",
-                        "format": "password",
-                        "example": "SenhaSegura123"
-                    },
-                    "admin_password_confirmation": {
-                        "type": "string",
-                        "format": "password",
-                        "example": "SenhaSegura123"
                     }
                 },
                 "type": "object"

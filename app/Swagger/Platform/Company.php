@@ -372,7 +372,7 @@ class PlatformCompanyBlockPayloadSchema {}
 /**
  * @OA\Schema(
  *     schema="PlatformCompanyRegistrationPayload",
- *     required={"company_name","admin_name","admin_email","admin_password","admin_password_confirmation"},
+ *     required={"company_name","admin_name","admin_email"},
  *     @OA\Property(property="company_name", type="string", example="Empresa Nova"),
  *     @OA\Property(property="company_document", type="string", nullable=true, example="00.000.000/0001-00"),
  *     @OA\Property(property="company_email", type="string", format="email", nullable=true, example="contato@empresa.com"),
@@ -381,9 +381,7 @@ class PlatformCompanyBlockPayloadSchema {}
  *     @OA\Property(property="company_city", type="string", nullable=true, example="São Paulo"),
  *     @OA\Property(property="company_state", type="string", nullable=true, example="SP"),
  *     @OA\Property(property="admin_name", type="string", example="Maria Fernanda"),
- *     @OA\Property(property="admin_email", type="string", format="email", example="maria@empresa.com"),
- *     @OA\Property(property="admin_password", type="string", format="password", example="SenhaSegura123"),
- *     @OA\Property(property="admin_password_confirmation", type="string", format="password", example="SenhaSegura123")
+ *     @OA\Property(property="admin_email", type="string", format="email", example="maria@empresa.com")
  * )
  */
 class PlatformCompanyRegistrationPayloadSchema {}
