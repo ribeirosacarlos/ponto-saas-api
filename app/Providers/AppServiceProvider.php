@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Models\Company;
 use App\Observers\CompanyObserver;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Stripe\StripeClient;
 
@@ -33,5 +36,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Company::observe(CompanyObserver::class);
+
+        RateLimiter::for('public-company-registration', function (Request $request) {
+            $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'public-company-registration';
+
+            return Limit::perMinute(5)->by($ip);
+        });
     }
 }
