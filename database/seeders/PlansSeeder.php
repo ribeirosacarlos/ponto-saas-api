@@ -9,7 +9,9 @@ class PlansSeeder extends Seeder
 {
     public function run(): void
     {
-        $plans = [
+        $annualDiscount = 0.20; // 20% de desconto no anual
+
+        $basePlans = [
             [
                 'slug' => 'free',
                 'name' => 'Plano Free',
@@ -70,11 +72,41 @@ class PlansSeeder extends Seeder
             ],
         ];
 
-        foreach ($plans as $plan) {
+        foreach ($basePlans as $plan) {
+
             Plan::updateOrCreate(
-                ['slug' => $plan['slug']],
-                $plan
+                [
+                    'slug' => "{$plan['slug']}_monthly",
+                    'billing_interval' => 'month',
+                ],
+                [
+                    ...$plan,
+                    'slug' => "{$plan['slug']}_monthly",
+                ]
             );
+
+            // 🔹 Plano anual (exceto free)
+            if ($plan['price_cents'] > 0) {
+                $annualPrice = (int) round(
+                    $plan['price_cents'] * 12 * (1 - $annualDiscount)
+                );
+
+                Plan::updateOrCreate(
+                    [
+                        'slug' => "{$plan['slug']}_yearly",
+                        'billing_interval' => 'year',
+                    ],
+                    [
+                        ...$plan,
+                        'slug' => "{$plan['slug']}_yearly",
+                        'name' => "{$plan['name']} Anual",
+                        'description' => "{$plan['description']} (Pagamento anual com desconto)",
+                        'price_cents' => $annualPrice,
+                        'billing_interval' => 'year',
+                        'sort_order' => $plan['sort_order'] + 1,
+                    ]
+                );
+            }
         }
     }
 }
