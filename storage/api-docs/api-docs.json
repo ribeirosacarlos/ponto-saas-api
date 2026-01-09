@@ -3023,13 +3023,14 @@
                 ]
             }
         },
-        "/v1/billing/plans": {
+        "/v1/public/plans": {
             "get": {
                 "tags": [
                     "Billing"
                 ],
-                "summary": "Lista os planos ativos disponíveis para assinatura",
-                "operationId": "6fb38ad0d58739677009a74568be124c",
+                "summary": "Lista os planos públicos ativos disponíveis para assinatura",
+                "description": "Retorna os planos públicos que podem ser contratados sem autenticação.",
+                "operationId": "a3fcb77134a541c3a05b4d3f2b18a957",
                 "responses": {
                     "200": {
                         "description": "Lista de planos",
@@ -3049,18 +3050,10 @@
                             }
                         }
                     },
-                    "401": {
-                        "description": "Requisição não autenticada"
-                    },
                     "500": {
                         "description": "Erro interno"
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             }
         },
         "/v1/billing/checkout-session": {
