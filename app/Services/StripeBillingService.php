@@ -23,7 +23,7 @@ class StripeBillingService
     ) {
     }
 
-    public function createCheckoutSession(Company $company, Plan $plan, User $user): StripeCheckoutSession
+    public function createCheckoutSession(Company $company, Plan $plan, ?User $user = null): StripeCheckoutSession
     {
         $customerId = $this->ensureCustomer($company, $user);
 
@@ -43,7 +43,7 @@ class StripeBillingService
             'subscription_data' => [
                 'metadata' => [
                     'company_id' => $company->id,
-                    'user_id' => $user->id,
+                    'user_id' => $user?->id,
                     'plan_id' => $plan->id,
                 ],
             ],
@@ -63,16 +63,22 @@ class StripeBillingService
         ]);
     }
 
-    public function ensureCustomer(Company $company, User $user): string
+    public function ensureCustomer(Company $company, ?User $user = null): string
     {
         if ($company->stripe_customer_id) {
             return $company->stripe_customer_id;
         }
 
+        $customerEmail = $user?->email
+            ?? $company->email
+            ?? config('mail.from.address')
+            ?? 'no-reply@example.com';
+
         $customer = $this->stripe->customers->create([
-            'email' => $user->email,
+            'email' => $customerEmail,
             'metadata' => [
                 'company_id' => $company->id,
+                'user_id' => $user?->id,
             ],
         ]);
 

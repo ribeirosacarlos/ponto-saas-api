@@ -7,6 +7,7 @@ use App\Http\Controllers\InviteController;
 use App\Http\Controllers\Api\Billing\CheckoutSessionController;
 use App\Http\Controllers\Api\Billing\PortalController;
 use App\Http\Controllers\Api\Billing\PublicPlanController;
+use App\Http\Controllers\Api\Billing\PublicCheckoutSessionController;
 use App\Http\Controllers\Api\Billing\StripeWebhookController;
 use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
@@ -37,6 +38,9 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/public/companies/register', [CompanyRegistrationController::class, 'store'])
         ->middleware(['throttle:public-company-registration']);
+
+    Route::post('/public/billing/checkout-session', [PublicCheckoutSessionController::class, 'store'])
+        ->middleware(['throttle:public-billing-checkout-session']);
 
     Route::post('/invites/accept', [InviteController::class, 'accept']);
     Route::post('/auth/login', [AuthController::class, 'login']);
