@@ -51,7 +51,7 @@ class CompanyRegistrationController extends Controller
 
         $admin->assignRole('admin');
 
-        $supportEmail = $company->email ?? config('mail.from.address');
+        $supportEmail = config('app.support_email');
 
         SendCompanyAdminInviteJob::dispatch($admin->id, [
             'companyName' => $company->name,

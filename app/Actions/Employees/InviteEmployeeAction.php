@@ -39,7 +39,7 @@ class InviteEmployeeAction
         $this->assignShiftFromPayload($user, $data['shift_id'] ?? null);
 
         $companyName = $inviter->company?->name;
-        $supportEmail = $inviter->company?->email ?? config('mail.from.address');
+        $supportEmail = config('app.support_email');
 
         $payload = [
             'companyName' => $companyName,

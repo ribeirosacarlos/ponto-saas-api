@@ -53,7 +53,7 @@ class SendCompanyAdminInviteJob implements ShouldQueue
             companyName: $this->payload['companyName'] ?? $user->company?->name,
             inviteUrl: $this->resolveInviteUrl($inviteCode),
             inviteCode: $inviteCode,
-            supportEmail: $this->payload['supportEmail'] ?? config('mail.from.address'),
+            supportEmail: $this->payload['supportEmail'] ?? config('app.support_email'),
         ));
 
         Log::info('Admin invite email queued', $metadata);

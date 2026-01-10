@@ -23,7 +23,7 @@ class CompanyAdminInviteMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $brand = $this->companyName ?? config('app.name', 'SaaS');
+        $brand = $this->companyName ?? config('app.name', 'Jornafy');
 
         return new Envelope(
             subject: "Acesso administrativo - {$brand}",
@@ -39,7 +39,7 @@ class CompanyAdminInviteMail extends Mailable implements ShouldQueue
                 'companyName' => $this->companyName,
                 'inviteUrl' => $this->inviteUrl,
                 'inviteCode' => $this->inviteCode,
-                'supportEmail' => $this->supportEmail ?? config('mail.from.address'),
+                'supportEmail' => $this->supportEmail ?? config('app.support_email'),
             ],
         );
     }

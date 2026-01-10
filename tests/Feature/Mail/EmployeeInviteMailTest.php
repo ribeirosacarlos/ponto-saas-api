@@ -21,9 +21,9 @@ class EmployeeInviteMailTest extends TestCase
 
         $rendered = $mail->render();
 
-        $this->assertStringContainsString('Aceitar convite', $rendered);
+        $this->assertStringContainsString('Aceptar invitación', $rendered);
         $this->assertStringContainsString('https://app.test/invite?invite_code=ABC123', $rendered);
-        $this->assertStringContainsString('Código do convite', $rendered);
+        $this->assertStringContainsString('Código de invitación', $rendered);
     }
 
     public function test_it_shows_temporary_password_when_link_is_absent()
@@ -40,8 +40,8 @@ class EmployeeInviteMailTest extends TestCase
 
         $rendered = $mail->render();
 
-        $this->assertStringContainsString('Senha provisória', $rendered);
+        $this->assertStringContainsString('Contraseña provisional', $rendered);
         $this->assertStringContainsString('Outra123', $rendered);
-        $this->assertStringContainsString('Código do convite', $rendered);
+        $this->assertStringContainsString('Código de invitación', $rendered);
     }
 }

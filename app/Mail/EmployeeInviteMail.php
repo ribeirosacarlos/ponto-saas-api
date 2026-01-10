@@ -24,7 +24,7 @@ class EmployeeInviteMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $brand = $this->companyName ?? config('app.name', 'SaaS');
+        $brand = $this->companyName ?? config('app.name', 'Jornafy');
 
         return new Envelope(
             subject: "Convite de acesso - {$brand}",
@@ -41,7 +41,7 @@ class EmployeeInviteMail extends Mailable implements ShouldQueue
                 'inviteUrl' => $this->inviteUrl,
                 'inviteCode' => $this->inviteCode,
                 'temporaryPassword' => $this->temporaryPassword,
-                'supportEmail' => $this->supportEmail ?? config('mail.from.address'),
+                'supportEmail' => $this->supportEmail ?? config('app.support_email'),
             ],
         );
     }

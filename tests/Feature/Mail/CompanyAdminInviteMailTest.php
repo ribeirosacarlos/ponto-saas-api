@@ -20,15 +20,15 @@ class CompanyAdminInviteMailTest extends TestCase
 
         $rendered = $mail->render();
 
-        $this->assertStringContainsString('Ativar minha conta', $rendered);
+        $this->assertStringContainsString('Activar mi cuenta', $rendered);
         $this->assertStringContainsString('https://app.test/invite?invite_code=ABC123', $rendered);
-        $this->assertStringContainsString('Código de ativação', $rendered);
+        $this->assertStringContainsString('Código de activación', $rendered);
         $this->assertStringContainsString('ABC123', $rendered);
     }
 
     public function test_it_uses_default_support_email_when_missing()
     {
-        $fromAddress = config('mail.from.address');
+        $fromAddress = config('app.support_email');
 
         $mail = new CompanyAdminInviteMail(
             userName: 'Admin Teste',

@@ -52,7 +52,7 @@ class SendEmployeeInviteJob implements ShouldQueue
             inviteUrl: $this->payload['inviteUrl'] ?? null,
             inviteCode: $this->payload['inviteCode'] ?? null,
             temporaryPassword: $this->payload['temporaryPassword'] ?? null,
-            supportEmail: $this->payload['supportEmail'] ?? config('mail.from.address'),
+            supportEmail: $this->payload['supportEmail'] ?? config('app.support_email'),
         ));
 
         Log::info('Employee invite email queued', $metadata);
