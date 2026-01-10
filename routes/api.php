@@ -36,9 +36,11 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/public/plans', [PublicPlanController::class, 'index']);
 
-    Route::post('/public/companies/register', [CompanyRegistrationController::class, 'store']);
+    Route::post('/public/companies/register', [CompanyRegistrationController::class, 'store'])
+        ->middleware(['throttle:public-company-registration']);
 
-    Route::post('/public/billing/checkout-session', [PublicCheckoutSessionController::class, 'store']);
+    Route::post('/public/billing/checkout-session', [PublicCheckoutSessionController::class, 'store'])
+        ->middleware(['throttle:public-billing-checkout-session']);
 
     Route::post('/invites/accept', [InviteController::class, 'accept']);
     Route::post('/auth/login', [AuthController::class, 'login']);
