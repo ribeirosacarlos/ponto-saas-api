@@ -36,7 +36,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/public/plans', [PublicPlanController::class, 'index']);
 
-    Route::post('/public/companies/register', [CompanyRegistrationController::class, 'store']));
+    Route::post('/public/companies/register', [CompanyRegistrationController::class, 'store']);
 
     Route::post('/public/billing/checkout-session', [PublicCheckoutSessionController::class, 'store']);
 
