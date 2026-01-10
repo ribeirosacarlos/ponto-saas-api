@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use App\Services\CompanySubscriptionService;
+use Closure;
+use Illuminate\Http\Request;
+
+class EnsureCompanyHasAccess
+{
+    public function __construct(protected CompanySubscriptionService $companySubscriptionService)
+    {
+    }
+
+    public function handle(Request $request, Closure $next)
+    {
+        $company = $request->user()?->company;
+
+        if (! $company) {
+            return response()->json(['message' => 'Usuário sem empresa associada.'], 403);
+        }
+
+        if (! $this->companySubscriptionService->canAccessSystem($company)) {
+            return response()->json([
+                'message' => 'Acesso negado: assinatura ativa é necessária para continuar usando o sistema.',
+            ], 403);
+        }
+
+        return $next($request);
+    }
+}
