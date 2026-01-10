@@ -42,5 +42,11 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($ip);
         });
+
+        RateLimiter::for('public-billing-checkout-session', function (Request $request) {
+            $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'public-billing-checkout-session';
+
+            return Limit::perMinute(10)->by($ip);
+        });
     }
 }

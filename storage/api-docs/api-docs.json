@@ -3023,14 +3023,13 @@
                 ]
             }
         },
-        "/v1/public/plans": {
+        "/v1/billing/plans": {
             "get": {
                 "tags": [
                     "Billing"
                 ],
-                "summary": "Lista os planos públicos ativos disponíveis para assinatura",
-                "description": "Retorna os planos públicos que podem ser contratados sem autenticação.",
-                "operationId": "a3fcb77134a541c3a05b4d3f2b18a957",
+                "summary": "Lista os planos ativos disponíveis para assinatura",
+                "operationId": "6fb38ad0d58739677009a74568be124c",
                 "responses": {
                     "200": {
                         "description": "Lista de planos",
@@ -3050,10 +3049,18 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
                     "500": {
                         "description": "Erro interno"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/v1/billing/checkout-session": {
@@ -3099,6 +3106,53 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/v1/public/billing/checkout-session": {
+            "post": {
+                "tags": [
+                    "Billing"
+                ],
+                "summary": "Cria sessão pública do Stripe Checkout para o site",
+                "description": "Endpoint público utilizado pelo site após cadastro. Protegido por rate limit e honeypot.",
+                "operationId": "b4a5f7ad751f1d6dd4bf4069daa6643f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PublicBillingCheckoutSessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "URL pública do Stripe Checkout Session",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BillingCheckoutSessionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Empresa bloqueada"
+                    },
+                    "404": {
+                        "description": "Empresa ou plano não encontrado"
+                    },
+                    "422": {
+                        "description": "Dados inválidos, plano gratuito ou sem preço configurado"
+                    },
+                    "429": {
+                        "description": "Limite de requisições excedido"
+                    },
+                    "500": {
+                        "description": "Erro ao gerar sessão de checkout"
+                    }
+                }
             }
         },
         "/v1/billing/portal": {
@@ -4195,52 +4249,6 @@
                 ]
             }
         },
-        "/v1/public/companies/register": {
-            "post": {
-                "tags": [
-                    "Platform - Companies"
-                ],
-                "summary": "Registra empresa e admin via formulário público",
-                "description": "Endpoint público utilizado pelo site para criar empresas e administradores. Inclui proteção anti-spam (honeypot) e limite por IP.",
-                "operationId": "publicCompaniesRegister",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/PlatformCompanyRegistrationPayload"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Empresa criada e administrador configurado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "company": {
-                                            "$ref": "#/components/schemas/Company"
-                                        },
-                                        "admin_user": {
-                                            "$ref": "#/components/schemas/PlatformCompanyRegistrationAdmin"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Erro de validação ou detecção anti-spam"
-                    },
-                    "429": {
-                        "description": "Limite de requisições atingido, aguarde alguns segundos."
-                    }
-                }
-            }
-        },
         "/v1/platform/companies/register": {
             "post": {
                 "tags": [
@@ -5052,6 +5060,35 @@
                 },
                 "type": "object"
             },
+            "PublicBillingCheckoutSessionRequest": {
+                "required": [
+                    "company_id",
+                    "plan_id"
+                ],
+                "properties": {
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "00000000-0000-0000-0000-000000000000"
+                    },
+                    "plan_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "00000000-0000-0000-0000-000000000000"
+                    },
+                    "stripe_price_id": {
+                        "type": "string",
+                        "example": "price_xyz123",
+                        "nullable": true
+                    },
+                    "honeypot": {
+                        "description": "Campo oculto utilizado para detectar spam",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "EmployeeShift": {
                 "properties": {
                     "id": {
@@ -5713,12 +5750,6 @@
                     "company_state": {
                         "type": "string",
                         "example": "SP",
-                        "nullable": true
-                    },
-                    "company_honeypot": {
-                        "description": "Campo invisível no formulário público; deve permanecer vazio.",
-                        "type": "string",
-                        "example": "",
                         "nullable": true
                     },
                     "admin_name": {

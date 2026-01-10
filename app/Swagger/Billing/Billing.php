@@ -57,6 +57,30 @@ class BillingCheckoutSession {}
 
 /**
  * @OA\Post(
+ *     path="/v1/public/billing/checkout-session",
+ *     summary="Cria sessão pública do Stripe Checkout para o site",
+ *     description="Endpoint público utilizado pelo site após cadastro. Protegido por rate limit e honeypot.",
+ *     tags={"Billing"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/PublicBillingCheckoutSessionRequest")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="URL pública do Stripe Checkout Session",
+ *         @OA\JsonContent(ref="#/components/schemas/BillingCheckoutSessionResponse")
+ *     ),
+ *     @OA\Response(response=403, description="Empresa bloqueada"),
+ *     @OA\Response(response=404, description="Empresa ou plano não encontrado"),
+ *     @OA\Response(response=422, description="Dados inválidos, plano gratuito ou sem preço configurado"),
+ *     @OA\Response(response=429, description="Limite de requisições excedido"),
+ *     @OA\Response(response=500, description="Erro ao gerar sessão de checkout")
+ * )
+ */
+class PublicBillingCheckoutSession {}
+
+/**
+ * @OA\Post(
  *     path="/v1/billing/portal",
  *     summary="Cria link para o Stripe Billing Portal",
  *     tags={"Billing"},
