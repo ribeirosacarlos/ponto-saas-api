@@ -29,6 +29,9 @@ class Company extends Model
         'stripe_customer_id',
         'subscription_status',
         'current_plan_id',
+        'timezone',
+        'country',
+        'locale',
     ];
 
     protected $casts = [
@@ -37,6 +40,9 @@ class Company extends Model
         'deleted_at' => 'datetime',
         'current_plan_id' => 'string',
         'subscription_status' => 'string',
+        'timezone' => 'string',
+        'country' => 'string',
+        'locale' => 'string',
     ];
 
     public function users()

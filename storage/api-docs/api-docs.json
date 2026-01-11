@@ -4663,6 +4663,39 @@
                     }
                 ]
             }
+        },
+        "/v1/settings/overview": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Retorna o overview das configurações e billing da empresa autenticada",
+                "description": "Fornece um snapshot local de billing, flags e metadados de configurações. Dados Stripe são mantidos em cache na tabela `subscriptions` (sincronizados por webhooks); quando estiverem ausentes retornam `null` mas a estrutura permanece.",
+                "operationId": "d013701ac9d519c5287af2b710b52ec4",
+                "responses": {
+                    "200": {
+                        "description": "Overview completo preparado para a UI",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SettingsOverviewResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "404": {
+                        "description": "Empresa não encontrada para o usuário autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -5779,6 +5812,330 @@
                     }
                 },
                 "type": "object"
+            },
+            "SettingsBilling": {
+                "properties": {
+                    "plan": {
+                        "$ref": "#/components/schemas/SettingsBillingPlan"
+                    },
+                    "subscription": {
+                        "$ref": "#/components/schemas/SettingsBillingSubscription"
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsBillingPlan": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "slug": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price_cents": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "currency": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "billing_interval": {
+                        "type": "string",
+                        "enum": [
+                            "month",
+                            "year",
+                            "one_time"
+                        ],
+                        "nullable": true
+                    },
+                    "limits": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsBillingSubscription": {
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "example": "active",
+                        "nullable": true
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "example": "Active"
+                    },
+                    "next_action": {
+                        "type": "string",
+                        "example": "NONE"
+                    },
+                    "stripe_customer_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "stripe_subscription_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "subscription_status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "trial_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "trial_days_remaining": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "current_period_end": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "billing_days_remaining": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "subscription_ends_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "cancel_at_period_end": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "canceled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsCompany": {
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "locale": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsCompliance": {
+                "properties": {
+                    "log_retention_days": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "export_enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsFlags": {
+                "properties": {
+                    "can_access_system": {
+                        "type": "boolean"
+                    },
+                    "is_trial": {
+                        "type": "boolean"
+                    },
+                    "is_trial_active": {
+                        "type": "boolean"
+                    },
+                    "is_subscription_active": {
+                        "type": "boolean"
+                    },
+                    "requires_action": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsLinks": {
+                "properties": {
+                    "checkout_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "customer_portal_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsOverviewResponse": {
+                "properties": {
+                    "billing": {
+                        "$ref": "#/components/schemas/SettingsBilling"
+                    },
+                    "flags": {
+                        "$ref": "#/components/schemas/SettingsFlags"
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/SettingsLinks"
+                    },
+                    "company": {
+                        "$ref": "#/components/schemas/SettingsCompany"
+                    },
+                    "workday": {
+                        "$ref": "#/components/schemas/SettingsWorkday"
+                    },
+                    "security": {
+                        "$ref": "#/components/schemas/SettingsSecurity"
+                    },
+                    "usage": {
+                        "$ref": "#/components/schemas/SettingsUsage"
+                    },
+                    "compliance": {
+                        "$ref": "#/components/schemas/SettingsCompliance"
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsSecurity": {
+                "properties": {
+                    "two_factor_enabled": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "last_login_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsUsage": {
+                "properties": {
+                    "employees": {
+                        "$ref": "#/components/schemas/SettingsUsageEmployees"
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsUsageEmployees": {
+                "properties": {
+                    "current": {
+                        "type": "integer"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "over_limit": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsWorkday": {
+                "properties": {
+                    "default_shift": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SettingsWorkdayDefaultShift"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "tolerance_minutes": {
+                        "type": "integer"
+                    },
+                    "rounding_minutes": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "geolocation_enabled": {
+                        "type": "boolean"
+                    },
+                    "require_photo": {
+                        "type": "boolean",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsWorkdayDefaultShift": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "example": "09:00"
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "example": "18:00"
+                    },
+                    "days": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SettingsWorkdayShiftDay"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SettingsWorkdayShiftDay": {
+                "properties": {
+                    "weekday": {
+                        "type": "integer",
+                        "maximum": 7,
+                        "minimum": 1
+                    },
+                    "is_working_day": {
+                        "type": "boolean"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "break_expected": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -5861,6 +6218,10 @@
         {
             "name": "Platform - Companies",
             "description": "Rotas de gerenciamento de empresas acessíveis ao super admin"
+        },
+        {
+            "name": "Settings",
+            "description": "Endpoints que expõem o overview de billing e configurações da empresa logada"
         }
     ]
 }

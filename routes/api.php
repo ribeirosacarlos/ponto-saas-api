@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\Admin\LeavePolicyController;
 use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Api\Platform\CompanyController;
 use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
+use App\Http\Controllers\Api\Settings\CompanySettingsController;
 
 Route::prefix('v1')->group(function () {
 
@@ -47,6 +48,7 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::get('/settings/overview', [CompanySettingsController::class, 'overview']);
 
         Route::prefix('billing')->group(function () {
             Route::post('checkout-session', [CheckoutSessionController::class, 'store']);
