@@ -231,6 +231,106 @@
                 ]
             }
         },
+        "/v1/admin/employees/{employee}/overtime": {
+            "get": {
+                "tags": [
+                    "Admin - Employees"
+                ],
+                "summary": "Resumo de saldo de horas do funcionário",
+                "description": "Retorna o total de horas extras/dívidas no período informado e, opcionalmente, o detalhamento diário.",
+                "operationId": "1d2c3471b8e9be3fdb5be9cd83233857",
+                "parameters": [
+                    {
+                        "name": "employee",
+                        "in": "path",
+                        "description": "ID do funcionário",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Data inicial (YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-01-01"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Data final (YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-01-31"
+                        }
+                    },
+                    {
+                        "name": "include_days",
+                        "in": "query",
+                        "description": "Use 1 para incluir o array diário em resposta.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ],
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resumo de horas extras/dívidas retornado com sucesso.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OvertimeBalanceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Usuário não autenticado."
+                    },
+                    "403": {
+                        "description": "Usuário sem permissão"
+                    },
+                    "422": {
+                        "description": "Erro de validação",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/admin/employees": {
             "get": {
                 "tags": [
@@ -2723,6 +2823,90 @@
                 ]
             }
         },
+        "/v1/area-manager/team/{employee}/overtime": {
+            "get": {
+                "tags": [
+                    "Area Manager - Time Entries"
+                ],
+                "summary": "Resumo de horas extras/dívidas do membro da equipe",
+                "description": "Permite que area managers vejam o saldo de horas da equipe (mesmo comportamento da rota admin).",
+                "operationId": "8466d11f44728a451c0708e5c088bfdc",
+                "parameters": [
+                    {
+                        "name": "employee",
+                        "in": "path",
+                        "description": "ID do funcionário",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Data inicial (YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-01-01"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Data final (YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-01-31"
+                        }
+                    },
+                    {
+                        "name": "include_days",
+                        "in": "query",
+                        "description": "Use 1 para incluir o array diário em resposta.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ],
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resumo de horas extras/dívidas retornado com sucesso.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OvertimeBalanceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Usuário não autenticado."
+                    },
+                    "403": {
+                        "description": "Usuário sem permissão para consultar o funcionário."
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/area-manager/team/entries": {
             "get": {
                 "tags": [
@@ -4700,6 +4884,141 @@
     },
     "components": {
         "schemas": {
+            "OvertimeDay": {
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-01-05"
+                    },
+                    "worked_minutes": {
+                        "type": "integer",
+                        "example": 480
+                    },
+                    "expected_minutes": {
+                        "type": "integer",
+                        "example": 480
+                    },
+                    "balance_minutes": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "worked_hhmm": {
+                        "type": "string",
+                        "example": "8:00"
+                    },
+                    "expected_hhmm": {
+                        "type": "string",
+                        "example": "8:00"
+                    },
+                    "balance_hhmm": {
+                        "type": "string",
+                        "example": "00:00"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "extra",
+                            "debt",
+                            "even"
+                        ],
+                        "example": "even"
+                    },
+                    "ignored": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "too_few_entries",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "OvertimeBalanceResponse": {
+                "properties": {
+                    "employee_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                    },
+                    "from": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-01-01"
+                    },
+                    "to": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-01-31"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "example": "Europe/Madrid"
+                    },
+                    "totals": {
+                        "$ref": "#/components/schemas/OvertimeTotals"
+                    },
+                    "days": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OvertimeDay"
+                        },
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "OvertimeTotals": {
+                "properties": {
+                    "worked_minutes": {
+                        "type": "integer",
+                        "example": 10230
+                    },
+                    "expected_minutes": {
+                        "type": "integer",
+                        "example": 9600
+                    },
+                    "balance_minutes": {
+                        "type": "integer",
+                        "example": 630
+                    },
+                    "extra_minutes": {
+                        "type": "integer",
+                        "example": 780
+                    },
+                    "debt_minutes": {
+                        "type": "integer",
+                        "example": -150
+                    },
+                    "abs_debt_minutes": {
+                        "type": "integer",
+                        "example": 150
+                    },
+                    "worked_hhmm": {
+                        "type": "string",
+                        "example": "170:30"
+                    },
+                    "expected_hhmm": {
+                        "type": "string",
+                        "example": "160:00"
+                    },
+                    "balance_hhmm": {
+                        "type": "string",
+                        "example": "+10:30"
+                    },
+                    "extra_hhmm": {
+                        "type": "string",
+                        "example": "13:00"
+                    },
+                    "debt_hhmm": {
+                        "type": "string",
+                        "example": "02:30"
+                    }
+                },
+                "type": "object"
+            },
             "UserShiftResource": {
                 "properties": {
                     "id": {

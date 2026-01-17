@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdju
 use App\Http\Controllers\Api\Admin\Billing\CompanySubscriptionController;
 use App\Http\Controllers\Api\Admin\Billing\PlanController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
+use App\Http\Controllers\Api\Admin\EmployeeOvertimeController;
 use App\Http\Controllers\Api\Admin\ShiftController;
 use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\HolidayController;
@@ -93,6 +94,7 @@ Route::prefix('v1')->group(function () {
 
                 // Ver batidas da equipe
                 Route::get('/team/entries', [AreaManagerTimeEntryController::class, 'teamEntries']);
+                Route::get('/team/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
 
                 // Listar solicitações de ajuste
                 Route::get('/adjustments', [AreaManagerAdjustmentController::class, 'index']);
@@ -110,6 +112,7 @@ Route::prefix('v1')->group(function () {
 
                 // Funcionários
                 Route::apiResource('employees', EmployeeController::class);
+                Route::get('/employees/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
 
                 // Relatórios
                 Route::get('/reports/time', [ReportController::class, 'timeReport'])
