@@ -27,6 +27,7 @@ class OvertimeCalculatorService
     {
         $timezone = $this->resolveTimezone($employee);
         $fromLocal = $this->normalizeToLocalStart($from, $timezone);
+        $fromLocal = $this->clampStartByActivation($employee, $fromLocal, $timezone);
         $toLocal = $this->normalizeToLocalEnd($to, $timezone);
 
         $entries = $this->fetchEntries($employee, $fromLocal, $toLocal);
@@ -207,6 +208,38 @@ class OvertimeCalculatorService
         }
 
         return $local->endOfDay();
+    }
+
+    protected function clampStartByActivation(User $employee, CarbonImmutable $from, string $timezone): CarbonImmutable
+    {
+        $activation = $this->resolveActivationDate($employee);
+
+        if (! $activation) {
+            return $from;
+        }
+
+        $activationStart = $activation->setTimezone($timezone)->startOfDay();
+
+        return $activationStart->greaterThan($from) ? $activationStart : $from;
+    }
+
+    protected function resolveActivationDate(User $employee): ?CarbonImmutable
+    {
+        $activation = $employee->password_set_at;
+
+        if (! $activation) {
+            return null;
+        }
+
+        if ($activation instanceof \DateTimeInterface) {
+            return CarbonImmutable::instance($activation);
+        }
+
+        try {
+            return CarbonImmutable::parse($activation);
+        } catch (InvalidFormatException) {
+            return null;
+        }
     }
 
     protected function expectedMinutesForDate(?Shift $shift, CarbonImmutable $date): int
