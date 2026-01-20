@@ -14,7 +14,6 @@ class TimeEntryStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type'      => ['nullable', 'in:in,out'],
             'user_id'   => ['nullable', 'uuid'],
             'date_from' => ['nullable', 'date'],
             'date_to'   => ['nullable', 'date'],

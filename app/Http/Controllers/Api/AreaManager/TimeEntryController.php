@@ -18,11 +18,6 @@ class TimeEntryController extends Controller
             ->where('company_id', $user->company_id)
             ->orderByDesc('clocked_at');
 
-        // filtros opcionais
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
         }

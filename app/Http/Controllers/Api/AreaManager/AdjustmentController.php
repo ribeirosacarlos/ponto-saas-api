@@ -91,7 +91,6 @@ class AdjustmentController extends Controller
             'company_id' => $adjustment->company_id,
             'user_id' => $adjustment->user_id,
             'clocked_at' => $adjustment->corrected_time,
-            'type' => $this->guessTimeEntryType($adjustment),
             'source' => 'adjustment',
         ]);
     }
