@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdju
 
 use App\Http\Controllers\Api\Admin\Billing\CompanySubscriptionController;
 use App\Http\Controllers\Api\Admin\Billing\PlanController;
+use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
 use App\Http\Controllers\Api\Admin\EmployeeOvertimeController;
@@ -127,6 +128,11 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
 
     // ADMIN AREA
     Route::prefix('admin')->group(function () {
+
+        Route::middleware(['role:admin|super_admin', 'subscription.access'])->group(function () {
+            Route::get('/company/timezone', [CompanyTimezoneController::class, 'show']);
+            Route::put('/company/timezone', [CompanyTimezoneController::class, 'update']);
+        });
 
         Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
 

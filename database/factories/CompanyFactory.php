@@ -27,6 +27,7 @@ class CompanyFactory extends Factory
             'is_blocked' => false,
             'blocked_at' => null,
             'blocked_reason' => null,
+            'timezone' => 'Europe/Madrid',
         ];
     }
 }

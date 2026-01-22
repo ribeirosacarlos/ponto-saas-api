@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\AreaManager;
 use App\Http\Controllers\Controller;
 use App\Models\TimeEntry;
 use App\Http\Requests\TimeEntryStoreRequest;
+use App\Support\CompanyTime;
 use Illuminate\Http\Request;
 
 class TimeEntryController extends Controller
@@ -29,12 +30,16 @@ class TimeEntryController extends Controller
             }
         }
 
+        $timezone = CompanyTime::companyTz($request);
+
         if ($request->filled('date_from')) {
-            $query->where('clocked_at', '>=', $request->date_from);
+            [$fromUtc] = CompanyTime::dayRangeToUtc($request->date_from, $timezone);
+            $query->where('clocked_at', '>=', $fromUtc->toDateTimeString());
         }
 
         if ($request->filled('date_to')) {
-            $query->where('clocked_at', '<=', $request->date_to);
+            [, $toUtc] = CompanyTime::dayRangeToUtc($request->date_to, $timezone);
+            $query->where('clocked_at', '<=', $toUtc->toDateTimeString());
         }
 
         $perPage = (int) $request->get('per_page', 30);

@@ -32,7 +32,9 @@ class CompanySeeder extends Seeder
                 continue;
             }
 
-            Company::factory()->create($company);
+            Company::factory()->create(array_merge([
+                'timezone' => 'Europe/Madrid',
+            ], $company));
         }
     }
 }

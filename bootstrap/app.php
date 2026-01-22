@@ -7,6 +7,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
+use App\Http\Middleware\SetCompanyTimezone;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ->withMiddleware(function (Middleware $middleware) {
             $middleware->appendToGroup('api', [
                 \App\Http\Middleware\IdentifyTenant::class,
+                SetCompanyTimezone::class,
             ]);
             $middleware->alias([
                 'role' => \App\Http\Middleware\RoleMiddleware::class,
