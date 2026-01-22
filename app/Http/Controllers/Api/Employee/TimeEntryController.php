@@ -22,7 +22,7 @@ class TimeEntryController extends Controller
         $validated = $request->validate([
             'latitude'  => 'nullable|string',
             'longitude' => 'nullable|string',
-            'type'      => 'required|string|in:in,out,break_start,break_end',
+            'type'      => 'nullable|string|in:in,out,break_start,break_end',
         ]);
 
         $user = $request->user();
