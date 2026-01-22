@@ -22,6 +22,13 @@ class TimeEntryController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
+        if ($request->filled('source')) {
+            $sources = array_filter(explode(',', $request->source));
+            if (! empty($sources)) {
+                $query->whereIn('source', $sources);
+            }
+        }
+
         if ($request->filled('date_from')) {
             $query->where('clocked_at', '>=', $request->date_from);
         }
