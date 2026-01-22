@@ -91,6 +91,7 @@ class AdjustmentController extends Controller
             'company_id' => $adjustment->company_id,
             'user_id' => $adjustment->user_id,
             'clocked_at' => $adjustment->corrected_time,
+            'type' => $this->guessTimeEntryType($adjustment),
             'source' => 'adjustment',
         ]);
     }
@@ -103,8 +104,11 @@ class AdjustmentController extends Controller
             return 'in';
         }
 
+        $date = Carbon::parse($clockedAt)->toDateString();
+
         $entries = TimeEntry::where('company_id', $adjustment->company_id)
             ->where('user_id', $adjustment->user_id)
+            ->whereDate('clocked_at', $date)
             ->where('clocked_at', '<=', $clockedAt)
             ->orderBy('clocked_at')
             ->get();
@@ -124,4 +128,5 @@ class AdjustmentController extends Controller
 
         return $pendingIn ? 'out' : 'in';
     }
+
 }

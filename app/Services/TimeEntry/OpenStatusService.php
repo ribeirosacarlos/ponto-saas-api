@@ -5,6 +5,7 @@ namespace App\Services\TimeEntry;
 use App\Models\Shift;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Models\UserShift;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use App\Services\UserShiftResolver;
@@ -29,7 +30,8 @@ class OpenStatusService
             ->orderBy('clocked_at')
             ->get();
 
-        $shift = $this->shiftResolver->resolve($user)['shift'];
+        $shiftResult = $this->shiftResolver->resolve($user);
+        $shift = $shiftResult['shift'];
         $shiftContext = $this->buildShiftContext($shift, $today);
         $status = $this->determineStatus($entries, $shiftContext['break_expected'], $timezone);
         $shiftPayload = $this->buildShiftPayload($shift, $today, $timezone, $status['first_in']);
@@ -41,6 +43,7 @@ class OpenStatusService
             'last_entry' => $status['last_entry'],
             'next_action' => $status['next_action'],
             'shift' => $shiftPayload,
+            'assignment' => $this->serializeAssignment($shiftResult['assignment']),
         ];
     }
 
@@ -132,6 +135,8 @@ class OpenStatusService
             $payload['late'] = $firstInAt->greaterThan($shiftStart->addMinutes($tolerance));
         }
 
+        $payload['shift_days'] = $this->serializeShiftDays($shift->shiftDays);
+
         return $payload;
     }
 
@@ -182,6 +187,35 @@ class OpenStatusService
         }
 
         return false;
+    }
+
+    /**
+     * @return array<int, array{weekday: int, is_working_day: bool, start_time: string|null, end_time: string|null, break_start_time: string|null, break_end_time: string|null}>
+     */
+    private function serializeShiftDays(Collection $days): array
+    {
+        return $days->map(fn ($day) => [
+            'weekday' => (int) $day->weekday,
+            'is_working_day' => (bool) $day->is_working_day,
+            'start_time' => $day->start_time,
+            'end_time' => $day->end_time,
+            'break_start_time' => $day->break_start_time,
+            'break_end_time' => $day->break_end_time,
+        ])->toArray();
+    }
+
+    private function serializeAssignment(?UserShift $assignment): ?array
+    {
+        if (! $assignment) {
+            return null;
+        }
+
+        return [
+            'id' => $assignment->id,
+            'shift_id' => $assignment->shift_id,
+            'start_date' => $assignment->start_date?->toDateString(),
+            'end_date' => $assignment->end_date?->toDateString(),
+        ];
     }
 
     private function serializeEntry(TimeEntry $entry, string $timezone): array
