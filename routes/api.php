@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Billing\PortalController;
 use App\Http\Controllers\Api\Billing\PublicPlanController;
 use App\Http\Controllers\Api\Billing\PublicCheckoutSessionController;
 use App\Http\Controllers\Api\Billing\StripeWebhookController;
+use App\Http\Controllers\Api\Documents\DocumentController;
 use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
@@ -50,6 +51,21 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/settings/overview', [CompanySettingsController::class, 'overview']);
+
+        Route::middleware(['role:employee|area_manager|manager|admin', 'subscription.access'])->group(function () {
+            Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+            Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+            Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
+            Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
+            Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+            Route::patch('/documents/{document}', [DocumentController::class, 'update'])
+                ->name('documents.update')
+                ->middleware('role:admin|manager|area_manager');
+            Route::patch('/documents/{document}/approve', [DocumentController::class, 'approve'])
+                ->name('documents.approve')
+                ->middleware('role:admin|manager|area_manager');
+            Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+        });
 
         Route::prefix('billing')->group(function () {
             Route::post('checkout-session', [CheckoutSessionController::class, 'store']);
