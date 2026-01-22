@@ -2,6 +2,7 @@
 
 use App\Console\Commands\BillingMarkPastDue;
 use App\Console\Commands\BillingSyncSubscriptions;
+use App\Console\Commands\NormalizeDocumentPaths;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         BillingSyncSubscriptions::class,
         BillingMarkPastDue::class,
+        NormalizeDocumentPaths::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //

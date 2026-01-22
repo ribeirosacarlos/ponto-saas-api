@@ -122,8 +122,9 @@ class DocumentController extends Controller
         $this->authorize('view', $document);
 
         $disk = Storage::disk(Document::STORAGE_DISK);
+        $path = $this->resolveDocumentPath($document);
 
-        if (! $disk->exists($document->path)) {
+        if (! $path || ! $disk->exists($path)) {
             abort(404, 'Arquivo não encontrado.');
         }
 
@@ -136,8 +137,8 @@ class DocumentController extends Controller
             'Content-Disposition' => sprintf('inline; filename="%s"', $filename),
         ];
 
-        return response()->stream(function () use ($document) {
-            $stream = Storage::disk(Document::STORAGE_DISK)->readStream($document->path);
+        return response()->stream(function () use ($path) {
+            $stream = Storage::disk(Document::STORAGE_DISK)->readStream($path);
 
             if (! $stream) {
                 abort(404, 'Arquivo não encontrado.');
@@ -156,8 +157,9 @@ class DocumentController extends Controller
         $this->authorize('download', $document);
 
         $disk = Storage::disk(Document::STORAGE_DISK);
+        $path = $this->resolveDocumentPath($document);
 
-        if (! $disk->exists($document->path)) {
+        if (! $path || ! $disk->exists($path)) {
             abort(404, 'Arquivo não encontrado.');
         }
 
@@ -168,8 +170,8 @@ class DocumentController extends Controller
             'Content-Length' => $document->size_bytes,
         ];
 
-        return response()->streamDownload(function () use ($document) {
-            $stream = Storage::disk(Document::STORAGE_DISK)->readStream($document->path);
+        return response()->streamDownload(function () use ($path) {
+            $stream = Storage::disk(Document::STORAGE_DISK)->readStream($path);
 
             if (! $stream) {
                 abort(404, 'Arquivo não encontrado.');
@@ -228,8 +230,10 @@ class DocumentController extends Controller
 
         $disk = Storage::disk(Document::STORAGE_DISK);
 
-        if ($disk->exists($document->path)) {
-            $disk->delete($document->path);
+        $path = $this->resolveDocumentPath($document);
+
+        if ($path && $disk->exists($path)) {
+            $disk->delete($path);
         }
 
         $this->logDocumentAudit($document, 'delete');
@@ -248,9 +252,10 @@ class DocumentController extends Controller
         }
 
         $disk = Storage::disk(Document::STORAGE_DISK);
+        $resolved = $this->resolveDocumentPath($document);
 
-        if ($disk->exists($document->path)) {
-            $disk->delete($document->path);
+        if ($resolved && $disk->exists($resolved)) {
+            $disk->delete($resolved);
         }
 
         $file = $request->file('file');
@@ -310,6 +315,30 @@ class DocumentController extends Controller
         $clean = preg_replace('/[^A-Za-z0-9\.\-_ ]+/', '_', $filename);
 
         return Str::limit($clean, 120, '');
+    }
+
+    private function resolveDocumentPath(Document $document): ?string
+    {
+        $disk = Storage::disk(Document::STORAGE_DISK);
+
+        if ($disk->exists($document->path)) {
+            return $document->path;
+        }
+
+        $fallback = sprintf(
+            'private/documents/%s/%s/%s',
+            $document->company_id,
+            $document->user_id,
+            basename($document->path),
+        );
+
+        if ($disk->exists($fallback)) {
+            $document->forceFill(['path' => $fallback])->saveQuietly();
+
+            return $fallback;
+        }
+
+        return null;
     }
 
     private function isPrivileged(User $user): bool
