@@ -54,6 +54,7 @@ Route::prefix('v1')->group(function () {
 
 Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/auth/me', [AuthController::class, 'me']);
     Route::get('/settings/overview', [CompanySettingsController::class, 'overview']);
 
     Route::middleware(['role:employee|area_manager|manager|admin', 'subscription.access'])->group(function () {
