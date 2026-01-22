@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,6 +44,17 @@ class Handler extends ExceptionHandler
         $this->renderable(function (AccessDeniedHttpException $exception, Request $request): JsonResponse {
             return $this->formatAuthorizationFailure($request, $exception);
         });
+    }
+
+    public function render($request, Throwable $exception)
+    {
+        if ($exception instanceof AuthenticationException
+            && ($request->expectsJson() || $request->is('api/*') || $request->is('v1/*')))
+        {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        return parent::render($request, $exception);
     }
 
     protected function formatAuthorizationFailure(Request $request, Throwable $exception): JsonResponse

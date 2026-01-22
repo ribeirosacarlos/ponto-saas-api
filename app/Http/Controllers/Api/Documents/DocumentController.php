@@ -121,8 +121,8 @@ class DocumentController extends Controller
     {
         $this->authorize('view', $document);
 
-        $disk = Storage::disk(Document::STORAGE_DISK);
-        $path = $this->resolveDocumentPath($document);
+        $disk = Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
+        $path = $this->resolveDocumentPath($document, $disk);
 
         if (! $path || ! $disk->exists($path)) {
             abort(404, 'Arquivo não encontrado.');
@@ -134,11 +134,12 @@ class DocumentController extends Controller
         $headers = [
             'Content-Type' => $document->mime_type ?? 'application/octet-stream',
             'Content-Length' => $document->size_bytes,
-            'Content-Disposition' => sprintf('inline; filename="%s"', $filename),
+            'Content-Disposition' => sprintf('inline; filename="%s"', addslashes($filename)),
+            'Cache-Control' => 'no-store',
         ];
 
-        return response()->stream(function () use ($path) {
-            $stream = Storage::disk(Document::STORAGE_DISK)->readStream($path);
+        return response()->stream(function () use ($disk, $path) {
+            $stream = $disk->readStream($path);
 
             if (! $stream) {
                 abort(404, 'Arquivo não encontrado.');
@@ -156,8 +157,8 @@ class DocumentController extends Controller
     {
         $this->authorize('download', $document);
 
-        $disk = Storage::disk(Document::STORAGE_DISK);
-        $path = $this->resolveDocumentPath($document);
+        $disk = Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
+        $path = $this->resolveDocumentPath($document, $disk);
 
         if (! $path || ! $disk->exists($path)) {
             abort(404, 'Arquivo não encontrado.');
@@ -165,24 +166,9 @@ class DocumentController extends Controller
 
         $this->logDocumentAudit($document, 'download');
 
-        $headers = [
-            'Content-Type' => $document->mime_type ?? 'application/octet-stream',
-            'Content-Length' => $document->size_bytes,
-        ];
-
-        return response()->streamDownload(function () use ($path) {
-            $stream = Storage::disk(Document::STORAGE_DISK)->readStream($path);
-
-            if (! $stream) {
-                abort(404, 'Arquivo não encontrado.');
-            }
-
-            fpassthru($stream);
-
-            if (is_resource($stream)) {
-                fclose($stream);
-            }
-        }, $this->sanitizeFilename($document), $headers);
+        return $disk->download($path, $this->sanitizeFilename($document), [
+            'Cache-Control' => 'no-store',
+        ]);
     }
 
     public function update(DocumentUpdateRequest $request, Document $document)
@@ -228,9 +214,9 @@ class DocumentController extends Controller
     {
         $this->authorize('delete', $document);
 
-        $disk = Storage::disk(Document::STORAGE_DISK);
+        $disk = Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
 
-        $path = $this->resolveDocumentPath($document);
+        $path = $this->resolveDocumentPath($document, $disk);
 
         if ($path && $disk->exists($path)) {
             $disk->delete($path);
@@ -251,8 +237,8 @@ class DocumentController extends Controller
             return response()->json(['message' => 'Documento não está em revisão'], 422);
         }
 
-        $disk = Storage::disk(Document::STORAGE_DISK);
-        $resolved = $this->resolveDocumentPath($document);
+        $disk = Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
+        $resolved = $this->resolveDocumentPath($document, $disk);
 
         if ($resolved && $disk->exists($resolved)) {
             $disk->delete($resolved);
@@ -317,9 +303,9 @@ class DocumentController extends Controller
         return Str::limit($clean, 120, '');
     }
 
-    private function resolveDocumentPath(Document $document): ?string
+    private function resolveDocumentPath(Document $document, $disk = null): ?string
     {
-        $disk = Storage::disk(Document::STORAGE_DISK);
+        $disk = $disk ?? Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
 
         if ($disk->exists($document->path)) {
             return $document->path;
