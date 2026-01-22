@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Adjustment;
 use App\Models\TimeEntry;
+use Carbon\Carbon;
 
 class AdjustmentController extends Controller
 {
