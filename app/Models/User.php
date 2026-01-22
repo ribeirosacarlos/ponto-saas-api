@@ -34,6 +34,10 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $appends = [
+        'role',
+    ];
+
     public function company()
     {
         return $this->belongsTo(Company::class);
@@ -108,5 +112,16 @@ class User extends Authenticatable
         if (! empty($roleIds)) {
             $this->roles()->sync($roleIds);
         }
+    }
+
+    public function getRoleAttribute()
+    {
+        $role = $this->roles->first();
+
+        if (! $role) {
+            return null;
+        }
+
+        return $role->only(['id', 'name', 'display_name']);
     }
 }
