@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Company;
 use App\Models\DocumentAudit;
+use App\Models\DocumentNotification;
 use App\Models\User;
 use App\Traits\CompanyScoped;
 use App\Traits\HasUuid;
@@ -57,6 +58,9 @@ class Document extends Model
         'path',
         'storage_disk',
         'notes',
+        'rejected_comment',
+        'rejected_by',
+        'rejected_at',
     ];
 
     protected $casts = [
@@ -76,5 +80,10 @@ class Document extends Model
     public function audits(): HasMany
     {
         return $this->hasMany(DocumentAudit::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(DocumentNotification::class);
     }
 }

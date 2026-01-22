@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Api\Documents;
 
+use App\Http\Controllers\Api\Documents\Traits\LogsDocumentAudits;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DocumentResendRequest;
 use App\Http\Requests\DocumentStoreRequest;
 use App\Http\Requests\DocumentUpdateRequest;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
-use App\Models\DocumentAudit;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,7 @@ use Throwable;
 
 class DocumentController extends Controller
 {
+    use LogsDocumentAudits;
     private const PRIVILEGED_ROLES = ['admin', 'manager', 'area_manager'];
     private const SORT_FIELDS = ['updated_at'];
     private const DEFAULT_SORT_FIELD = 'updated_at';
@@ -96,7 +98,7 @@ class DocumentController extends Controller
                 throw $exception;
             }
 
-            $this->logAudit($document, 'upload', [
+            $this->logDocumentAudit($document, 'upload', [
                 'original_name' => $file->getClientOriginalName(),
             ]);
 
@@ -125,7 +127,7 @@ class DocumentController extends Controller
             abort(404, 'Arquivo não encontrado.');
         }
 
-        $this->logAudit($document, 'view');
+        $this->logDocumentAudit($document, 'view');
 
         $filename = $this->sanitizeFilename($document);
         $headers = [
@@ -159,7 +161,7 @@ class DocumentController extends Controller
             abort(404, 'Arquivo não encontrado.');
         }
 
-        $this->logAudit($document, 'download');
+        $this->logDocumentAudit($document, 'download');
 
         $headers = [
             'Content-Type' => $document->mime_type ?? 'application/octet-stream',
@@ -190,7 +192,7 @@ class DocumentController extends Controller
         $document->save();
 
         if ($request->filled('status') && $request->input('status') !== $oldStatus) {
-            $this->logAudit($document, 'status_change', [
+            $this->logDocumentAudit($document, 'status_change', [
                 'from' => $oldStatus,
                 'to' => $document->status,
             ]);
@@ -206,9 +208,12 @@ class DocumentController extends Controller
         if ($document->status !== Document::STATUS_AVAILABLE) {
             $oldStatus = $document->status;
             $document->status = Document::STATUS_AVAILABLE;
+            $document->rejected_comment = null;
+            $document->rejected_by = null;
+            $document->rejected_at = null;
             $document->save();
 
-            $this->logAudit($document, 'status_change', [
+            $this->logDocumentAudit($document, 'status_change', [
                 'from' => $oldStatus,
                 'to' => Document::STATUS_AVAILABLE,
             ]);
@@ -227,11 +232,56 @@ class DocumentController extends Controller
             $disk->delete($document->path);
         }
 
-        $this->logAudit($document, 'delete');
+        $this->logDocumentAudit($document, 'delete');
 
         $document->delete();
 
         return response()->noContent();
+    }
+
+    public function resend(DocumentResendRequest $request, Document $document)
+    {
+        $this->authorize('resend', $document);
+
+        if ($document->status !== Document::STATUS_REVIEW) {
+            return response()->json(['message' => 'Documento não está em revisão'], 422);
+        }
+
+        $disk = Storage::disk(Document::STORAGE_DISK);
+
+        if ($disk->exists($document->path)) {
+            $disk->delete($document->path);
+        }
+
+        $file = $request->file('file');
+        $directory = sprintf('private/documents/%s/%s', $document->company_id, $document->user_id);
+        $filename = sprintf('%s.%s', Str::random(16), Str::lower($file->getClientOriginalExtension()));
+        $path = $disk->putFileAs($directory, $filename, $file);
+
+        if (! $path) {
+            throw new RuntimeException('Não foi possível salvar o arquivo.');
+        }
+
+        $document->fill([
+            'mime_type' => $file->getClientMimeType(),
+            'ext' => Str::lower($file->getClientOriginalExtension()),
+            'size_bytes' => $file->getSize() ?: 0,
+            'path' => $path,
+            'status' => Document::STATUS_PENDING,
+            'rejected_comment' => null,
+            'rejected_by' => null,
+            'rejected_at' => null,
+        ]);
+
+        $document->save();
+
+        $this->logDocumentAudit($document, 'resend');
+        $this->logDocumentAudit($document, 'status_change', [
+            'from' => Document::STATUS_REVIEW,
+            'to' => Document::STATUS_PENDING,
+        ]);
+
+        return new DocumentResource($document->fresh());
     }
 
     private function parseSort(?string $sort): array
@@ -267,17 +317,4 @@ class DocumentController extends Controller
         return $user->hasRole(self::PRIVILEGED_ROLES);
     }
 
-    private function logAudit(Document $document, string $action, array $meta = []): DocumentAudit
-    {
-        return DocumentAudit::create([
-            'document_id' => $document->id,
-            'company_id' => $document->company_id,
-            'actor_user_id' => auth()->id(),
-            'action' => $action,
-            'ip' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'meta' => $meta ?: null,
-            'created_at' => now(),
-        ]);
-    }
 }

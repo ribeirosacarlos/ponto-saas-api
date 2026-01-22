@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdju
 
 use App\Http\Controllers\Api\Admin\Billing\CompanySubscriptionController;
 use App\Http\Controllers\Api\Admin\Billing\PlanController;
+use App\Http\Controllers\Api\Admin\DocumentReviewController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
 use App\Http\Controllers\Api\Admin\EmployeeOvertimeController;
 use App\Http\Controllers\Api\Admin\ShiftController;
@@ -58,6 +59,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
             Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
             Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+            Route::post('/documents/{document}/resend', [DocumentController::class, 'resend'])->name('documents.resend');
             Route::patch('/documents/{document}', [DocumentController::class, 'update'])
                 ->name('documents.update')
                 ->middleware('role:admin|manager|area_manager');
@@ -125,6 +127,18 @@ Route::prefix('v1')->group(function () {
         Route::prefix('admin')->group(function () {
 
             Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
+
+                // Documentos pendentes / revisão
+                Route::get('/documents/pending', [DocumentReviewController::class, 'pending'])
+                    ->name('admin.documents.pending');
+                Route::get('/documents/review', [DocumentReviewController::class, 'review'])
+                    ->name('admin.documents.review');
+                Route::get('/documents/{document}', [DocumentReviewController::class, 'show'])
+                    ->name('admin.documents.show');
+                Route::patch('/documents/{document}/approve', [DocumentReviewController::class, 'approve'])
+                    ->name('admin.documents.approve');
+                Route::patch('/documents/{document}/reject', [DocumentReviewController::class, 'reject'])
+                    ->name('admin.documents.reject');
 
                 // Funcionários
                 Route::apiResource('employees', EmployeeController::class);
