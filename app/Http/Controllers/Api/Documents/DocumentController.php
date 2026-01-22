@@ -72,8 +72,8 @@ class DocumentController extends Controller
 
         foreach ($request->file('files', []) as $file) {
             $directory = sprintf('private/documents/%s/%s', $user->company_id, $user->id);
-            $filename = sprintf('%s.%s', Str::random(16), Str::lower($file->getClientOriginalExtension()));
-            $path = Storage::disk(Document::STORAGE_DISK)->putFileAs($directory, $filename, $file);
+            $filename = sprintf('%s.%s', Str::uuid(), Str::lower($file->getClientOriginalExtension()));
+            $path = $file->storeAs($directory, $filename, Document::STORAGE_DISK);
 
             if (! $path) {
                 throw new RuntimeException('Não foi possível salvar o arquivo.');
@@ -260,8 +260,8 @@ class DocumentController extends Controller
 
         $file = $request->file('file');
         $directory = sprintf('private/documents/%s/%s', $document->company_id, $document->user_id);
-        $filename = sprintf('%s.%s', Str::random(16), Str::lower($file->getClientOriginalExtension()));
-        $path = $disk->putFileAs($directory, $filename, $file);
+        $filename = sprintf('%s.%s', Str::uuid(), Str::lower($file->getClientOriginalExtension()));
+        $path = $file->storeAs($directory, $filename, Document::STORAGE_DISK);
 
         if (! $path) {
             throw new RuntimeException('Não foi possível salvar o arquivo.');
