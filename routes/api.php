@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
@@ -46,6 +47,11 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/invites/accept', [InviteController::class, 'accept']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+
+    Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])
+        ->middleware('throttle:5,1');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])
+        ->middleware('throttle:5,1');
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -98,7 +104,7 @@ Route::prefix('v1')->group(function () {
 
                 // Listar solicitações de ajuste
                 Route::get('/adjustments', [AreaManagerAdjustmentController::class, 'index']);
-        
+
                 // Aprovar ajustes
                 Route::post('/adjustments/{id}/approve', [AreaManagerAdjustmentController::class, 'approve']);
                 Route::post('/adjustments/{id}/reject',  [AreaManagerAdjustmentController::class, 'reject']);

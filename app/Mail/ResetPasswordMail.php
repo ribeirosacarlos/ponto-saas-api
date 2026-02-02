@@ -8,7 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
-class EmployeeInviteMail extends Mailable implements ShouldQueue
+class ResetPasswordMail extends Mailable implements ShouldQueue
 {
     use Queueable;
 
@@ -16,9 +16,9 @@ class EmployeeInviteMail extends Mailable implements ShouldQueue
         public string $userName,
         public string $userEmail,
         public ?string $companyName,
-        public ?string $inviteUrl,
-        public ?string $inviteCode,
-        public ?string $temporaryPassword,
+        public ?string $token,
+        public ?string $email,
+        public ?string $resetCode,
         public ?string $supportEmail,
     ) {}
 
@@ -27,20 +27,25 @@ class EmployeeInviteMail extends Mailable implements ShouldQueue
         $brand = $this->companyName ?? config('app.name', 'Jornafy');
 
         return new Envelope(
-            subject: "Welcome to Jornafy - {$brand}",
+            subject: "Recuperação de senha - {$brand}",
         );
     }
 
     public function content(): Content
     {
+        $frontendUrl = config('app.frontend_url');
+
+        $resetUrl = "{$frontendUrl}/reset-password"
+            . "?token={$this->token}"
+            . "&email=" . urlencode($this->email);
+
         return new Content(
-            view: 'emails.employee_invite',
+            view: 'emails.reset_password',
             with: [
                 'userName' => $this->userName,
                 'companyName' => $this->companyName,
-                'inviteUrl' => $this->inviteUrl,
-                'inviteCode' => $this->inviteCode,
-                'temporaryPassword' => $this->temporaryPassword,
+                'resetUrl' => $resetUrl,
+                'resetCode' => $this->resetCode,
                 'supportEmail' => $this->supportEmail ?? config('app.support_email'),
             ],
         );
