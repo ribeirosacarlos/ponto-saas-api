@@ -40,7 +40,7 @@ class EmployeeController extends Controller
         $employee = User::findOrFail($id);
         $this->authorize('view', $employee);
 
-        return $employee->load(['userShifts.shift']);
+        return $employee->load(['userShifts.shift', 'roles']);
     }
 
     public function update($id, EmployeeStoreRequest $request)
@@ -72,7 +72,7 @@ class EmployeeController extends Controller
             $this->userShiftService->assign($employee, $shift);
         }
 
-        return $employee->load(['userShifts.shift']);
+        return $employee->load(['userShifts.shift', 'roles']);
     }
 
     public function destroy($id)

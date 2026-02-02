@@ -11,12 +11,6 @@ use Illuminate\Support\Collection;
 
 class WorkedTodayService
 {
-    /**
-     * Automatically deduct the scheduled break after six hours of gross work.
-     * Use this to decide when the auto-deduction rule should kick in.
-     */
-    private const AUTOMATIC_BREAK_THRESHOLD_SECONDS = 6 * 3600;
-
     public function __construct(
         protected UserShiftResolver $shiftResolver
     ) {
@@ -42,27 +36,10 @@ class WorkedTodayService
         $shiftDay = $this->resolveShiftDay($shift, $now);
 
         [$pairs, $openSession] = $this->buildWorkPairs($entries, $now, $timezone);
-        $workedSecondsBruto = array_sum(array_column($pairs, 'seconds'));
-        $explicitBreakSeconds = $this->calculateExplicitBreakSeconds($entries, $now, $timezone);
+        $workedSecondsBruto = (int) array_sum(array_column($pairs, 'seconds'));
         $expectedBreakMinutes = $this->determineExpectedBreakMinutes($shiftDay);
-
-        $autoDeduct = $this->shouldAutoDeductBreak(
-            $explicitBreakSeconds,
-            $expectedBreakMinutes,
-            $workedSecondsBruto,
-            $pairs,
-            $shiftDay,
-            $now
-        );
-
-        $breakSecondsDeducted = $this->determineBreakSecondsDeducted(
-            $explicitBreakSeconds,
-            $expectedBreakMinutes,
-            $autoDeduct,
-            $workedSecondsBruto
-        );
-
-        $workedSeconds = max(0, $workedSecondsBruto - $breakSecondsDeducted);
+        $breakSecondsDeducted = 0;
+        $workedSeconds = $workedSecondsBruto;
         $detailsPairs = $this->formatPairsForOutput($pairs, $timezone);
 
         return [
@@ -140,36 +117,6 @@ class WorkedTodayService
         ];
     }
 
-    private function calculateExplicitBreakSeconds(Collection $entries, CarbonImmutable $now, string $timezone): int
-    {
-        $breakSeconds = 0;
-        /** @var CarbonImmutable|null $pendingBreak */
-        $pendingBreak = null;
-
-        foreach ($entries as $entry) {
-            if ($entry->type === 'break_start') {
-                $pendingBreak = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone);
-                continue;
-            }
-
-            if ($entry->type === 'break_end' && $pendingBreak) {
-                $end = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone);
-                if ($end->greaterThan($pendingBreak)) {
-                    $breakSeconds += $end->diffInSeconds($pendingBreak);
-                }
-                $pendingBreak = null;
-            }
-        }
-
-        if ($pendingBreak) {
-            if ($now->greaterThan($pendingBreak)) {
-                $breakSeconds += $now->diffInSeconds($pendingBreak);
-            }
-        }
-
-        return $breakSeconds;
-    }
-
     private function determineExpectedBreakMinutes(?ShiftDay $shiftDay): int
     {
         if (! $shiftDay) {
@@ -177,67 +124,6 @@ class WorkedTodayService
         }
 
         return (int) ($shiftDay->break_minutes ?? 0);
-    }
-
-    /**
-     * Only deduct the scheduled break automatically when no explicit break entries exist,
-     * and the gross work exceeds the configured threshold OR crosses the scheduled break window.
-     */
-    private function shouldAutoDeductBreak(
-        int $explicitBreakSeconds,
-        int $expectedBreakMinutes,
-        int $workedSecondsBruto,
-        array $pairs,
-        ?ShiftDay $shiftDay,
-        CarbonImmutable $today
-    ): bool {
-        if ($explicitBreakSeconds > 0 || $expectedBreakMinutes <= 0) {
-            return false;
-        }
-
-        if ($workedSecondsBruto > self::AUTOMATIC_BREAK_THRESHOLD_SECONDS) {
-            return true;
-        }
-
-        return $this->pairsCrossBreakWindow($pairs, $shiftDay, $today);
-    }
-
-    private function pairsCrossBreakWindow(array $pairs, ?ShiftDay $shiftDay, CarbonImmutable $today): bool
-    {
-        if (! $shiftDay || ! $shiftDay->break_start_time || ! $shiftDay->break_end_time) {
-            return false;
-        }
-
-        $breakStart = $today->setTimeFromTimeString($shiftDay->break_start_time);
-        $breakEnd = $today->setTimeFromTimeString($shiftDay->break_end_time);
-
-        foreach ($pairs as $pair) {
-            $in = $pair['in'];
-            $out = $pair['out'];
-            if ($in->lessThan($breakEnd) && $out->greaterThan($breakStart)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function determineBreakSecondsDeducted(
-        int $explicitBreakSeconds,
-        int $expectedBreakMinutes,
-        bool $autoDeduct,
-        int $workedSecondsBruto
-    ): int {
-        if ($explicitBreakSeconds > 0) {
-            return min($explicitBreakSeconds, $workedSecondsBruto);
-        }
-
-        if ($autoDeduct) {
-            $expectedSeconds = $expectedBreakMinutes * 60;
-            return min($expectedSeconds, $workedSecondsBruto);
-        }
-
-        return 0;
     }
 
     private function formatPairsForOutput(array $pairs, string $timezone): array

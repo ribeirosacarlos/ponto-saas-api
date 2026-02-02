@@ -19,10 +19,10 @@ class TimeEntryController extends Controller
     {
         $this->authorize('create', TimeEntry::class);
 
-        $request->validate([
-            'type'      => 'required|in:in,out',
+        $validated = $request->validate([
             'latitude'  => 'nullable|string',
             'longitude' => 'nullable|string',
+            'type'      => 'nullable|string|in:in,out,break_start,break_end',
         ]);
 
         $user = $request->user();
@@ -48,7 +48,7 @@ class TimeEntryController extends Controller
             'company_id' => $user->company_id,
             'user_id'    => $user->id,
             'clocked_at' => now(),
-            'type'       => $request->type,
+            'type'       => $validated['type'],
             'latitude'   => $request->latitude,
             'longitude'  => $request->longitude,
             'source'     => 'web',

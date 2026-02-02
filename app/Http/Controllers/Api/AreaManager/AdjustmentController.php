@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Adjustment;
 use App\Models\TimeEntry;
+use Carbon\Carbon;
 
 class AdjustmentController extends Controller
 {
@@ -104,8 +105,11 @@ class AdjustmentController extends Controller
             return 'in';
         }
 
+        $date = Carbon::parse($clockedAt)->toDateString();
+
         $entries = TimeEntry::where('company_id', $adjustment->company_id)
             ->where('user_id', $adjustment->user_id)
+            ->whereDate('clocked_at', $date)
             ->where('clocked_at', '<=', $clockedAt)
             ->orderBy('clocked_at')
             ->get();
@@ -125,4 +129,5 @@ class AdjustmentController extends Controller
 
         return $pendingIn ? 'out' : 'in';
     }
+
 }

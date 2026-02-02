@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\Company;
+use App\Models\User;
+
+class CompanyPolicy
+{
+    public function updateTimezone(User $user, Company $company): bool
+    {
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        if (! $user->hasRole('admin')) {
+            return false;
+        }
+
+        return $user->company_id === $company->id;
+    }
+}
