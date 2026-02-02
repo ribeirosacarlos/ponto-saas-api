@@ -110,6 +110,9 @@ Route::prefix('v1')->group(function () {
                 Route::get('/announcements/pending-count', [EmployeeAnnouncementController::class, 'pendingCount']);
                 Route::get('/announcements/{announcement}', [EmployeeAnnouncementController::class, 'show']);
                 Route::post('/announcements/{announcement}/seen', [EmployeeAnnouncementController::class, 'markAsSeen']);
+
+                // Horas extras
+                Route::get('/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
             });
 
 
@@ -124,7 +127,7 @@ Route::prefix('v1')->group(function () {
                 // Aprovar ajustes
                 Route::post('/adjustments/{id}/approve', [AreaManagerAdjustmentController::class, 'approve']);
                 Route::post('/adjustments/{id}/reject',  [AreaManagerAdjustmentController::class, 'reject']);
-                
+
                 // Ver batidas da equipe
                 Route::get('/team/entries', [AreaManagerTimeEntryController::class, 'teamEntries']);
                 Route::get('/team/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
@@ -155,7 +158,6 @@ Route::prefix('v1')->group(function () {
 
                 // Funcionários
                 Route::apiResource('employees', EmployeeController::class);
-                Route::get('/employees/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
 
                 // Relatórios
                 Route::get('/reports/time', [ReportController::class, 'timeReport'])
