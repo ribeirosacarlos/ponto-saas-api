@@ -46,27 +46,27 @@ class Handler extends ExceptionHandler
         });
     }
 
-    public function render($request, Throwable $exception)
+    public function render($request, Throwable $e)
     {
-        if ($exception instanceof AuthenticationException
+        if ($e instanceof AuthenticationException
             && ($request->expectsJson() || $request->is('api/*') || $request->is('v1/*')))
         {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
-        return parent::render($request, $exception);
+        return parent::render($request, $e);
     }
 
-    protected function formatAuthorizationFailure(Request $request, Throwable $exception): JsonResponse
+    protected function formatAuthorizationFailure(Request $request, Throwable $e): JsonResponse
     {
-        $context = $this->buildContext($request, $exception);
+        $context = $this->buildContext($request, $e);
 
         // Identify the type of authorization failure
-        $failureType = $this->identifyAuthorizationFailureType($request, $exception);
+        $failureType = $this->identifyAuthorizationFailureType($request, $e);
 
         Log::warning('authorization failure', array_merge($context, [
             'failure_type' => $failureType,
-            'original_message' => $exception->getMessage(),
+            'original_message' => $e->getMessage(),
         ]));
 
         return response()->json([
@@ -80,14 +80,14 @@ class Handler extends ExceptionHandler
         ], 403);
     }
 
-    protected function buildContext(Request $request, Throwable $exception): array
+    protected function buildContext(Request $request, Throwable $e): array
     {
         $roles = $request->user()?->roles->pluck('name')->toArray() ?? [];
         $company = $request->user()?->company;
 
         return [
-            'exception' => get_class($exception),
-            'message' => $exception->getMessage(),
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
             'user_id' => $request->user()?->id,
             'roles' => $roles,
             'method' => $request->method(),
@@ -100,9 +100,9 @@ class Handler extends ExceptionHandler
     /**
      * Identify the type of authorization failure based on exception message and context
      */
-    protected function identifyAuthorizationFailureType(Request $request, Throwable $exception): string
+    protected function identifyAuthorizationFailureType(Request $request, Throwable $e): string
     {
-        $message = $exception->getMessage();
+        $message = $e->getMessage();
         $user = $request->user();
         $company = $user?->company;
 
