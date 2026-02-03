@@ -76,8 +76,6 @@ class Handler extends ExceptionHandler
                 'path' => $context['path'],
                 'route_action' => $context['route_action'],
                 'route_name' => $context['route_name'],
-                'user_roles' => $context['roles'],
-                'user_id' => $context['user_id'],
             ],
         ], 403);
     }
