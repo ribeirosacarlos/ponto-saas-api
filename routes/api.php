@@ -124,7 +124,7 @@ Route::prefix('v1')->group(function () {
                 // Aprovar ajustes
                 Route::post('/adjustments/{id}/approve', [AreaManagerAdjustmentController::class, 'approve']);
                 Route::post('/adjustments/{id}/reject',  [AreaManagerAdjustmentController::class, 'reject']);
-                
+
                 // Ver batidas da equipe
                 Route::get('/team/entries', [AreaManagerTimeEntryController::class, 'teamEntries']);
                 Route::get('/team/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
@@ -152,6 +152,10 @@ Route::prefix('v1')->group(function () {
                     ->name('admin.documents.approve');
                 Route::patch('/documents/{document}/reject', [DocumentReviewController::class, 'reject'])
                     ->name('admin.documents.reject');
+
+                // Upload de documentos para funcionários
+                Route::post('/documents/upload-for-employee', [DocumentReviewController::class, 'uploadForEmployee'])
+                    ->name('admin.documents.upload_for_employee');
 
                 // Funcionários
                 Route::apiResource('employees', EmployeeController::class);
