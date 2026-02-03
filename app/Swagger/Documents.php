@@ -277,5 +277,34 @@ namespace App\Swagger;
  *     @OA\Response(response=404, description="Documento não encontrado"),
  *     @OA\Response(response=422, description="Comentário obrigatório")
  * )
+ *
+ * @OA\Post(
+ *     path="/v1/admin/documents/upload-for-employee",
+ *     tags={"Documents"},
+ *     security={{"bearerAuth": {}}},
+ *     summary="Upload de documentos para funcionário (apenas admin)",
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\MediaType(
+ *             mediaType="multipart/form-data",
+ *             @OA\Schema(
+ *                 required={"user_id","category","files"},
+ *                 @OA\Property(property="user_id", type="string", format="uuid", description="ID do funcionário"),
+ *                 @OA\Property(property="category", type="string", enum={"payroll","courses","personal","others"}),
+ *                 @OA\Property(property="title", type="string", maxLength=180),
+ *                 @OA\Property(property="notes", type="string", maxLength=2000),
+ *                 @OA\Property(property="files[]", type="string", format="binary", description="Multipart com os arquivos permitidos")
+ *             )
+ *         )
+ *     ),
+ *     @OA\Response(response=201, description="Documentos criados", @OA\JsonContent(
+ *         @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/DocumentAdminResource"))
+ *     )),
+ *     @OA\Response(response=400, description="Dados inválidos"),
+ *     @OA\Response(response=401, description="Requisição não autenticada"),
+ *     @OA\Response(response=403, description="Acesso negado"),
+ *     @OA\Response(response=404, description="Funcionário não encontrado"),
+ *     @OA\Response(response=422, description="Dados inválidos ou arquivo muito grande")
+ * )
  */
 class Documents {}

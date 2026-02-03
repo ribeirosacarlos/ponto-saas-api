@@ -4,11 +4,17 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\Documents\Traits\LogsDocumentAudits;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AdminDocumentStoreRequest;
 use App\Http\Requests\AdminPendingIndexRequest;
 use App\Http\Requests\DocumentRejectRequest;
 use App\Http\Resources\DocumentAdminResource;
 use App\Models\Document;
 use App\Models\DocumentNotification;
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use RuntimeException;
+use Throwable;
 
 class DocumentReviewController extends Controller
 {
@@ -94,6 +100,57 @@ class DocumentReviewController extends Controller
         return new DocumentAdminResource($document->fresh()->load('user'));
     }
 
+    public function uploadForEmployee(AdminDocumentStoreRequest $request)
+    {
+        $admin = $request->user();
+        $targetUser = User::where('id', $request->input('user_id'))
+            ->where('company_id', $admin->company_id)
+            ->firstOrFail();
+
+        $created = [];
+
+        foreach ($request->file('files', []) as $file) {
+            $directory = sprintf('private/documents/%s/%s', $targetUser->company_id, $targetUser->id);
+            $filename = sprintf('%s.%s', Str::uuid(), Str::lower($file->getClientOriginalExtension()));
+            $path = $file->storeAs($directory, $filename, Document::STORAGE_DISK);
+
+            if (! $path) {
+                throw new RuntimeException('Não foi possível salvar o arquivo.');
+            }
+
+            try {
+                $document = Document::create([
+                    'company_id' => $targetUser->company_id,
+                    'user_id' => $targetUser->id,
+                    'title' => $this->resolveTitle($file->getClientOriginalName(), $request->input('title')),
+                    'category' => $request->input('category'),
+                    'status' => Document::STATUS_PENDING,
+                    'mime_type' => $file->getClientMimeType(),
+                    'ext' => Str::lower($file->getClientOriginalExtension()),
+                    'size_bytes' => $file->getSize() ?: 0,
+                    'path' => $path,
+                    'storage_disk' => Document::STORAGE_DISK,
+                    'notes' => $request->input('notes'),
+                ]);
+            } catch (Throwable $exception) {
+                Storage::disk(Document::STORAGE_DISK)->delete($path);
+                throw $exception;
+            }
+
+            $this->logDocumentAudit($document, 'admin_upload', [
+                'original_name' => $file->getClientOriginalName(),
+                'uploaded_by_admin' => $admin->id,
+                'target_user_id' => $targetUser->id,
+            ]);
+
+            $created[] = $document;
+        }
+
+        $resource = DocumentAdminResource::collection(collect($created))->response();
+
+        return $resource->setStatusCode(201);
+    }
+
     private function buildQuery(AdminPendingIndexRequest $request)
     {
         $query = Document::with('user:id,name,email')->where('company_id', $request->user()->company_id);
@@ -143,5 +200,12 @@ class DocumentReviewController extends Controller
             'type' => $type,
             'message' => $message,
         ]);
+    }
+
+    private function resolveTitle(string $originalName, ?string $prefix): string
+    {
+        $title = trim($prefix ? sprintf('%s - %s', $prefix, $originalName) : $originalName);
+
+        return Str::limit($title, 180);
     }
 }
