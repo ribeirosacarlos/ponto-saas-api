@@ -60,10 +60,10 @@ class Handler extends ExceptionHandler
     protected function formatAuthorizationFailure(Request $request, Throwable $exception): JsonResponse
     {
         $context = $this->buildContext($request, $exception);
-        
+
         // Identify the type of authorization failure
         $failureType = $this->identifyAuthorizationFailureType($request, $exception);
-        
+
         Log::warning('authorization failure', array_merge($context, [
             'failure_type' => $failureType,
             'original_message' => $exception->getMessage(),
@@ -71,7 +71,6 @@ class Handler extends ExceptionHandler
 
         return response()->json([
             'message' => 'Não autorizado para essa ação.',
-            'failure_type' => $failureType,
             'details' => [
                 'method' => $context['method'],
                 'path' => $context['path'],
@@ -87,7 +86,7 @@ class Handler extends ExceptionHandler
     {
         $roles = $request->user()?->roles->pluck('name')->toArray() ?? [];
         $company = $request->user()?->company;
-        
+
         return [
             'exception' => get_class($exception),
             'message' => $exception->getMessage(),
@@ -97,12 +96,9 @@ class Handler extends ExceptionHandler
             'path' => $request->path(),
             'route_action' => Route::currentRouteAction(),
             'route_name' => Route::currentRouteName(),
-            'company_id' => $company?->id,
-            'company_subscription_status' => $company?->subscription?->status?->value ?? $company?->subscription_status,
-            'company_is_blocked' => $company?->is_blocked,
         ];
     }
-    
+
     /**
      * Identify the type of authorization failure based on exception message and context
      */
@@ -111,30 +107,30 @@ class Handler extends ExceptionHandler
         $message = $exception->getMessage();
         $user = $request->user();
         $company = $user?->company;
-        
+
         // Check for subscription-related failures
-        if (str_contains($message, 'assinatura ativa') || 
-            str_contains($message, 'subscription') || 
-            str_contains($message, 'trial') || 
+        if (str_contains($message, 'assinatura ativa') ||
+            str_contains($message, 'subscription') ||
+            str_contains($message, 'trial') ||
             str_contains($message, 'payment')) {
             return 'subscription_access_denied';
         }
-        
+
         // Check for role-related failures
         if ($message === 'Forbidden.' || str_contains($message, 'role')) {
             return 'insufficient_role_permissions';
         }
-        
+
         // Check if user has no company
         if (! $company) {
             return 'no_company_assigned';
         }
-        
+
         // Check if company is blocked
         if ($company->is_blocked) {
             return 'company_blocked';
         }
-        
+
         // Check subscription status
         $subscription = $company->subscription;
         if ($subscription) {
@@ -148,7 +144,7 @@ class Handler extends ExceptionHandler
                 return 'subscription_inactive';
             }
         }
-        
+
         // Default fallback
         return 'unknown_authorization_failure';
     }
