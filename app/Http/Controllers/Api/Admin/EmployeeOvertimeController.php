@@ -17,8 +17,6 @@ class EmployeeOvertimeController extends Controller
 
     public function show(OvertimeReportRequest $request, User $employee)
     {
-        $this->authorize('view', $employee);
-
         $validated = $request->validated();
 
         $timezone = $employee->company?->timezone ?? config('app.timezone', 'UTC');
