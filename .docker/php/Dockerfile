@@ -1,57 +1,54 @@
+# ---------- Composer deps ----------
+FROM composer:2 AS vendor
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install \
+  --no-dev \
+  --no-interaction \
+  --prefer-dist \
+  --optimize-autoloader \
+  --no-progress
+
+# ---------- PHP runtime ----------
 FROM php:8.4-fpm
 
-# Instalar dependências do sistema
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    libzip-dev \
+    git curl \
+    libpng-dev libonig-dev libxml2-dev \
+    zip unzip libzip-dev \
     libpq-dev \
-    netcat-traditional
+    netcat-traditional \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Instalar extensões do PHP
 RUN docker-php-ext-install \
-    pdo_mysql \
-    pdo_pgsql \
-    pgsql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    zip
+    pdo_pgsql pgsql \
+    mbstring exif pcntl bcmath gd zip
 
-# Copiar Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN docker-php-ext-install opcache
 
-# Definir diretório de trabalho
 WORKDIR /var/www
 
-# Copiar arquivos do projeto
+# Copia o projeto
 COPY . /var/www
 
-# Copiar e dar permissão ao entrypoint
+# Copia vendor do estágio do composer
+COPY --from=vendor /app/vendor /var/www/vendor
+
+# Config PHP
+COPY .docker/php/php.ini /usr/local/etc/php/conf.d/local.ini
+
+# Entrypoint
 COPY .docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Criar diretórios necessários e ajustar permissões iniciais
+# Permissões (sem 777)
 RUN mkdir -p /var/www/storage/framework/{sessions,views,cache} \
     && mkdir -p /var/www/storage/logs \
     && mkdir -p /var/www/bootstrap/cache \
     && chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage \
-    && chmod -R 775 /var/www/bootstrap/cache
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 9000
-
-# Definir entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-# Comando padrão
 CMD ["php-fpm"]

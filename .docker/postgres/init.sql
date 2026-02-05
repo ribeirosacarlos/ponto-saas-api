@@ -1,16 +1,16 @@
--- Criar schemas
-CREATE SCHEMA IF NOT EXISTS safecar;
-CREATE SCHEMA IF NOT EXISTS public;
-CREATE SCHEMA IF NOT EXISTS oauth;
-
--- Garantir que o usuário postgres tem permissões
-GRANT ALL ON SCHEMA safecar TO postgres;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA oauth TO postgres;
-
--- Definir safecar como schema padrão
-ALTER DATABASE "DB_Tecnol" SET search_path TO safecar, public, oauth;
-ALTER USER postgres SET search_path TO safecar, public, oauth;
-
--- Definir safecar como schema padrão para novas conexões
-ALTER ROLE postgres IN DATABASE "DB_Tecnol" SET search_path TO safecar, public, oauth;
+-- -- Criar schemas
+-- CREATE SCHEMA IF NOT EXISTS safecar;
+-- CREATE SCHEMA IF NOT EXISTS public;
+-- CREATE SCHEMA IF NOT EXISTS oauth;
+--
+-- -- Garantir que o usuário postgres tem permissões
+-- GRANT ALL ON SCHEMA safecar TO postgres;
+-- GRANT ALL ON SCHEMA public TO postgres;
+-- GRANT ALL ON SCHEMA oauth TO postgres;
+--
+-- -- Definir safecar como schema padrão
+-- ALTER DATABASE "DB_Tecnol" SET search_path TO safecar, public, oauth;
+-- ALTER USER postgres SET search_path TO safecar, public, oauth;
+--
+-- -- Definir safecar como schema padrão para novas conexões
+-- ALTER ROLE postgres IN DATABASE "DB_Tecnol" SET search_path TO safecar, public, oauth;
