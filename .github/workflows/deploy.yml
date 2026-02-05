@@ -1,52 +1,61 @@
-name: Deploy Laravel to Hostinger Dudu
+name: Deploy API (ECR -> EC2)
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches: ["main"]
+    workflow_dispatch: {}
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+    build-push-deploy:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Set up PHP 8.2
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-          extensions: mbstring, intl, bcmath
-          ini-values: post_max_size=256M, upload_max_filesize=256M
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install Composer dependencies
-        run: |
-          composer install --no-dev --optimize-autoloader
+            - name: Login to Amazon ECR
+              id: ecr-login
+              uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Prepare build folder
-        run: |
-          rm -rf build
-          mkdir build
-          rsync -av --exclude=build --exclude=.git --exclude=.github ./ build/
-          cp -R vendor build/vendor
+            - name: Build and push image to ECR
+              env:
+                  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+                  AWS_REGION: ${{ secrets.AWS_REGION }}
+                  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+                  IMAGE_TAG: ${{ github.sha }}
+              run: |
+                  ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                  IMAGE="${ECR_URI}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+                  IMAGE_LATEST="${ECR_URI}/${ECR_REPOSITORY}:latest"
 
-      - name: Upload Laravel root to Hostinger (except public)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
-          protocol: ftp
-          local-dir: build/
-          server-dir: laravel-api/
+                  docker build -f ./.docker/php/Dockerfile -t "$IMAGE" -t "$IMAGE_LATEST" .
+                  docker push "$IMAGE"
+                  docker push "$IMAGE_LATEST"
 
-      - name: Upload Public folder to public_html
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
-          protocol: ftp
-          local-dir: build/public/
-          server-dir: public_html/
+            - name: Deploy on EC2 via SSH
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.EC2_HOST }}
+                  username: ${{ secrets.EC2_USER }}
+                  key: ${{ secrets.EC2_SSH_KEY }}
+                  script: |
+                      set -e
+                      cd /opt/jornafy-api
+
+                      # Login no ECR
+                      aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+                        docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+                      # Pull e restart
+                      docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+                      docker compose -f docker-compose.prod.yml up -d
+
+                      # (Opcional) limpar imagens antigas
+                      docker image prune -f
