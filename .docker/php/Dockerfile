@@ -41,6 +41,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
  && chown -R www-data:www-data /var/www \
  && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
+ARG APP_BUILD_SHA=unknown
+ENV APP_BUILD_SHA=${APP_BUILD_SHA}
 EXPOSE 9000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]

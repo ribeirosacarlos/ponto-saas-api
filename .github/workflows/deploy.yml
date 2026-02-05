@@ -20,24 +20,33 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            - name: Login to Amazon ECR
-              id: ecr-login
-              uses: aws-actions/amazon-ecr-login@v2
+            -   name: Login to Amazon ECR
+                id: ecr-login
+                uses: aws-actions/amazon-ecr-login@v2
 
-            - name: Build and push image to ECR
-              env:
-                  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-                  AWS_REGION: ${{ secrets.AWS_REGION }}
-                  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-                  IMAGE_TAG: ${{ github.sha }}
-              run: |
-                  ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-                  IMAGE="${ECR_URI}/${ECR_REPOSITORY}:${IMAGE_TAG}"
-                  IMAGE_LATEST="${ECR_URI}/${ECR_REPOSITORY}:latest"
+            -   name: Build and push image to ECR
+                env:
+                    AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+                    AWS_REGION: ${{ secrets.AWS_REGION }}
+                    ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+                    IMAGE_TAG: ${{ github.sha }}
+                run: |
+                    ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                    IMAGE="${ECR_URI}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+                    IMAGE_LATEST="${ECR_URI}/${ECR_REPOSITORY}:latest"
 
-                  docker build -f ./.docker/php/Dockerfile -t "$IMAGE" -t "$IMAGE_LATEST" .
-                  docker push "$IMAGE"
-                  docker push "$IMAGE_LATEST"
+                    docker build \
+                      --pull \
+                      --no-cache \
+                      --build-arg APP_BUILD_SHA="${IMAGE_TAG}" \
+                      -f ./.docker/php/Dockerfile \
+                      -t "$IMAGE" \
+                      -t "$IMAGE_LATEST" \
+                      .
+
+                    docker push "$IMAGE"
+                    docker push "$IMAGE_LATEST"
+
 
             - name: Deploy on EC2 via SSH
               uses: appleboy/ssh-action@v1.0.3
