@@ -1,0 +1,2 @@
+# Jobs desativados - agora gerenciados pelo Laravel Schedule (app/Console/Kernel.php)
+# O Supervisor será responsável por executar o php artisan schedule:run
