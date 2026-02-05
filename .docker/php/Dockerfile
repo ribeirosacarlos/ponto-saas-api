@@ -1,6 +1,5 @@
-# ---------- Composer deps ----------
+# ---------- vendor ----------
 FROM composer:2 AS vendor
-
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install \
@@ -8,9 +7,10 @@ RUN composer install \
   --no-interaction \
   --prefer-dist \
   --optimize-autoloader \
-  --no-progress
+  --no-progress \
+  --no-scripts
 
-# ---------- PHP runtime ----------
+# ---------- runtime ----------
 FROM php:8.4-fpm
 
 RUN apt-get update && apt-get install -y \
@@ -23,31 +23,23 @@ RUN apt-get update && apt-get install -y \
 
 RUN docker-php-ext-install \
     pdo_pgsql pgsql \
-    mbstring exif pcntl bcmath gd zip
-
-RUN docker-php-ext-install opcache
+    mbstring exif pcntl bcmath gd zip opcache
 
 WORKDIR /var/www
-
-# Copia o projeto
 COPY . /var/www
 
-# Copia vendor do estágio do composer
+# copia vendor pronto
 COPY --from=vendor /app/vendor /var/www/vendor
 
-# Config PHP
+# agora que artisan existe, podemos rodar discover/otimizações
+RUN php -v \
+ && php artisan package:discover --ansi || true
+
 COPY .docker/php/php.ini /usr/local/etc/php/conf.d/local.ini
-
-# Entrypoint
 COPY .docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Permissões (sem 777)
-RUN mkdir -p /var/www/storage/framework/{sessions,views,cache} \
-    && mkdir -p /var/www/storage/logs \
-    && mkdir -p /var/www/bootstrap/cache \
-    && chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+ && chown -R www-data:www-data /var/www \
+ && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 9000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
