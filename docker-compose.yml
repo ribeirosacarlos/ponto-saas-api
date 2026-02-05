@@ -1,0 +1,59 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./.docker/php/Dockerfile
+    image: laravel-app
+    container_name: laravel-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - /var/www/vendor
+      - ./.docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - laravel
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./.docker/nginx:/etc/nginx/conf.d
+    networks:
+      - laravel
+    depends_on:
+      - app
+
+  postgres:
+    image: postgres:17.2
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: DB_Tecnol
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./.docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - laravel
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d DB_Tecnol" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  postgres-data:
