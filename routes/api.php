@@ -234,3 +234,10 @@ Route::get('/db-test', function () {
         return ['status' => 'error', 'message' => $e->getMessage()];
     }
 });
+
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'ts' => now()->toIso8601String(),
+    ]);
+});
