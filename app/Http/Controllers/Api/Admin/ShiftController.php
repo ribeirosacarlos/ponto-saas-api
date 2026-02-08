@@ -145,16 +145,17 @@ class ShiftController extends Controller
 
         foreach ($days as $day) {
             $weekdays[] = $day['weekday'];
+            $isWorkingDay = (bool) ($day['is_working_day'] ?? false);
 
             $shift->shiftDays()->updateOrCreate(
                 ['weekday' => $day['weekday']],
                 [
-                    'is_working_day'   => $day['is_working_day'],
-                    'start_time'       => $day['is_working_day'] ? $day['start_time'] : null,
-                    'end_time'         => $day['is_working_day'] ? $day['end_time'] : null,
-                    'break_start_time' => $day['is_working_day'] ? ($day['break_start_time'] ?? null) : null,
-                    'break_end_time'   => $day['is_working_day'] ? ($day['break_end_time'] ?? null) : null,
-                    'break_minutes'    => $day['is_working_day'] ? ($day['break_minutes'] ?? null) : null,
+                    'is_working_day'   => $isWorkingDay,
+                    'start_time'       => $isWorkingDay ? $day['start_time'] : null,
+                    'end_time'         => $isWorkingDay ? $day['end_time'] : null,
+                    'break_start_time' => $isWorkingDay ? ($day['break_start_time'] ?? null) : null,
+                    'break_end_time'   => $isWorkingDay ? ($day['break_end_time'] ?? null) : null,
+                    'break_minutes'    => $isWorkingDay ? ($day['break_minutes'] ?? null) : null,
                 ]
             );
         }
