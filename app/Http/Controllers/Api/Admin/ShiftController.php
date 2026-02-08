@@ -150,7 +150,7 @@ class ShiftController extends Controller
             $shift->shiftDays()->updateOrCreate(
                 ['weekday' => $day['weekday']],
                 [
-                    'is_working_day'   => $isWorkingDay,
+                    'is_working_day'   => $isWorkingDay ? 'true' : 'false',
                     'start_time'       => $isWorkingDay ? $day['start_time'] : null,
                     'end_time'         => $isWorkingDay ? $day['end_time'] : null,
                     'break_start_time' => $isWorkingDay ? ($day['break_start_time'] ?? null) : null,
