@@ -7,8 +7,10 @@ use App\Http\Requests\StoreShiftRequest;
 use App\Http\Requests\UpdateShiftRequest;
 use App\Models\Shift;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ShiftController extends Controller
 {
@@ -27,25 +29,29 @@ class ShiftController extends Controller
         $data = $request->validated();
         $companyId = $request->user()->company_id;
 
-        $shift = DB::transaction(function () use ($data, $companyId) {
-            $times = $this->resolveShiftTimes($data['days']);
+        try {
+            $shift = DB::transaction(function () use ($data, $companyId) {
+                $times = $this->resolveShiftTimes($data['days']);
 
-            $shift = Shift::create([
-                'company_id'  => $companyId,
-                'name'        => $data['name'],
-                'start_time'  => $times['start_time'],
-                'end_time'    => $times['end_time'],
-                'is_flexible' => $data['is_flexible'] ?? false,
-                'is_default'  => false,
-            ]);
+                $shift = Shift::create([
+                    'company_id'  => $companyId,
+                    'name'        => $data['name'],
+                    'start_time'  => $times['start_time'],
+                    'end_time'    => $times['end_time'],
+                    'is_flexible' => $data['is_flexible'] ?? false,
+                    'is_default'  => false,
+                ]);
 
-            $this->syncShiftDays($shift, $data['days']);
-            $this->toggleDefault($shift, $data['is_default'] ?? false);
+                $this->syncShiftDays($shift, $data['days']);
+                $this->toggleDefault($shift, $data['is_default'] ?? false);
 
-            return $shift->load(['shiftDays' => function ($query) {
-                $query->orderBy('weekday');
-            }]);
-        });
+                return $shift->load(['shiftDays' => function ($query) {
+                    $query->orderBy('weekday');
+                }]);
+            });
+        } catch (QueryException $exception) {
+            throw $this->handleShiftQueryException($exception);
+        }
 
         return response()->json($shift, 201);
     }
@@ -76,39 +82,43 @@ class ShiftController extends Controller
 
         $data = $request->validated();
 
-        $shift = DB::transaction(function () use ($shift, $data) {
-            $payload = [];
+        try {
+            $shift = DB::transaction(function () use ($shift, $data) {
+                $payload = [];
 
-            if (array_key_exists('name', $data)) {
-                $payload['name'] = $data['name'];
-            }
+                if (array_key_exists('name', $data)) {
+                    $payload['name'] = $data['name'];
+                }
 
-            if (array_key_exists('is_flexible', $data)) {
-                $payload['is_flexible'] = $data['is_flexible'];
-            }
+                if (array_key_exists('is_flexible', $data)) {
+                    $payload['is_flexible'] = $data['is_flexible'];
+                }
 
-            if (! empty($data['days'])) {
-                $times = $this->resolveShiftTimes($data['days']);
-                $payload['start_time'] = $times['start_time'];
-                $payload['end_time'] = $times['end_time'];
-            }
+                if (! empty($data['days'])) {
+                    $times = $this->resolveShiftTimes($data['days']);
+                    $payload['start_time'] = $times['start_time'];
+                    $payload['end_time'] = $times['end_time'];
+                }
 
-            if (! empty($payload)) {
-                $shift->update($payload);
-            }
+                if (! empty($payload)) {
+                    $shift->update($payload);
+                }
 
-            if (! empty($data['days'])) {
-                $this->syncShiftDays($shift, $data['days']);
-            }
+                if (! empty($data['days'])) {
+                    $this->syncShiftDays($shift, $data['days']);
+                }
 
-            if (array_key_exists('is_default', $data)) {
-                $this->toggleDefault($shift, (bool) $data['is_default']);
-            }
+                if (array_key_exists('is_default', $data)) {
+                    $this->toggleDefault($shift, (bool) $data['is_default']);
+                }
 
-            return $shift->load(['shiftDays' => function ($query) {
-                $query->orderBy('weekday');
-            }]);
-        });
+                return $shift->load(['shiftDays' => function ($query) {
+                    $query->orderBy('weekday');
+                }]);
+            });
+        } catch (QueryException $exception) {
+            throw $this->handleShiftQueryException($exception);
+        }
 
         return $shift;
     }
@@ -164,6 +174,15 @@ class ShiftController extends Controller
             'start_time' => $workingDays->pluck('start_time')->sort()->first(),
             'end_time'   => $workingDays->pluck('end_time')->sort()->last(),
         ];
+    }
+
+    protected function handleShiftQueryException(QueryException $exception): ValidationException
+    {
+        report($exception);
+
+        return ValidationException::withMessages([
+            'days' => 'Type error on shift days. Send boolean values for "is_working_day" and time values compatible with the database.',
+        ]);
     }
 
     protected function toggleDefault(Shift $shift, bool $isDefault): void
