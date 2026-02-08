@@ -12,8 +12,12 @@ class EmployeePolicy
      */
     public function view(User $user, User $employee): bool
     {
+        if ($user->id === $employee->id) {
+            return true;
+        }
+
         return $user->company_id === $employee->company_id &&
-               $user->hasRole(['manager', 'area_manager', 'admin']);
+            $user->hasRole(['manager', 'area_manager', 'admin']);
     }
 
     /**
