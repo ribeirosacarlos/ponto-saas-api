@@ -1,40 +1,37 @@
 <?php
 
-use App\Http\Controllers\Api\PasswordResetController;
-use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\InviteController;
-use App\Http\Controllers\Api\Billing\CheckoutSessionController;
-use App\Http\Controllers\Api\Billing\PortalController;
-use App\Http\Controllers\Api\Billing\PublicPlanController;
-use App\Http\Controllers\Api\Billing\PublicCheckoutSessionController;
-use App\Http\Controllers\Api\Billing\StripeWebhookController;
-use App\Http\Controllers\Api\Documents\DocumentController;
-use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
-use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
-use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
-use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
-use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
-
-use App\Http\Controllers\Api\AreaManager\TimeEntryController as AreaManagerTimeEntryController;
-use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdjustmentController;
-
+use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Api\Admin\Billing\CompanySubscriptionController;
 use App\Http\Controllers\Api\Admin\Billing\PlanController;
 use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
-use App\Http\Controllers\Api\Admin\EmployeeOvertimeController;
-use App\Http\Controllers\Api\Admin\ShiftController;
-use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\HolidayController;
-use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
-use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Api\Admin\ReportController;
+use App\Http\Controllers\Api\Admin\ShiftController;
+use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
+use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdjustmentController;
+use App\Http\Controllers\Api\AreaManager\TimeEntryController as AreaManagerTimeEntryController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Billing\CheckoutSessionController;
+use App\Http\Controllers\Api\Billing\PortalController;
+use App\Http\Controllers\Api\Billing\PublicCheckoutSessionController;
+use App\Http\Controllers\Api\Billing\PublicPlanController;
+use App\Http\Controllers\Api\Billing\StripeWebhookController;
+use App\Http\Controllers\Api\Documents\DocumentController;
+use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
+use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
+use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
+use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
+use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
+use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\Platform\CompanyController;
 use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 use App\Http\Controllers\Api\Settings\CompanySettingsController;
+use App\Http\Controllers\InviteController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
