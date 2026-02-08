@@ -2,7 +2,7 @@
 
 return [
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'health'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
@@ -20,7 +20,7 @@ return [
 
     'exposed_headers' => ['Content-Disposition', 'Content-Type', 'Content-Length'],
 
-    'max_age' => 86400,
+    'max_age' => 0,
 
     'supports_credentials' => false,
 ];
