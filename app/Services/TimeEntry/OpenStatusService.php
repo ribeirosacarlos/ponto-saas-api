@@ -3,6 +3,7 @@
 namespace App\Services\TimeEntry;
 
 use App\Models\Shift;
+use App\Models\ShiftDay;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\UserShift;
@@ -33,7 +34,13 @@ class OpenStatusService
         $shiftResult = $this->shiftResolver->resolve($user);
         $shift = $shiftResult['shift'];
         $shiftContext = $this->buildShiftContext($shift, $today);
-        $status = $this->determineStatus($entries, $shiftContext['break_expected'], $timezone);
+        $status = $this->determineStatus(
+            $entries,
+            $shiftContext['break_expected'],
+            $timezone,
+            $shiftContext['shift_day'] ?? null,
+            $today
+        );
         $shiftPayload = $this->buildShiftPayload($shift, $today, $timezone, $status['first_in']);
 
         return [
@@ -50,7 +57,7 @@ class OpenStatusService
     private function buildShiftContext(?Shift $shift, CarbonImmutable $today): array
     {
         if (! $shift) {
-            return ['break_expected' => false];
+            return ['break_expected' => false, 'shift_day' => null];
         }
 
         $weekday = $today->isoWeekday();
@@ -58,10 +65,11 @@ class OpenStatusService
 
         return [
             'break_expected' => (bool) ($definition?->break_start_time && $definition?->break_end_time),
+            'shift_day' => $definition,
         ];
     }
 
-    private function determineStatus(Collection $entries, bool $breakExpected, string $timezone): array
+    private function determineStatus(Collection $entries, bool $breakExpected, string $timezone, ?ShiftDay $shiftDay, CarbonImmutable $today): array
     {
         $status = [
             'has_open_entry' => false,
@@ -72,7 +80,7 @@ class OpenStatusService
         ];
 
         if ($entries->isEmpty()) {
-            return $status;
+            return $this->handleNoEntriesStatus($status, $timezone, $shiftDay, $today);
         }
 
         $lastEntry = $entries->last();
@@ -103,6 +111,49 @@ class OpenStatusService
         }
 
         return $status;
+    }
+
+    private function handleNoEntriesStatus(array $status, string $timezone, ?ShiftDay $shiftDay, CarbonImmutable $today): array
+    {
+        $now = CarbonImmutable::now($timezone);
+
+        if ($this->shouldTreatMissingEntryAsOpen($now, $today, $shiftDay)) {
+            return [
+                'has_open_entry' => true,
+                'open_type' => 'work',
+                'next_action' => 'clock_in',
+                'last_entry' => null,
+                'first_in' => null,
+            ];
+        }
+
+        return $status;
+    }
+
+    private function shouldTreatMissingEntryAsOpen(CarbonImmutable $now, CarbonImmutable $today, ?ShiftDay $shiftDay): bool
+    {
+        if (! $shiftDay || ! $shiftDay->is_working_day || ! $shiftDay->start_time) {
+            return false;
+        }
+
+        $shiftStart = $today->setTimeFromTimeString($shiftDay->start_time);
+        $shiftEnd = $shiftDay->end_time ? $today->setTimeFromTimeString($shiftDay->end_time) : null;
+        $tolerance = self::SHIFT_TOLERANCE_MINUTES;
+        $windowStart = $shiftStart->subMinutes($tolerance);
+
+        if ($now->lessThan($windowStart)) {
+            return false;
+        }
+
+        if ($shiftEnd) {
+            $windowEnd = $shiftEnd->addMinutes($tolerance);
+
+            if ($now->greaterThan($windowEnd)) {
+                return false;
+            }
+        }
+
+        return $now->greaterThanOrEqualTo($shiftStart);
     }
 
     private function buildShiftPayload(?Shift $shift, CarbonImmutable $today, string $timezone, ?TimeEntry $firstIn): array

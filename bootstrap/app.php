@@ -19,13 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ->withMiddleware(function (Middleware $middleware) {
             $middleware->appendToGroup('api', [
                 \App\Http\Middleware\IdentifyTenant::class,
-                SetCompanyTimezone::class,
             ]);
             $middleware->alias([
                 'role' => \App\Http\Middleware\RoleMiddleware::class,
                 'subscription.active' => \App\Http\Middleware\EnsureSubscriptionTrialOrActive::class,
                 'subscription.access' => \App\Http\Middleware\EnsureCompanyHasAccess::class,
                 'plan.feature' => \App\Http\Middleware\EnsurePlanFeature::class,
+                'company.timezone' => SetCompanyTimezone::class,
             ]);
             $middleware->prepend(HandleCors::class);
         })
