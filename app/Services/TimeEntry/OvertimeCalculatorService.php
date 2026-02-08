@@ -33,6 +33,7 @@ class OvertimeCalculatorService
         $entries = $this->fetchEntries($employee, $fromLocal, $toLocal);
         $groupedEntries = $this->groupEntriesByDate($entries, $timezone);
         $shift = $this->shiftResolver->resolve($employee)['shift'];
+        $days = $this->iterateDays($fromLocal, $toLocal);
 
         $totalWorked = 0;
         $totalExpected = 0;
@@ -40,9 +41,13 @@ class OvertimeCalculatorService
         $totalDebt = 0;
         $dailyDetails = [];
 
-        foreach ($groupedEntries as $date => $entriesForDay) {
-            $expectedMinutes = $this->expectedMinutesForDate($shift, CarbonImmutable::parse($date));
-            $pairResult = $this->pairAndSumMinutes($entriesForDay);
+        foreach ($days as $day) {
+            $date = $day->toDateString();
+            $expectedMinutes = $this->expectedMinutesForDate($shift, $day);
+            $entriesForDay = $groupedEntries[$date] ?? [];
+            $pairResult = $entriesForDay
+                ? $this->pairAndSumMinutes($entriesForDay)
+                : ['worked_minutes' => 0, 'ignored' => false, 'reason' => 'no_entries'];
             $workingMinutes = $pairResult['worked_minutes'] ?? 0;
             $ignored = $pairResult['ignored'] ?? false;
             $reason = $pairResult['reason'] ?? null;
@@ -343,5 +348,22 @@ class OvertimeCalculatorService
         }
 
         return 'even';
+    }
+
+    /**
+     * @return array<int, CarbonImmutable>
+     */
+    protected function iterateDays(CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $start = $from->startOfDay();
+        $end = $to->startOfDay();
+        $days = [];
+
+        while ($start->lessThanOrEqualTo($end)) {
+            $days[] = $start;
+            $start = $start->addDay();
+        }
+
+        return $days;
     }
 }
