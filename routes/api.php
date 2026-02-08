@@ -110,6 +110,9 @@ Route::prefix('v1')->group(function () {
                 Route::get('/announcements/pending-count', [EmployeeAnnouncementController::class, 'pendingCount']);
                 Route::get('/announcements/{announcement}', [EmployeeAnnouncementController::class, 'show']);
                 Route::post('/announcements/{announcement}/seen', [EmployeeAnnouncementController::class, 'markAsSeen']);
+
+
+                Route::get('/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
             });
 
 
