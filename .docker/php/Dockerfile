@@ -41,6 +41,19 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
  && chown -R www-data:www-data /var/www \
  && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
+ # --- PHP-FPM logs -> stderr/stdout (Docker friendly) ---
+RUN { \
+echo '[global]'; \
+echo 'error_log = /proc/self/fd/2'; \
+} > /usr/local/etc/php-fpm.d/zz-log.conf \
+&& { \
+echo '[www]'; \
+echo 'catch_workers_output = yes'; \
+echo 'decorate_workers_output = no'; \
+echo 'access.log = /proc/self/fd/2'; \
+echo 'clear_env = no'; \
+} > /usr/local/etc/php-fpm.d/zz-www.conf
+
 ARG APP_BUILD_SHA=unknown
 ENV APP_BUILD_SHA=${APP_BUILD_SHA}
 EXPOSE 9000

@@ -64,7 +64,7 @@ jobs:
 
                       # Pull e restart
                       docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-                      docker compose -f docker-compose.prod.yml up -d
+                      docker compose -f docker-compose.prod.yml up -d --pull always --force-recreate
 
                       # (Opcional) limpar imagens antigas
                       docker image prune -f
