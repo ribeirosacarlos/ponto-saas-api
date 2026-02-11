@@ -42,16 +42,16 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
  && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
  # --- PHP-FPM logs -> stderr/stdout (Docker friendly) ---
-RUN { \
-echo '[global]'; \
-echo 'error_log = /proc/self/fd/2'; \
+  RUN { \
+  echo '[global]'; \
+  echo 'error_log = /proc/self/fd/2'; \
 } > /usr/local/etc/php-fpm.d/zz-log.conf \
 && { \
-echo '[www]'; \
-echo 'catch_workers_output = yes'; \
-echo 'decorate_workers_output = no'; \
-echo 'access.log = /proc/self/fd/2'; \
-echo 'clear_env = no'; \
+  echo '[www]'; \
+  echo 'catch_workers_output = yes'; \
+  echo 'decorate_workers_output = no'; \
+  echo 'clear_env = no'; \
+  echo 'access.log = /dev/null'; \
 } > /usr/local/etc/php-fpm.d/zz-www.conf
 
 ARG APP_BUILD_SHA=unknown
