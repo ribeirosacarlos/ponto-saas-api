@@ -234,3 +234,8 @@ Route::get('/db-test', function () {
         return ['status' => 'error', 'message' => $e->getMessage()];
     }
 });
+
+Route::get('/__crash', function () {
+    logger()->error('LOG ANTES DO CRASH');
+    throw new Exception('CRASH TEST - CloudWatch');
+});
