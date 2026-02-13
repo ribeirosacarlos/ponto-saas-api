@@ -75,6 +75,42 @@ class TimeEntryAdjustmentTest extends TestCase
         ]);
     }
 
+    public function test_adjustment_type_follows_in_out_cycle(): void
+    {
+        $this->seedRoles();
+        $company = $this->createSubscribedCompany();
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $entry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->startOfDay()->addHours(7),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->startOfDay()->addHours(10),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $adjustmentTime = Carbon::now()->startOfDay()->addHours(15);
+
+        $response = $this->actingAs($employee)
+            ->postJson("/v1/employee/time-entries/{$entry->id}/adjustment", [
+                'proposed_clocked_at' => $adjustmentTime->toDateTimeString(),
+                'reason' => 'Entrada extra',
+            ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonFragment(['type' => 'in']);
+    }
+
     public function test_employee_entries_exclude_rejected_adjustments(): void
     {
         $this->seedRoles();
