@@ -34,6 +34,7 @@ class TimeEntry extends Model
         'adjustment_reviewed_by',
         'adjustment_reviewed_at',
         'adjustment_review_reason',
+        'adjustment_origin_id',
     ];
 
     protected $casts = [
@@ -41,11 +42,29 @@ class TimeEntry extends Model
         'proposed_clocked_at' => 'datetime',
         'adjustment_requested_at' => 'datetime',
         'adjustment_reviewed_at' => 'datetime',
+        'adjustment_origin_id' => 'string',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function adjustmentOrigin()
+    {
+        return $this->belongsTo(self::class, 'adjustment_origin_id');
+    }
+
+    public function adjustmentRequests()
+    {
+        return $this->hasMany(self::class, 'adjustment_origin_id');
+    }
+
+    public function hasPendingAdjustmentRequest(): bool
+    {
+        return $this->adjustmentRequests()
+            ->where('adjustment_status', 'pending')
+            ->exists();
     }
 
     public function isAdjustmentPending(): bool
@@ -58,26 +77,28 @@ class TimeEntry extends Model
         return $this->adjustment_status !== null;
     }
 
-    public function applyApprovedAdjustment(): void
+    public function applyApprovedAdjustment(self $target = null): void
     {
+        $target ??= $this;
+
         if ($this->proposed_clocked_at) {
-            $this->clocked_at = $this->proposed_clocked_at;
+            $target->clocked_at = $this->proposed_clocked_at;
         }
 
         if ($this->proposed_type) {
-            $this->type = $this->proposed_type;
+            $target->type = $this->proposed_type;
         }
 
         if (! is_null($this->proposed_latitude)) {
-            $this->latitude = (string) $this->proposed_latitude;
+            $target->latitude = (string) $this->proposed_latitude;
         }
 
         if (! is_null($this->proposed_longitude)) {
-            $this->longitude = (string) $this->proposed_longitude;
+            $target->longitude = (string) $this->proposed_longitude;
         }
 
         if ($this->proposed_source) {
-            $this->source = $this->proposed_source;
+            $target->source = $this->proposed_source;
         }
 
         $this->proposed_clocked_at = null;
