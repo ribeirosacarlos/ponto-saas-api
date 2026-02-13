@@ -59,17 +59,21 @@ class TimeEntryAdjustmentTest extends TestCase
         $response->assertJsonFragment([
             'adjustment_status' => 'pending',
             'adjustment_reason' => 'Corrigir entrada',
+            'adjustment_origin_id' => $entry->id,
         ]);
 
-        $this->assertDatabaseHas('time_entries', [
-            'id' => $entry->id,
-            'adjustment_status' => 'pending',
-            'proposed_clocked_at' => $proposed->toDateTimeString(),
-        ]);
+        $adjustmentId = $response->json('id');
 
         $this->assertDatabaseHas('time_entries', [
             'id' => $entry->id,
             'clocked_at' => $entry->clocked_at->toDateTimeString(),
+        ]);
+
+        $this->assertDatabaseHas('time_entries', [
+            'id' => $adjustmentId,
+            'adjustment_status' => 'pending',
+            'adjustment_origin_id' => $entry->id,
+            'proposed_clocked_at' => $proposed->toDateTimeString(),
         ]);
     }
 
@@ -87,7 +91,16 @@ class TimeEntryAdjustmentTest extends TestCase
             'clocked_at' => Carbon::now()->subHour(),
             'type' => 'in',
             'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $entry->clocked_at,
+            'type' => $entry->type,
+            'source' => $entry->source,
             'adjustment_status' => 'pending',
+            'adjustment_origin_id' => $entry->id,
             'proposed_clocked_at' => Carbon::now()->subMinute(),
             'adjustment_reason' => 'Ainda pendente',
             'adjustment_requested_by' => $employee->id,
@@ -113,22 +126,33 @@ class TimeEntryAdjustmentTest extends TestCase
         $manager = User::factory()->create(['company_id' => $company->id]);
         $manager->assignRole('area_manager');
 
-        $entry = TimeEntry::create([
+        $originalEntry = TimeEntry::create([
             'company_id' => $company->id,
             'user_id' => $employee->id,
             'clocked_at' => Carbon::now()->subHours(3),
             'type' => 'in',
             'source' => 'web',
+        ]);
+
+        $proposedClockedAt = Carbon::now()->subHour();
+
+        $adjustmentEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $originalEntry->clocked_at,
+            'type' => $originalEntry->type,
+            'source' => $originalEntry->source,
             'adjustment_status' => 'pending',
             'adjustment_reason' => 'Corrigir saída',
             'adjustment_requested_by' => $employee->id,
             'adjustment_requested_at' => now(),
-            'proposed_clocked_at' => Carbon::now()->subHour(),
+            'adjustment_origin_id' => $originalEntry->id,
+            'proposed_clocked_at' => $proposedClockedAt,
             'proposed_type' => 'out',
         ]);
 
         $response = $this->actingAs($manager)
-            ->postJson("/v1/admin/time-entries/{$entry->id}/adjustment/approve", [
+            ->postJson("/v1/admin/time-entries/{$adjustmentEntry->id}/adjustment/approve", [
                 'review_reason' => 'Aprovado',
             ]);
 
@@ -139,10 +163,16 @@ class TimeEntryAdjustmentTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('time_entries', [
-            'id' => $entry->id,
+            'id' => $originalEntry->id,
+            'type' => 'out',
+            'clocked_at' => $proposedClockedAt->toDateTimeString(),
+        ]);
+
+        $this->assertDatabaseHas('time_entries', [
+            'id' => $adjustmentEntry->id,
             'adjustment_status' => 'approved',
             'adjustment_review_reason' => 'Aprovado',
-            'type' => 'out',
+            'adjustment_origin_id' => $originalEntry->id,
         ]);
     }
 
@@ -157,22 +187,31 @@ class TimeEntryAdjustmentTest extends TestCase
         $manager = User::factory()->create(['company_id' => $company->id]);
         $manager->assignRole('area_manager');
 
-        $entry = TimeEntry::create([
+        $originalEntry = TimeEntry::create([
             'company_id' => $company->id,
             'user_id' => $employee->id,
             'clocked_at' => Carbon::now()->subHours(3),
             'type' => 'in',
             'source' => 'web',
+        ]);
+
+        $adjustmentEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $originalEntry->clocked_at,
+            'type' => $originalEntry->type,
+            'source' => $originalEntry->source,
             'adjustment_status' => 'pending',
             'adjustment_reason' => 'Corrigir saída',
             'adjustment_requested_by' => $employee->id,
             'adjustment_requested_at' => now(),
+            'adjustment_origin_id' => $originalEntry->id,
             'proposed_clocked_at' => Carbon::now()->subHour(),
             'proposed_type' => 'out',
         ]);
 
         $response = $this->actingAs($manager)
-            ->postJson("/v1/admin/time-entries/{$entry->id}/adjustment/reject", [
+            ->postJson("/v1/admin/time-entries/{$adjustmentEntry->id}/adjustment/reject", [
                 'review_reason' => 'Rejeitado',
             ]);
 
@@ -183,10 +222,15 @@ class TimeEntryAdjustmentTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('time_entries', [
-            'id' => $entry->id,
-            'adjustment_status' => 'rejected',
+            'id' => $originalEntry->id,
             'type' => 'in',
-            'clocked_at' => $entry->clocked_at->toDateTimeString(),
+            'clocked_at' => $originalEntry->clocked_at->toDateTimeString(),
+        ]);
+
+        $this->assertDatabaseHas('time_entries', [
+            'id' => $adjustmentEntry->id,
+            'adjustment_status' => 'rejected',
+            'adjustment_origin_id' => $originalEntry->id,
         ]);
     }
 
@@ -200,14 +244,25 @@ class TimeEntryAdjustmentTest extends TestCase
         $admin = User::factory()->create(['company_id' => $company->id]);
         $admin->assignRole('admin');
 
-        $entry = TimeEntry::create([
+        $originalEntry = TimeEntry::create([
             'company_id' => $company->id,
             'user_id' => $admin->id,
             'clocked_at' => Carbon::now()->subDays(1),
             'type' => 'in',
             'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $admin->id,
+            'clocked_at' => $originalEntry->clocked_at,
+            'type' => $originalEntry->type,
+            'source' => $originalEntry->source,
+            'adjustment_origin_id' => $originalEntry->id,
             'adjustment_status' => 'pending',
             'adjustment_reason' => 'Ajuste em avaliação',
+            'adjustment_requested_by' => $admin->id,
+            'adjustment_requested_at' => now(),
             'proposed_clocked_at' => Carbon::now()->subMinutes(30),
         ]);
 
