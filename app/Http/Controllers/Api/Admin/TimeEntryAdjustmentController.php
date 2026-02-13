@@ -20,14 +20,7 @@ class TimeEntryAdjustmentController extends Controller
             ], 409);
         }
 
-        $origin = $timeEntry->adjustmentOrigin;
-
-        DB::transaction(function () use ($request, $timeEntry, $origin) {
-            if ($origin) {
-                $timeEntry->applyApprovedAdjustment($origin);
-                $origin->save();
-            }
-
+        DB::transaction(function () use ($request, $timeEntry) {
             $timeEntry->fill([
                 'adjustment_status' => 'approved',
                 'adjustment_reviewed_by' => $request->user()->id,
