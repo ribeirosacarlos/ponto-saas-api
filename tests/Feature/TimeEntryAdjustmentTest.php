@@ -75,6 +75,60 @@ class TimeEntryAdjustmentTest extends TestCase
         ]);
     }
 
+    public function test_employee_entries_exclude_rejected_adjustments(): void
+    {
+        $this->seedRoles();
+        $company = $this->createSubscribedCompany();
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->subDays(1),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->subHours(5),
+            'type' => 'out',
+            'source' => 'web',
+            'adjustment_status' => 'pending',
+            'adjustment_reason' => 'Pendência',
+            'adjustment_requested_by' => $employee->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->subHours(2),
+            'type' => 'in',
+            'source' => 'web',
+            'adjustment_status' => 'rejected',
+            'adjustment_reason' => 'Rejeitado',
+            'adjustment_requested_by' => $employee->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        $response = $this->actingAs($employee)
+            ->getJson('/v1/employee/entries');
+
+        $response->assertStatus(200);
+        $data = $response->json('data');
+        $this->assertCount(2, $data);
+
+        foreach ($data as $entry) {
+            $this->assertTrue(
+                empty($entry['adjustment_status']) || $entry['adjustment_status'] !== 'rejected'
+            );
+        }
+    }
+
     public function test_admin_can_approve_adjustment(): void
     {
         $this->seedRoles();

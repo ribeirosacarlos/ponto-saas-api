@@ -13,13 +13,13 @@ class TimeEntryPolicy
      */
     public function view(User $user, TimeEntry $entry): bool
     {
-        if ($user->company_id !== $entry->company_id) {
+        if ((string) $user->company_id !== (string) $entry->company_id) {
             return false;
         }
 
         // employee sees own entries only
         if ($user->hasRole('employee')) {
-            return $entry->user_id === $user->id;
+            return (string) $entry->user_id === (string) $user->id;
         }
 
         // manager / area_manager / admin can view all entries from the same company

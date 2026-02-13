@@ -6,6 +6,7 @@ use App\Traits\CompanyScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Builder;
 
 class TimeEntry extends Model
 {
@@ -42,6 +43,14 @@ class TimeEntry extends Model
         'adjustment_requested_at' => 'datetime',
         'adjustment_reviewed_at' => 'datetime',
     ];
+
+    public function scopeExcludeRejected(Builder $query): Builder
+    {
+        return $query->where(function (Builder $builder) {
+            $builder->whereNull('adjustment_status')
+                ->orWhere('adjustment_status', '!=', 'rejected');
+        });
+    }
 
     public function user()
     {
