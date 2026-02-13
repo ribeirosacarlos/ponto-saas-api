@@ -53,6 +53,7 @@ class TimeEntryAdjustmentController extends Controller
             ->where('company_id', $timeEntry->company_id)
             ->whereDate('clocked_at', $clockedAt->toDateString())
             ->where('clocked_at', '<=', $clockedAt)
+            ->where('id', '!=', $timeEntry->id)
             ->orderByDesc('clocked_at')
             ->first();
 
