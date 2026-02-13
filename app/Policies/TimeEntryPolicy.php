@@ -26,6 +26,46 @@ class TimeEntryPolicy
         return $user->hasRole(['manager', 'area_manager', 'admin']);
     }
 
+    public function viewAnyAdjustments(User $user): bool
+    {
+        if ($user->hasRole('employee')) {
+            return false;
+        }
+
+        return $user->hasRole(['manager', 'area_manager', 'admin']);
+    }
+
+    public function requestAdjustment(User $user, TimeEntry $entry): bool
+    {
+        if ((string) $user->company_id !== (string) $entry->company_id) {
+            return false;
+        }
+
+        if ($user->hasRole('employee')) {
+            return (string) $entry->user_id === (string) $user->id;
+        }
+
+        return $user->hasRole(['manager', 'area_manager', 'admin']);
+    }
+
+    public function approveAdjustment(User $user, TimeEntry $entry): bool
+    {
+        if ($user->company_id !== $entry->company_id) {
+            return false;
+        }
+
+        if (! $user->hasRole(['manager', 'area_manager', 'admin'])) {
+            return false;
+        }
+
+        return $entry->isAdjustmentPending();
+    }
+
+    public function rejectAdjustment(User $user, TimeEntry $entry): bool
+    {
+        return $this->approveAdjustment($user, $entry);
+    }
+
 
     /**
      * Employees can create clock entries only for themselves.

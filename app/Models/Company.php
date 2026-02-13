@@ -60,11 +60,6 @@ class Company extends Model
         return $this->hasMany(TimeEntry::class);
     }
 
-    public function adjustments()
-    {
-        return $this->hasMany(Adjustment::class);
-    }
-
     public function userShifts()
     {
         return $this->hasMany(UserShift::class);

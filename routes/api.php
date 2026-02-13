@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
 use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\ShiftController;
+use App\Http\Controllers\Api\Admin\TimeEntryAdjustmentController as AdminTimeEntryAdjustmentController;
 use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
 use App\Http\Controllers\Api\AreaManager\AdjustmentController as AreaManagerAdjustmentController;
 use App\Http\Controllers\Api\AreaManager\TimeEntryController as AreaManagerTimeEntryController;
@@ -20,7 +21,7 @@ use App\Http\Controllers\Api\Billing\PublicCheckoutSessionController;
 use App\Http\Controllers\Api\Billing\PublicPlanController;
 use App\Http\Controllers\Api\Billing\StripeWebhookController;
 use App\Http\Controllers\Api\Documents\DocumentController;
-use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
+use App\Http\Controllers\Api\Employee\TimeEntryAdjustmentController as EmployeeTimeEntryAdjustmentController;
 use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
 use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
@@ -95,7 +96,8 @@ Route::prefix('v1')->group(function () {
                 Route::get('/worked-today', [EmployeeWorkedTodayController::class, 'show']);
 
                 // Solicitar ajuste
-                Route::post('/adjustments', [EmployeeAdjustmentController::class, 'request']);
+                Route::post('/time-entries/{timeEntry}/adjustment', [EmployeeTimeEntryAdjustmentController::class, 'store'])
+                    ->name('employee.time_entries.adjustment.store');
 
                 // Férias
                 Route::get('/vacations', [EmployeeVacationController::class, 'index']);
@@ -118,12 +120,8 @@ Route::prefix('v1')->group(function () {
             ->middleware(['role:area_manager|manager|admin', 'subscription.access'])
             ->group(function () {
 
-                // Listar solicitações de ajuste
+                // Listar solicitações de ajuste (compatível com /adjustments; mapeado para time_entries)
                 Route::get('/adjustments', [AreaManagerAdjustmentController::class, 'index']);
-
-                // Aprovar ajustes
-                Route::post('/adjustments/{id}/approve', [AreaManagerAdjustmentController::class, 'approve']);
-                Route::post('/adjustments/{id}/reject',  [AreaManagerAdjustmentController::class, 'reject']);
 
                 // Ver batidas da equipe
                 Route::get('/team/entries', [AreaManagerTimeEntryController::class, 'teamEntries']);
@@ -164,6 +162,9 @@ Route::prefix('v1')->group(function () {
                 // Relatórios
                 Route::get('/reports/time', [ReportController::class, 'timeReport'])
                     ->middleware('plan.feature:reports');
+
+                Route::post('/time-entries/{timeEntry}/adjustment/approve', [AdminTimeEntryAdjustmentController::class, 'approve']);
+                Route::post('/time-entries/{timeEntry}/adjustment/reject', [AdminTimeEntryAdjustmentController::class, 'reject']);
             });
 
             Route::middleware(['role:area_manager|manager|admin', 'subscription.access'])->group(function () {
