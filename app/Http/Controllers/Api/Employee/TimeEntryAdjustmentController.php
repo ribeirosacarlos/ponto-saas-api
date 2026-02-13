@@ -13,30 +13,18 @@ class TimeEntryAdjustmentController extends Controller
     {
         $this->authorize('requestAdjustment', $timeEntry);
 
-        if ($timeEntry->hasPendingAdjustmentRequest()) {
-            return response()->json([
-                'message' => 'Já existe um ajuste pendente para este registro.'
-            ], 409);
-        }
-
         $adjustment = TimeEntry::create([
             'company_id' => $timeEntry->company_id,
             'user_id' => $timeEntry->user_id,
-            'clocked_at' => $timeEntry->clocked_at,
-            'type' => $timeEntry->type,
-            'latitude' => $timeEntry->latitude,
-            'longitude' => $timeEntry->longitude,
-            'source' => $timeEntry->source,
-            'adjustment_origin_id' => $timeEntry->id,
+            'clocked_at' => $request->proposed_clocked_at ?? $timeEntry->clocked_at,
+            'type' => $request->proposed_type ?? $timeEntry->type,
+            'latitude' => $request->proposed_latitude ?? $timeEntry->latitude,
+            'longitude' => $request->proposed_longitude ?? $timeEntry->longitude,
+            'source' => $request->proposed_source ?? $timeEntry->source,
             'adjustment_status' => 'pending',
             'adjustment_reason' => $request->reason,
             'adjustment_requested_by' => $request->user()->id,
             'adjustment_requested_at' => now(),
-            'proposed_clocked_at' => $request->proposed_clocked_at,
-            'proposed_type' => $request->proposed_type,
-            'proposed_latitude' => $request->proposed_latitude,
-            'proposed_longitude' => $request->proposed_longitude,
-            'proposed_source' => $request->proposed_source,
         ]);
 
         return response()->json($adjustment, 201);
