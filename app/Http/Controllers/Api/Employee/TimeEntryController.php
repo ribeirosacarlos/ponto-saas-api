@@ -61,6 +61,7 @@ class TimeEntryController extends Controller
     {
         $entries = $request->user()
             ->timeEntries()
+            ->excludeRejected()
             ->orderBy('clocked_at', 'desc')
             ->paginate(20);
 

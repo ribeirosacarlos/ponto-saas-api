@@ -18,6 +18,7 @@ class AdjustmentController extends Controller
             ->with('user:id,name,email')
             ->where('company_id', $user->company_id)
             ->whereNotNull('adjustment_status')
+            ->where('adjustment_status', '!=', 'rejected')
             ->orderByDesc('adjustment_requested_at');
 
         if ($request->filled('status')) {
