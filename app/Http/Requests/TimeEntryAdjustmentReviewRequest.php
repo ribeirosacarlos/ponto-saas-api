@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AdjustmentStoreRequest extends FormRequest
+class TimeEntryAdjustmentReviewRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,8 +14,7 @@ class AdjustmentStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'corrected_time' => 'required|date',
-            'reason'         => 'required|string|max:500',
+            'review_reason' => ['nullable', 'string', 'max:500'],
         ];
     }
 }
