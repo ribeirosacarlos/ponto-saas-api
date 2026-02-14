@@ -2,11 +2,12 @@
 
 namespace Tests\Feature\Employee;
 
+use App\Http\Middleware\EnsureCompanyHasAccess;
+use App\Models\Role;
 use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\TimeEntry;
 use App\Models\User;
-use App\Models\Role;
 use App\Models\UserShift;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,161 +22,118 @@ class OpenStatusTest extends TestCase
     {
         parent::setUp();
 
-        Role::updateOrCreate(
-            ['name' => 'employee'],
-            ['display_name' => 'Employee']
-        );
+        $this->withoutMiddleware(EnsureCompanyHasAccess::class);
+
+        Role::updateOrCreate(['name' => 'employee'], ['display_name' => 'Employee']);
     }
 
-    public function test_returns_clock_in_when_no_entries()
+    protected function tearDown(): void
     {
-        $user = $this->createEmployee();
-        $this->assignShift($user);
+        CarbonImmutable::setTestNow();
 
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/time-entries/open-status');
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'has_open_entry' => false,
-                'open_type' => null,
-                'next_action' => 'clock_in',
-                'shift' => [
-                    'start' => '08:00',
-                    'end' => '17:00',
-                    'tolerance_minutes' => 10,
-                ],
-            ]);
-
-        $this->assertNull($response->json('last_entry'));
+        parent::tearDown();
     }
 
-    public function test_reports_open_work_when_last_entry_is_in()
+    public function test_overnight_open_status_is_true_after_30_minutes_from_expected_out(): void
     {
         $user = $this->createEmployee();
-        $this->assignShift($user, ['break_start_time' => null, 'break_end_time' => null]);
-        $this->createTimeEntry($user, 'in', CarbonImmutable::now()->subHour());
+        $this->createOvernightShift($user, 1); // Monday 22:00 -> Tuesday 06:00
 
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/time-entries/open-status');
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'has_open_entry' => true,
-                'open_type' => 'work',
-                'next_action' => 'clock_out',
-                'last_entry' => [
-                    'type' => 'in',
-                ],
-            ]);
-    }
-
-    public function test_returns_clock_in_after_completing_entries()
-    {
-        $user = $this->createEmployee();
-        $this->assignShift($user);
-        $this->createTimeEntry($user, 'in', CarbonImmutable::now()->setTime(8, 0));
-        $this->createTimeEntry($user, 'out', CarbonImmutable::now()->setTime(17, 0));
-
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/time-entries/open-status');
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'has_open_entry' => false,
-                'open_type' => null,
-                'next_action' => 'clock_in',
-                'last_entry' => [
-                    'type' => 'out',
-                ],
-            ]);
-    }
-
-    public function test_detects_open_break_when_break_started_without_ending()
-    {
-        $user = $this->createEmployee();
-        $this->assignShift($user, [
-            'break_start_time' => '12:00',
-            'break_end_time' => '13:00',
-        ]);
-        $this->createTimeEntry($user, 'in', CarbonImmutable::now()->setTime(8, 0));
-        $this->createTimeEntry($user, 'break_start', CarbonImmutable::now()->setTime(12, 0));
-
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/time-entries/open-status');
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'has_open_entry' => true,
-                'open_type' => 'break',
-                'next_action' => 'break_end',
-                'last_entry' => [
-                    'type' => 'break_start',
-                ],
-            ]);
-    }
-
-    public function test_shift_endpoint_returns_shift_rules()
-    {
-        $user = $this->createEmployee();
-        $shift = $this->assignShift($user, [
-            'break_start_time' => '12:00',
-            'break_end_time' => '13:00',
+        TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'user_shift_id' => $user->userShifts()->first()->id,
+            'clocked_at' => CarbonImmutable::parse('2026-02-16 22:01:00', 'Europe/Madrid'),
+            'type' => 'in',
+            'event_kind' => 'work_start',
+            'source' => 'web',
         ]);
 
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/shift');
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-02-17 06:40:00', 'Europe/Madrid'));
 
-        $response->assertStatus(200);
-        $response->assertJsonPath('shift.id', $shift->id);
-        $response->assertJsonPath('shift.shift_days.0.weekday', CarbonImmutable::now()->isoWeekday());
-        $response->assertJsonPath('shift.shift_days.0.break_start_time', '12:00');
-        $response->assertJsonPath('assignment.start_date', CarbonImmutable::now()->toDateString());
-        $this->assertNotNull($response->json('assignment.id'));
+        $response = $this->actingAs($user)->getJson('/v1/employee/time-entries/open-status');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('open', true)
+            ->assertJsonPath('assignment_id', $user->userShifts()->first()->id)
+            ->assertJsonPath('expected_next_out_at', '2026-02-17T06:00:00+01:00');
+    }
+
+    public function test_overnight_open_status_is_false_before_30_minutes_from_expected_out(): void
+    {
+        $user = $this->createEmployee();
+        $this->createOvernightShift($user, 1);
+
+        TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'user_shift_id' => $user->userShifts()->first()->id,
+            'clocked_at' => CarbonImmutable::parse('2026-02-16 22:01:00', 'Europe/Madrid'),
+            'type' => 'in',
+            'event_kind' => 'work_start',
+            'source' => 'web',
+        ]);
+
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-02-17 06:20:00', 'Europe/Madrid'));
+
+        $response = $this->actingAs($user)->getJson('/v1/employee/time-entries/open-status');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('open', false)
+            ->assertJsonPath('open_reason', null)
+            ->assertJsonPath('expected_next_out_at', '2026-02-17T06:00:00+01:00');
     }
 
     private function createEmployee(): User
     {
         $user = User::factory()->create();
         $user->assignRole('employee');
+
         return $user;
     }
 
-    private function assignShift(User $user, array $options = []): Shift
+    private function createOvernightShift(User $user, int $weekday): void
     {
         $shift = Shift::create([
             'company_id' => $user->company_id,
-            'name' => 'Teste ' . Str::random(4),
-            'start_time' => $options['start_time'] ?? '08:00',
-            'end_time' => $options['end_time'] ?? '17:00',
-            'is_flexible' => $options['is_flexible'] ?? false,
-            'is_default' => $options['is_default'] ?? true,
+            'name' => 'Overnight ' . Str::random(4),
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+            'is_flexible' => false,
+            'is_default' => false,
         ]);
 
-        ShiftDay::create([
+        $shiftDay = ShiftDay::create([
             'shift_id' => $shift->id,
-            'weekday' => CarbonImmutable::now()->isoWeekday(),
+            'weekday' => $weekday,
             'is_working_day' => true,
-            'start_time' => $shift->start_time,
-            'end_time' => $shift->end_time,
-            'break_start_time' => $options['break_start_time'] ?? null,
-            'break_end_time' => $options['break_end_time'] ?? null,
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+        ]);
+
+        $shiftDay->events()->createMany([
+            [
+                'kind' => 'work_start',
+                'expected_time' => '22:00:00',
+                'day_offset' => 0,
+                'expected_type' => 'in',
+                'sort_order' => 10,
+            ],
+            [
+                'kind' => 'work_end',
+                'expected_time' => '06:00:00',
+                'day_offset' => 1,
+                'expected_type' => 'out',
+                'sort_order' => 20,
+            ],
         ]);
 
         UserShift::create([
             'company_id' => $user->company_id,
             'user_id' => $user->id,
             'shift_id' => $shift->id,
-            'start_date' => CarbonImmutable::now()->toDateString(),
+            'start_date' => '2026-01-01',
             'end_date' => null,
-        ]);
-
-        return $shift;
-    }
-
-    private function createTimeEntry(User $user, string $type, CarbonImmutable $clockedAt): TimeEntry
-    {
-        return TimeEntry::create([
-            'company_id' => $user->company_id,
-            'user_id' => $user->id,
-            'clocked_at' => $clockedAt,
-            'type' => $type,
-            'source' => 'web',
         ]);
     }
 }

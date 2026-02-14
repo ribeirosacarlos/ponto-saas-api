@@ -2442,41 +2442,30 @@
                 "tags": [
                     "Area Manager - Adjustments"
                 ],
-                "summary": "Lista solicitações de ajuste da empresa",
-                "description": "Lista ajustes de ponto da empresa do usuário autenticado (area_manager/manager/admin). Por padrão retorna apenas ajustes com status 'pending'. Suporta filtros e paginação.",
+                "summary": "Lista ajustes via time_entries",
+                "description": "Retorna os time entries que possuem ajustes pendentes na empresa do usuário autenticado.",
                 "operationId": "1f0c5e7a8e55b7710cbefbea9c4ecb58",
                 "parameters": [
                     {
                         "name": "status",
                         "in": "query",
-                        "description": "Filtrar por status. Se não informado, default = pending.",
-                        "required": false,
+                        "description": "Filtrar por status (pending, approved, rejected). Default = pending.",
                         "schema": {
-                            "type": "string",
-                            "enum": [
-                                "pending",
-                                "approved",
-                                "rejected"
-                            ],
-                            "example": "pending"
+                            "type": "string"
                         }
                     },
                     {
                         "name": "user_id",
                         "in": "query",
-                        "description": "Filtrar pelos ajustes de um funcionário específico (UUID do usuário).",
-                        "required": false,
+                        "description": "UUID do funcionário",
                         "schema": {
                             "type": "string",
-                            "format": "uuid",
-                            "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                            "format": "uuid"
                         }
                     },
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Página da paginação",
-                        "required": false,
                         "schema": {
                             "type": "integer",
                             "example": 1
@@ -2485,8 +2474,6 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Quantidade de itens por página (se você implementar no backend). Se não, o Laravel usa o default do paginate().",
-                        "required": false,
                         "schema": {
                             "type": "integer",
                             "example": 15
@@ -2495,7 +2482,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de ajustes",
+                        "description": "Lista paginada de time entries com ajustes",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2506,149 +2493,65 @@
                                                 "properties": {
                                                     "id": {
                                                         "type": "string",
-                                                        "format": "uuid",
-                                                        "example": "019b9600-77ae-71dd-b912-4f26d4f2f354"
-                                                    },
-                                                    "company_id": {
-                                                        "type": "string",
-                                                        "format": "uuid",
-                                                        "example": "78f4ab91-296c-4fdb-a70c-c91415be1532"
+                                                        "format": "uuid"
                                                     },
                                                     "user_id": {
                                                         "type": "string",
-                                                        "format": "uuid",
-                                                        "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                                                        "format": "uuid"
                                                     },
-                                                    "approver_id": {
+                                                    "clocked_at": {
                                                         "type": "string",
-                                                        "format": "uuid",
-                                                        "example": null,
-                                                        "nullable": true
+                                                        "format": "date-time"
                                                     },
-                                                    "original_time": {
-                                                        "type": "string",
-                                                        "example": null,
-                                                        "nullable": true
+                                                    "type": {
+                                                        "type": "string"
                                                     },
-                                                    "corrected_time": {
-                                                        "type": "string",
-                                                        "example": "2026-01-06 13:03:00"
+                                                    "source": {
+                                                        "type": "string"
                                                     },
-                                                    "reason": {
-                                                        "type": "string",
-                                                        "example": "Esqueci de marcar o ponto",
-                                                        "nullable": true
-                                                    },
-                                                    "status": {
+                                                    "adjustment_status": {
                                                         "type": "string",
                                                         "example": "pending"
                                                     },
-                                                    "created_at": {
-                                                        "type": "string",
-                                                        "example": "2026-01-07 01:09:31",
-                                                        "nullable": true
+                                                    "adjustment_reason": {
+                                                        "type": "string"
                                                     },
-                                                    "updated_at": {
+                                                    "proposed_clocked_at": {
                                                         "type": "string",
-                                                        "example": "2026-01-07 01:09:31",
-                                                        "nullable": true
+                                                        "format": "date-time"
+                                                    },
+                                                    "proposed_type": {
+                                                        "type": "string"
+                                                    },
+                                                    "proposed_latitude": {
+                                                        "type": "number"
+                                                    },
+                                                    "proposed_longitude": {
+                                                        "type": "number"
                                                     },
                                                     "user": {
                                                         "properties": {
                                                             "id": {
                                                                 "type": "string",
-                                                                "format": "uuid",
-                                                                "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                                                                "format": "uuid"
                                                             },
                                                             "name": {
-                                                                "type": "string",
-                                                                "example": "João Silva"
+                                                                "type": "string"
                                                             },
                                                             "email": {
-                                                                "type": "string",
-                                                                "example": "joao@empresa.com"
+                                                                "type": "string"
                                                             }
                                                         },
-                                                        "type": "object",
-                                                        "nullable": true
-                                                    },
-                                                    "approver": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "string",
-                                                                "format": "uuid",
-                                                                "example": "11111111-2222-3333-4444-555555555555"
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "Gestor Maria"
-                                                            }
-                                                        },
-                                                        "type": "object",
-                                                        "nullable": true
+                                                        "type": "object"
                                                     }
                                                 },
                                                 "type": "object"
                                             }
                                         },
-                                        "links": {
-                                            "properties": {
-                                                "first": {
-                                                    "type": "string",
-                                                    "example": "https://api.jornafy.com/v1/area-manager/adjustments?page=1",
-                                                    "nullable": true
-                                                },
-                                                "last": {
-                                                    "type": "string",
-                                                    "example": "https://api.jornafy.com/v1/area-manager/adjustments?page=3",
-                                                    "nullable": true
-                                                },
-                                                "prev": {
-                                                    "type": "string",
-                                                    "example": null,
-                                                    "nullable": true
-                                                },
-                                                "next": {
-                                                    "type": "string",
-                                                    "example": "https://api.jornafy.com/v1/area-manager/adjustments?page=2",
-                                                    "nullable": true
-                                                }
-                                            },
+                                        "meta": {
                                             "type": "object"
                                         },
-                                        "meta": {
-                                            "properties": {
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "from": {
-                                                    "type": "integer",
-                                                    "example": 1,
-                                                    "nullable": true
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "example": 3
-                                                },
-                                                "path": {
-                                                    "type": "string",
-                                                    "example": "https://api.jornafy.com/v1/area-manager/adjustments"
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 15
-                                                },
-                                                "to": {
-                                                    "type": "integer",
-                                                    "example": 15,
-                                                    "nullable": true
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 40
-                                                }
-                                            },
+                                        "links": {
                                             "type": "object"
                                         }
                                     },
@@ -2656,12 +2559,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    },
-                    "403": {
-                        "description": "Usuário não autorizado"
                     }
                 },
                 "security": [
@@ -2671,73 +2568,75 @@
                 ]
             }
         },
-        "/v1/area-manager/adjustments/{id}/approve": {
+        "/v1/admin/time-entries/{timeEntry}/adjustment/approve": {
             "post": {
                 "tags": [
                     "Area Manager - Adjustments"
                 ],
-                "summary": "Aprova um ajuste solicitado pelo funcionário",
-                "description": "O gestor aprova um ajuste pendente. Atualiza o status e registra o 'approver_id'.",
-                "operationId": "4b33f380735fc075bcbc3a7956848034",
+                "summary": "Aprova um ajuste pendente",
+                "description": "Aplica os valores propostos ao time entry e marca o ajuste como aprovado.",
+                "operationId": "276347a672a5131f66819ecc2eb20207",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "timeEntry",
                         "in": "path",
-                        "description": "ID do ajuste a ser aprovado",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 5
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "review_reason": {
+                                        "type": "string",
+                                        "example": "Confere"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Ajuste aprovado com sucesso",
+                        "description": "Ajuste aprovado",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "id": {
-                                            "type": "integer",
-                                            "example": 5
-                                        },
-                                        "user_id": {
-                                            "type": "integer",
-                                            "example": 12
-                                        },
-                                        "original_time": {
                                             "type": "string",
-                                            "example": null,
-                                            "nullable": true
+                                            "format": "uuid"
                                         },
-                                        "corrected_time": {
+                                        "clocked_at": {
                                             "type": "string",
-                                            "example": "2025-02-10 08:10:00"
+                                            "format": "date-time"
                                         },
-                                        "reason": {
-                                            "type": "string",
-                                            "example": "Esqueci de bater o ponto"
+                                        "type": {
+                                            "type": "string"
                                         },
-                                        "status": {
+                                        "adjustment_status": {
                                             "type": "string",
                                             "example": "approved"
                                         },
-                                        "approver_id": {
-                                            "type": "integer",
-                                            "example": 7
+                                        "adjustment_review_reason": {
+                                            "type": "string"
+                                        },
+                                        "adjustment_reviewed_at": {
+                                            "type": "string",
+                                            "format": "date-time"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
-                    },
-                    "403": {
-                        "description": "Usuário não autorizado"
-                    },
-                    "404": {
-                        "description": "Ajuste não encontrado"
                     }
                 },
                 "security": [
@@ -2747,73 +2646,68 @@
                 ]
             }
         },
-        "/v1/area-manager/adjustments/{id}/reject": {
+        "/v1/admin/time-entries/{timeEntry}/adjustment/reject": {
             "post": {
                 "tags": [
                     "Area Manager - Adjustments"
                 ],
-                "summary": "Rejeita um ajuste solicitado pelo funcionário",
-                "description": "O gestor rejeita um ajuste pendente. Atualiza o status e registra o 'approver_id'.",
-                "operationId": "cfcaaeacfdc055ebab16322cef9fc9db",
+                "summary": "Rejeita um ajuste pendente",
+                "description": "Marca o ajuste como rejeitado e mantém os dados oficiais.",
+                "operationId": "179b9784e602e25abfd77a4c45aa5f6b",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "timeEntry",
                         "in": "path",
-                        "description": "ID do ajuste a ser rejeitado",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 5
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "review_reason": {
+                                        "type": "string",
+                                        "example": "Rejeitado"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Ajuste rejeitado com sucesso",
+                        "description": "Ajuste rejeitado",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "id": {
-                                            "type": "integer",
-                                            "example": 5
-                                        },
-                                        "user_id": {
-                                            "type": "integer",
-                                            "example": 12
-                                        },
-                                        "original_time": {
                                             "type": "string",
-                                            "example": null,
-                                            "nullable": true
+                                            "format": "uuid"
                                         },
-                                        "corrected_time": {
-                                            "type": "string",
-                                            "example": "2025-02-10 08:10:00"
-                                        },
-                                        "reason": {
-                                            "type": "string",
-                                            "example": "Esqueci de bater o ponto"
-                                        },
-                                        "status": {
+                                        "adjustment_status": {
                                             "type": "string",
                                             "example": "rejected"
                                         },
-                                        "approver_id": {
-                                            "type": "integer",
-                                            "example": 7
+                                        "adjustment_review_reason": {
+                                            "type": "string"
+                                        },
+                                        "adjustment_reviewed_at": {
+                                            "type": "string",
+                                            "format": "date-time"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
-                    },
-                    "403": {
-                        "description": "Usuário não autorizado"
-                    },
-                    "404": {
-                        "description": "Ajuste não encontrado"
                     }
                 },
                 "security": [
@@ -3095,11 +2989,11 @@
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Realiza login do usuário",
-                "description": "Retorna o token e dados do usuário autenticado",
+                "summary": "Performs user login",
+                "description": "Returns the token and authenticated user data",
                 "operationId": "2c84e8de383e2d44452e7f8b79a8b7e2",
                 "requestBody": {
-                    "description": "Dados de login",
+                    "description": "Login credentials",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -3126,13 +3020,13 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Login realizado com sucesso",
+                        "description": "Login successful",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "user": {
-                                            "description": "Objeto completo do usuário autenticado",
+                                            "description": "Authenticated user object",
                                             "type": "object"
                                         },
                                         "roles": {
@@ -3156,14 +3050,14 @@
                         }
                     },
                     "401": {
-                        "description": "Credenciais inválidas",
+                        "description": "Invalid credentials",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Credenciais inválidas"
+                                            "example": "Invalid credentials"
                                         }
                                     },
                                     "type": "object"
@@ -3179,19 +3073,19 @@
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Realiza logout do usuário autenticado",
-                "description": "Revoga o token atual do usuário",
+                "summary": "Performs logout for authenticated user",
+                "description": "Revokes the current user token",
                 "operationId": "d8ae940eb58b4e626e279e176bfd7457",
                 "responses": {
                     "200": {
-                        "description": "Logout realizado",
+                        "description": "Logout successful",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Logout feito com sucesso"
+                                            "example": "Logged out successfully"
                                         }
                                     },
                                     "type": "object"
@@ -3205,6 +3099,151 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/v1/forgot-password": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Request password reset",
+                "description": "Sends a password reset code to the user's email",
+                "operationId": "cd688b33a954749cb3dad5a7762f25b0",
+                "requestBody": {
+                    "description": "Email for password reset",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@company.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reset code sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "If the email exists, a recovery link has been sent."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The email field is required."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/reset-password": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Reset user password",
+                "description": "Reset user password with the provided code",
+                "operationId": "3d1fe7c341e2547fea0c042599600ba6",
+                "requestBody": {
+                    "description": "Data for password reset",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "example": "ABCDEFGH"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@company.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "NewPassword123!"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "NewPassword123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password reset successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid, expired token or invalid data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid or expired token."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/v1/billing/plans": {
@@ -3402,33 +3441,178 @@
                 }
             }
         },
-        "/v1/employee/adjustments": {
+        "/v1/documents": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Lista os documentos do funcionário logado",
+                "description": "Permite filtrar por categoria, status, busca e paginar. O filtro user_id só é respeitado por funções privilegiadas.",
+                "operationId": "213e569ecec66d86203467553dd23ed7",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "payroll",
+                                "courses",
+                                "personal",
+                                "others"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "review",
+                                "available",
+                                "expired"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "description": "Busca parcial no título ou notas",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "description": "Disponível apenas para admins/gerentes/area managers",
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "updated_at:desc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de documentos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 80
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DocumentResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "422": {
+                        "description": "Parâmetros inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
-                    "Employee - Adjustments"
+                    "Documents"
                 ],
-                "summary": "Solicita um ajuste de ponto",
-                "description": "O funcionário envia uma solicitação de correção de horário (entrada/saída). A solicitação entra como 'pending'.",
-                "operationId": "2cf9ab31b369832867d67f9316239e1e",
+                "summary": "Envio de um ou mais documentos",
+                "operationId": "a7df5282df1d2cd9fef8a72f99a808f3",
                 "requestBody": {
-                    "description": "Dados do ajuste solicitado",
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "required": [
-                                    "corrected_time",
-                                    "reason"
+                                    "category",
+                                    "files"
                                 ],
                                 "properties": {
-                                    "corrected_time": {
+                                    "category": {
                                         "type": "string",
-                                        "format": "date-time",
-                                        "example": "2025-02-10 08:10:00"
+                                        "enum": [
+                                            "payroll",
+                                            "courses",
+                                            "personal",
+                                            "others"
+                                        ]
                                     },
-                                    "reason": {
+                                    "title": {
                                         "type": "string",
-                                        "example": "Esqueci de registrar a entrada"
+                                        "maxLength": 180
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "files[]": {
+                                        "description": "Multipart com os arquivos permitidos",
+                                        "type": "string",
+                                        "format": "binary"
                                     }
                                 },
                                 "type": "object"
@@ -3438,35 +3622,1008 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Ajuste criado com sucesso",
+                        "description": "Documentos criados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DocumentResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "422": {
+                        "description": "Dados inválidos ou arquivo muito grande"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/documents/{document}": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Detalhes de um documento",
+                "operationId": "c6c00ccdb88daf9ca8f8900d83eb6caa",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documento retornado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Documento não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Remove um documento",
+                "operationId": "46723adaf9ee9b651433f49863f8881c",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Documento removido"
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Documento não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Atualiza metadados ou status do documento",
+                "operationId": "3227d189950e70ca7954c24ad596bde7",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 180
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "payroll",
+                                            "courses",
+                                            "personal",
+                                            "others"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "review",
+                                            "available",
+                                            "expired"
+                                        ]
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Documento atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentResource"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Dados inválidos"
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Documento não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/documents/{document}/view": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Abre o documento em modo inline",
+                "operationId": "531e8506f92b63368e4bf1108192976b",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stream do arquivo"
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Arquivo não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/documents/{document}/download": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Baixa o documento como anexo",
+                "operationId": "2904c971d036ab0be28f3773c5da0c09",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Download do arquivo"
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Arquivo não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/documents/{document}/resend": {
+            "post": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Reenvia o documento rejeitado",
+                "operationId": "cb5cdfe71c92f43645e9fbf8e77db522",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Documento reenviado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "422": {
+                        "description": "Documento não está em revisão"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/documents/{document}/approve": {
+            "patch": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Marca o documento como disponível",
+                "operationId": "c6b07eb2e68723491a1f5b8b7da9b178",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documento aprovado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Documento não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/documents/pending": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Lista documentos pendentes para revisão",
+                "operationId": "dc945bbcaa148f60a78a7190f674983d",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "payroll",
+                                "courses",
+                                "personal",
+                                "others"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "employee_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "updated_at:desc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documentos pendentes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DocumentAdminResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/documents/review": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Lista documentos rejeitados aguardando reenvio",
+                "operationId": "d013e46a4e8a88cfd9ff25ad431a1781",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "payroll",
+                                "courses",
+                                "personal",
+                                "others"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "employee_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "updated_at:desc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documentos em revisão",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DocumentAdminResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/documents/{document}": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Detalhes administrativos de um documento",
+                "operationId": "c94d20aa03311235b27c376332068a70",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documento retornado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentAdminResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Documento não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/documents/{document}/approve": {
+            "patch": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Aprova um documento e limpa o estado de rejeição",
+                "operationId": "af0688d568ab73fcccf680cfa47cdde2",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documento aprovado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentAdminResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Documento não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/documents/{document}/reject": {
+            "patch": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Rejeita um documento com comentário",
+                "operationId": "e6bfffe7f7cda3ca7abded8acf662a6f",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "comment": {
+                                        "type": "string",
+                                        "maxLength": 2000,
+                                        "minLength": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Documento rejeitado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentAdminResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Documento não encontrado"
+                    },
+                    "422": {
+                        "description": "Comentário obrigatório"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/documents/upload-for-employee": {
+            "post": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Upload de documentos para funcionário (apenas admin)",
+                "operationId": "0b438869ca05af0ee8387326daaffc2a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "category",
+                                    "files"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "description": "ID do funcionário",
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "payroll",
+                                            "courses",
+                                            "personal",
+                                            "others"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 180
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "files[]": {
+                                        "description": "Multipart com os arquivos permitidos",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Documentos criados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DocumentAdminResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Dados inválidos"
+                    },
+                    "401": {
+                        "description": "Requisição não autenticada"
+                    },
+                    "403": {
+                        "description": "Acesso negado"
+                    },
+                    "404": {
+                        "description": "Funcionário não encontrado"
+                    },
+                    "422": {
+                        "description": "Dados inválidos ou arquivo muito grande"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/time-entries/{timeEntry}/adjustment": {
+            "post": {
+                "tags": [
+                    "Employee - Adjustments"
+                ],
+                "summary": "Solicita ajuste para um registro existente",
+                "description": "Solicita ajuste sobre um time entry existente. O registro oficial so muda apos aprovacao.",
+                "operationId": "9705702f7401c6f54229f9c5847aa895",
+                "parameters": [
+                    {
+                        "name": "timeEntry",
+                        "in": "path",
+                        "description": "UUID do time entry a ser ajustado",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Campos propostos para o ajuste",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "proposed_clocked_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2026-02-10 08:05:00"
+                                    },
+                                    "proposed_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "in",
+                                            "out"
+                                        ],
+                                        "example": "in"
+                                    },
+                                    "proposed_latitude": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "example": -23.56667
+                                    },
+                                    "proposed_longitude": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "example": -46.65
+                                    },
+                                    "proposed_source": {
+                                        "type": "string",
+                                        "example": "mobile"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Corrigir entrada pois esqueci de bater"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ajuste registrado como pending",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "id": {
-                                            "type": "integer",
-                                            "example": 1
+                                            "type": "string",
+                                            "format": "uuid"
+                                        },
+                                        "company_id": {
+                                            "type": "string",
+                                            "format": "uuid"
                                         },
                                         "user_id": {
-                                            "type": "integer",
-                                            "example": 10
-                                        },
-                                        "original_time": {
                                             "type": "string",
-                                            "example": null,
+                                            "format": "uuid"
+                                        },
+                                        "user_shift_id": {
+                                            "type": "string",
+                                            "format": "uuid",
                                             "nullable": true
                                         },
-                                        "corrected_time": {
+                                        "clocked_at": {
                                             "type": "string",
-                                            "example": "2025-02-10 08:10:00"
+                                            "format": "date-time"
                                         },
-                                        "reason": {
+                                        "type": {
                                             "type": "string",
-                                            "example": "Esqueci de registrar a entrada"
+                                            "enum": [
+                                                "in",
+                                                "out"
+                                            ]
                                         },
-                                        "status": {
+                                        "event_kind": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "source": {
+                                            "type": "string"
+                                        },
+                                        "adjustment_status": {
                                             "type": "string",
                                             "example": "pending"
+                                        },
+                                        "adjustment_reason": {
+                                            "type": "string"
+                                        },
+                                        "proposed_clocked_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        },
+                                        "proposed_type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "in",
+                                                "out"
+                                            ],
+                                            "nullable": true
+                                        },
+                                        "proposed_latitude": {
+                                            "type": "number",
+                                            "nullable": true
+                                        },
+                                        "proposed_longitude": {
+                                            "type": "number",
+                                            "nullable": true
+                                        },
+                                        "proposed_source": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "adjustment_requested_at": {
+                                            "type": "string",
+                                            "format": "date-time"
                                         }
                                     },
                                     "type": "object"
@@ -3475,7 +4632,7 @@
                         }
                     },
                     "403": {
-                        "description": "Usuário não autorizado a solicitar ajustes"
+                        "description": "Usuario nao autorizado"
                     }
                 },
                 "security": [
@@ -3490,27 +4647,16 @@
                 "tags": [
                     "Employee - Time Entries"
                 ],
-                "summary": "Registrar batida de ponto (entrada ou saída)",
-                "description": "O funcionário registra uma batida de ponto. A localização é opcional.",
+                "summary": "Registrar batida de ponto",
+                "description": "O backend define automaticamente o type (in/out) com base no proximo evento esperado da jornada.",
                 "operationId": "19dedd588c22206ec7c07003fccf0013",
                 "requestBody": {
-                    "description": "Dados da batida",
-                    "required": true,
+                    "description": "Dados opcionais da batida",
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "type"
-                                ],
                                 "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "in",
-                                            "out"
-                                        ],
-                                        "example": "in"
-                                    },
                                     "latitude": {
                                         "type": "string",
                                         "example": "-23.550520",
@@ -3519,6 +4665,11 @@
                                     "longitude": {
                                         "type": "string",
                                         "example": "-46.633308",
+                                        "nullable": true
+                                    },
+                                    "source": {
+                                        "type": "string",
+                                        "example": "web",
                                         "nullable": true
                                     }
                                 },
@@ -3529,40 +4680,21 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Batida registrada com sucesso",
+                        "description": "Batida normal registrada com sucesso",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "id": {
-                                            "type": "integer",
-                                            "example": 1
+                                        "entry": {
+                                            "$ref": "#/components/schemas/EmployeeTimeEntry"
                                         },
-                                        "user_id": {
-                                            "type": "integer",
-                                            "example": 10
-                                        },
-                                        "clocked_at": {
-                                            "type": "string",
-                                            "example": "2025-02-10T14:32:20Z"
-                                        },
-                                        "type": {
-                                            "type": "string",
-                                            "example": "in"
-                                        },
-                                        "latitude": {
-                                            "type": "string",
-                                            "example": "-23.550520",
+                                        "next_event": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/EmployeeNextExpectedEvent"
+                                                }
+                                            ],
                                             "nullable": true
-                                        },
-                                        "longitude": {
-                                            "type": "string",
-                                            "example": "-46.633308",
-                                            "nullable": true
-                                        },
-                                        "source": {
-                                            "type": "string",
-                                            "example": "web"
                                         }
                                     },
                                     "type": "object"
@@ -3570,8 +4702,31 @@
                             }
                         }
                     },
-                    "403": {
-                        "description": "Usuário não autorizado a registrar batida"
+                    "202": {
+                        "description": "Batida fora da jornada convertida em solicitacao de ajuste",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Fora da jornada prevista. Solicitacao de ajuste criada."
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "adjustment_requested"
+                                        },
+                                        "adjustment": {
+                                            "$ref": "#/components/schemas/EmployeeTimeEntry"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Regra de negocio impedindo a batida (ex.: ferias ou intervalo minimo de 1 minuto)"
                     }
                 },
                 "security": [
@@ -3586,14 +4741,13 @@
                 "tags": [
                     "Employee - Time Entries"
                 ],
-                "summary": "Lista as batidas do próprio funcionário autenticado",
-                "description": "Retorna uma listagem paginada dos registros de batida do usuário.",
+                "summary": "Lista as batidas do funcionario autenticado",
+                "description": "==========================================\nListar batidas do proprio usuario\n==========================================",
                 "operationId": "b743185c32a5fb107dcf31c55ee155ff",
                 "parameters": [
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Número da página",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -3603,7 +4757,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista de batidas",
+                        "description": "Lista paginada de batidas",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3623,39 +4777,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "user_id": {
-                                                        "type": "integer",
-                                                        "example": 10
-                                                    },
-                                                    "clocked_at": {
-                                                        "type": "string",
-                                                        "example": "2025-02-10T14:32:20Z"
-                                                    },
-                                                    "type": {
-                                                        "type": "string",
-                                                        "example": "out"
-                                                    },
-                                                    "latitude": {
-                                                        "type": "string",
-                                                        "example": "-23.550520",
-                                                        "nullable": true
-                                                    },
-                                                    "longitude": {
-                                                        "type": "string",
-                                                        "example": "-46.633308",
-                                                        "nullable": true
-                                                    },
-                                                    "source": {
-                                                        "type": "string",
-                                                        "example": "web"
-                                                    }
-                                                },
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/EmployeeTimeEntry"
                                             }
                                         }
                                     },
@@ -3677,78 +4799,67 @@
                 "tags": [
                     "Employee - Time Entries"
                 ],
-                "summary": "Consulta se existe uma batida pendente para hoje",
-                "description": "Retorna o status do dia atual do funcionário, incluindo próximo passo esperado e dados da jornada.",
+                "summary": "Consulta status de ponto em aberto usando jornada atribuida",
+                "description": "open=true quando ultimo evento concluido e um IN e o proximo OUT esperado esta atrasado em >= 30 minutos.",
                 "operationId": "b482944fc22ae3dd9082d65f77ad5f30",
                 "responses": {
                     "200": {
-                        "description": "Status da jornada do dia atual",
+                        "description": "Status atual de ponto aberto",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "date": {
-                                            "type": "string",
-                                            "format": "date",
-                                            "example": "2025-12-15"
-                                        },
-                                        "has_open_entry": {
+                                        "open": {
                                             "type": "boolean",
                                             "example": true
                                         },
-                                        "open_type": {
+                                        "open_reason": {
                                             "type": "string",
-                                            "example": "work",
+                                            "example": "Expected out event overdue by at least 30 minutes.",
                                             "nullable": true
                                         },
-                                        "last_entry": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string",
-                                                    "format": "uuid"
-                                                },
-                                                "type": {
-                                                    "type": "string",
-                                                    "example": "in"
-                                                },
-                                                "clocked_at": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2025-12-15T08:12:00-03:00"
-                                                }
-                                            },
-                                            "type": "object",
+                                        "expected_next_out_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2026-02-17T06:00:00+01:00",
                                             "nullable": true
                                         },
-                                        "next_action": {
+                                        "last_in_at": {
                                             "type": "string",
-                                            "example": "clock_out"
+                                            "format": "date-time",
+                                            "example": "2026-02-16T22:01:00+01:00",
+                                            "nullable": true
                                         },
-                                        "shift": {
+                                        "shift_day": {
                                             "properties": {
-                                                "start": {
-                                                    "type": "string",
-                                                    "example": "08:00"
-                                                },
-                                                "end": {
-                                                    "type": "string",
-                                                    "example": "17:00"
-                                                },
-                                                "is_within_shift_window": {
-                                                    "type": "boolean",
-                                                    "nullable": true
-                                                },
-                                                "late": {
-                                                    "type": "boolean",
-                                                    "nullable": true
-                                                },
-                                                "tolerance_minutes": {
+                                                "weekday": {
                                                     "type": "integer",
-                                                    "example": 10
+                                                    "example": 1
+                                                },
+                                                "is_working_day": {
+                                                    "type": "boolean",
+                                                    "example": true
                                                 }
                                             },
                                             "type": "object",
                                             "nullable": true
+                                        },
+                                        "assignment_id": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "nullable": true
+                                        },
+                                        "next_event": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/EmployeeNextExpectedEvent"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        },
+                                        "is_outside_shift": {
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -3769,12 +4880,12 @@
                 "tags": [
                     "Employee - Time Entries"
                 ],
-                "summary": "Retorna a jornada atualmente atribuída ao funcionário",
-                "description": "Fornece os dados da jornada e da atribuição de turno em vigor, incluindo horários por dia útil.",
+                "summary": "Retorna a jornada atribuida ao funcionario",
+                "description": "Inclui dias da jornada e eventos normalizados por dia (work_start, break_start, break_end, work_end).",
                 "operationId": "b22f53efbddd924b7540aacaa60dba15",
                 "responses": {
                     "200": {
-                        "description": "Jornada atual e dados da atribuição",
+                        "description": "Jornada atual e atribuicao",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3814,12 +4925,12 @@
                 "tags": [
                     "Employee - Time Entries"
                 ],
-                "summary": "Resumo das horas trabalhadas hoje pelo funcionário autenticado",
+                "summary": "Resumo das horas trabalhadas hoje pelo funcionario autenticado",
                 "description": "Calcula pares IN/OUT do dia e apura horas descontando intervalos esperados/registrados.",
                 "operationId": "2cd877406bda4ff73fd0eb5233131b8d",
                 "responses": {
                     "200": {
-                        "description": "Resumo diário das horas trabalhadas",
+                        "description": "Resumo diario das horas trabalhadas",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -5441,6 +6552,191 @@
                 },
                 "type": "object"
             },
+            "DocumentResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "payroll",
+                            "courses",
+                            "personal",
+                            "others"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "review",
+                            "available",
+                            "expired"
+                        ]
+                    },
+                    "size_bytes": {
+                        "type": "integer"
+                    },
+                    "mime_type": {
+                        "type": "string"
+                    },
+                    "ext": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "view_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "download_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "DocumentAdminResource": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/DocumentResource"
+                    },
+                    {
+                        "properties": {
+                            "employee": {
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "rejected_comment": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "rejected_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                            },
+                            "rejected_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "EmployeeTimeEntry": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "user_shift_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "clocked_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "in",
+                            "out"
+                        ],
+                        "example": "in"
+                    },
+                    "event_kind": {
+                        "type": "string",
+                        "example": "work_start",
+                        "nullable": true
+                    },
+                    "latitude": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "longitude": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "source": {
+                        "type": "string",
+                        "example": "web"
+                    },
+                    "adjustment_status": {
+                        "type": "string",
+                        "example": "pending",
+                        "nullable": true
+                    },
+                    "adjustment_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "adjustment_requested_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeNextExpectedEvent": {
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "example": "break_start"
+                    },
+                    "expected_type": {
+                        "type": "string",
+                        "enum": [
+                            "in",
+                            "out"
+                        ],
+                        "example": "out"
+                    },
+                    "expected_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-16T12:00:00+01:00"
+                    },
+                    "day_offset": {
+                        "type": "integer",
+                        "example": 0
+                    }
+                },
+                "type": "object"
+            },
             "EmployeeShift": {
                 "properties": {
                     "id": {
@@ -5449,7 +6745,7 @@
                     },
                     "name": {
                         "type": "string",
-                        "example": "Turno Manhã"
+                        "example": "Turno Manha"
                     },
                     "start_time": {
                         "type": "string",
@@ -5516,6 +6812,41 @@
                         "type": "integer",
                         "example": 60,
                         "nullable": true
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EmployeeShiftDayEvent"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeShiftDayEvent": {
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "example": "work_start"
+                    },
+                    "expected_time": {
+                        "type": "string",
+                        "example": "08:00:00"
+                    },
+                    "day_offset": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "expected_type": {
+                        "type": "string",
+                        "enum": [
+                            "in",
+                            "out"
+                        ],
+                        "example": "in"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 10
                     }
                 },
                 "type": "object"
@@ -6500,7 +7831,7 @@
         },
         {
             "name": "Area Manager - Adjustments",
-            "description": "Aprovação e rejeição de ajustes feitos pelos funcionários"
+            "description": "Visualizar, aprovar e rejeitar ajustes pendentes"
         },
         {
             "name": "Area Manager - Time Entries",
@@ -6508,19 +7839,23 @@
         },
         {
             "name": "Auth",
-            "description": "Autenticação do usuário"
+            "description": "User authentication"
         },
         {
             "name": "Billing",
             "description": "Rotas públicas de planos, sessões de checkout e portal de cobrança"
         },
         {
+            "name": "Documents",
+            "description": "Gerencia os documentos vinculados aos funcionários."
+        },
+        {
             "name": "Employee - Adjustments",
-            "description": "Solicitações de ajuste de ponto feitas pelo funcionário"
+            "description": "Ajustes de ponto solicitados pelo funcionario"
         },
         {
             "name": "Employee - Time Entries",
-            "description": "Rotas de registro e consulta de batidas de ponto do funcionário"
+            "description": "Rotas de registro e consulta de batidas de ponto do funcionario"
         },
         {
             "name": "Employee - Vacations",

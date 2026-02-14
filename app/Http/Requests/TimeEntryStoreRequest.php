@@ -14,12 +14,9 @@ class TimeEntryStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id'   => ['nullable', 'uuid'],
-            'date_from' => ['nullable', 'date'],
-            'date_to'   => ['nullable', 'date'],
-
-            'page'      => ['nullable', 'integer', 'min:1'],
-            'per_page'  => ['nullable', 'integer', 'min:1', 'max:200'],
+            'latitude' => ['nullable', 'string', 'max:255'],
+            'longitude' => ['nullable', 'string', 'max:255'],
+            'source' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

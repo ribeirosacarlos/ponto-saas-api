@@ -32,4 +32,9 @@ class ShiftDay extends Model
     {
         return $this->belongsTo(Shift::class);
     }
+
+    public function events()
+    {
+        return $this->hasMany(ShiftDayEvent::class)->orderBy('sort_order');
+    }
 }

@@ -15,7 +15,7 @@ class TimeEntryAdjustmentRequest extends FormRequest
     {
         return [
             'proposed_clocked_at' => ['nullable', 'date'],
-            'proposed_type' => ['nullable', 'string', 'in:in,out,break_start,break_end'],
+            'proposed_type' => ['nullable', 'string', 'in:in,out'],
             'proposed_latitude' => ['nullable', 'numeric'],
             'proposed_longitude' => ['nullable', 'numeric'],
             'proposed_source' => ['nullable', 'string', 'max:255'],
