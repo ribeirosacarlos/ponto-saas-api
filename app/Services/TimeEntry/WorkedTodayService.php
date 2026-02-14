@@ -40,6 +40,7 @@ class WorkedTodayService
 
         $entries = $user->timeEntries()
             ->whereBetween('clocked_at', [$periodStart->toDateTimeString(), $periodEnd->toDateTimeString()])
+            ->excludeRejected()
             ->orderBy('clocked_at')
             ->orderBy('created_at')
             ->get();
