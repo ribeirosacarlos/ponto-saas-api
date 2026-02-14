@@ -17,7 +17,19 @@ class WorkedTodayService
     }
 
     /**
-     * @return array{date: string, worked_seconds: int, worked_minutes: int, worked_hours_decimal: float, expected_break_minutes: int, break_seconds_deducted: int, open_session: bool, details: array}
+     * @return array{
+     *   date: string,
+     *   worked_seconds: int,
+     *   worked_minutes: int,
+     *   worked_hours_decimal: float,
+     *   expected_break_minutes: int,
+     *   break_seconds_deducted: int,
+     *   open_session: bool,
+     *   details: array{
+     *     pairs: array<int, array{in: string, out: string, seconds: int}>,
+     *     entries: array<int, array{id: string, clocked_at: string, type: string|null, event_kind: string|null, adjustment_status: string|null, adjustment_reason: string|null, source: string|null}>
+     *   }
+     * }
      */
     public function getWorkedToday(User $user, ?CarbonImmutable $overrideNow = null): array
     {
@@ -52,6 +64,7 @@ class WorkedTodayService
             'open_session' => $openSession,
             'details' => [
                 'pairs' => $detailsPairs,
+                'entries' => $this->formatEntriesForOutput($entries, $timezone),
             ],
         ];
     }
@@ -135,5 +148,20 @@ class WorkedTodayService
                 'seconds' => $pair['seconds'],
             ];
         }, $pairs);
+    }
+
+    private function formatEntriesForOutput(Collection $entries, string $timezone): array
+    {
+        return $entries->map(function ($entry) use ($timezone) {
+            return [
+                'id' => $entry->id,
+                'clocked_at' => CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)->toIso8601String(),
+                'type' => $entry->type,
+                'event_kind' => $entry->event_kind,
+                'adjustment_status' => $entry->adjustment_status,
+                'adjustment_reason' => $entry->adjustment_reason,
+                'source' => $entry->source,
+            ];
+        })->values()->all();
     }
 }

@@ -6910,6 +6910,12 @@
                                 "items": {
                                     "$ref": "#/components/schemas/EmployeeWorkedTodayPair"
                                 }
+                            },
+                            "entries": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/EmployeeWorkedTodayEntry"
+                                }
                             }
                         },
                         "type": "object"
@@ -6932,6 +6938,45 @@
                     "seconds": {
                         "type": "integer",
                         "example": 12600
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeWorkedTodayEntry": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "clocked_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-12-19T08:00:00+00:00"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "in",
+                        "nullable": true
+                    },
+                    "event_kind": {
+                        "type": "string",
+                        "example": "work_start",
+                        "nullable": true
+                    },
+                    "adjustment_status": {
+                        "type": "string",
+                        "example": "pending",
+                        "nullable": true
+                    },
+                    "adjustment_reason": {
+                        "type": "string",
+                        "example": "Fora do turno/jornada.",
+                        "nullable": true
+                    },
+                    "source": {
+                        "type": "string",
+                        "example": "web",
+                        "nullable": true
                     }
                 },
                 "type": "object"

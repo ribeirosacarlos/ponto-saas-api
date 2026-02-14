@@ -290,6 +290,11 @@ class EmployeeWorkedToday {}
  *             property="pairs",
  *             type="array",
  *             @OA\Items(ref="#/components/schemas/EmployeeWorkedTodayPair")
+ *         ),
+ *         @OA\Property(
+ *             property="entries",
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/EmployeeWorkedTodayEntry")
  *         )
  *     )
  * )
@@ -305,3 +310,17 @@ class EmployeeWorkedTodaySchema {}
  * )
  */
 class EmployeeWorkedTodayPairSchema {}
+
+/**
+ * @OA\Schema(
+ *     schema="EmployeeWorkedTodayEntry",
+ *     @OA\Property(property="id", type="string", format="uuid"),
+ *     @OA\Property(property="clocked_at", type="string", format="date-time", example="2025-12-19T08:00:00+00:00"),
+ *     @OA\Property(property="type", type="string", nullable=true, example="in"),
+ *     @OA\Property(property="event_kind", type="string", nullable=true, example="work_start"),
+ *     @OA\Property(property="adjustment_status", type="string", nullable=true, example="pending"),
+ *     @OA\Property(property="adjustment_reason", type="string", nullable=true, example="Fora do turno/jornada."),
+ *     @OA\Property(property="source", type="string", nullable=true, example="web")
+ * )
+ */
+class EmployeeWorkedTodayEntrySchema {}

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Employee;
 
 use App\Enums\SubscriptionStatus;
+use App\Http\Middleware\EnsureCompanyHasAccess;
 use App\Models\Plan;
 use App\Models\Shift;
 use App\Models\ShiftDay;
@@ -22,6 +23,7 @@ class WorkedTodayTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutMiddleware(EnsureCompanyHasAccess::class);
 
         Role::updateOrCreate(
             ['name' => 'employee'],
@@ -47,7 +49,7 @@ class WorkedTodayTest extends TestCase
             'break_minutes' => 60,
         ]);
 
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/worked-today');
+        $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
         $response->assertStatus(200)
             ->assertJsonPath('data.worked_seconds', 0)
@@ -73,7 +75,7 @@ class WorkedTodayTest extends TestCase
 
         $this->createTimeEntry($user, 'in', CarbonImmutable::parse('2025-12-19 08:00:00', 'UTC'));
 
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/worked-today');
+        $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
         $response->assertStatus(200)
             ->assertJsonPath('data.details.pairs.0.in', '2025-12-19T08:00:00+00:00')
@@ -105,7 +107,7 @@ class WorkedTodayTest extends TestCase
         $this->createTimeEntry($user, 'in', CarbonImmutable::parse('2025-12-19 08:00:00', 'UTC'));
         $this->createTimeEntry($user, 'out', CarbonImmutable::parse('2025-12-19 17:00:00', 'UTC'));
 
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/worked-today');
+        $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
         $response->assertStatus(200)
             ->assertJsonPath('data.details.pairs.0.seconds', 32400)
@@ -137,7 +139,7 @@ class WorkedTodayTest extends TestCase
         $this->createTimeEntry($user, 'break_end', CarbonImmutable::parse('2025-12-19 13:00:00', 'UTC'));
         $this->createTimeEntry($user, 'out', CarbonImmutable::parse('2025-12-19 17:00:00', 'UTC'));
 
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/worked-today');
+        $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
         $response->assertStatus(200)
             ->assertJsonPath('data.details.pairs.0.seconds', 32400)
@@ -167,7 +169,7 @@ class WorkedTodayTest extends TestCase
         $this->createTimeEntry($user, 'in', CarbonImmutable::parse('2025-12-19 08:30:00', 'UTC'));
         $this->createTimeEntry($user, 'out', CarbonImmutable::parse('2025-12-19 12:30:00', 'UTC'));
 
-        $response = $this->actingAs($user)->getJson('/api/v1/employee/worked-today');
+        $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
         $response->assertStatus(200)
             ->assertJsonPath('data.details.pairs.0.seconds', 14400)
@@ -181,6 +183,60 @@ class WorkedTodayTest extends TestCase
                     'open_session' => false,
                 ],
             ]);
+    }
+
+    public function test_returns_all_registered_entries_including_adjustments(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2025-12-19 18:00:00', 'UTC'));
+
+        $user = $this->createEmployee();
+        $this->assignShift($user, [
+            'break_start_time' => '12:00',
+            'break_end_time' => '13:00',
+            'break_minutes' => 60,
+        ]);
+
+        $normal = TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'clocked_at' => CarbonImmutable::parse('2025-12-19 08:00:00', 'UTC'),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $pendingAdjustment = TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'clocked_at' => CarbonImmutable::parse('2025-12-19 12:00:00', 'UTC'),
+            'type' => 'out',
+            'source' => 'adjustment',
+            'adjustment_status' => 'pending',
+            'adjustment_reason' => 'Ajuste pendente',
+            'adjustment_requested_by' => $user->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        $rejectedAdjustment = TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'clocked_at' => CarbonImmutable::parse('2025-12-19 13:00:00', 'UTC'),
+            'type' => 'in',
+            'source' => 'adjustment',
+            'adjustment_status' => 'rejected',
+            'adjustment_reason' => 'Ajuste rejeitado',
+            'adjustment_requested_by' => $user->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(3, 'data.details.entries')
+            ->assertJsonPath('data.details.entries.0.id', $normal->id)
+            ->assertJsonPath('data.details.entries.1.id', $pendingAdjustment->id)
+            ->assertJsonPath('data.details.entries.1.adjustment_status', 'pending')
+            ->assertJsonPath('data.details.entries.2.id', $rejectedAdjustment->id)
+            ->assertJsonPath('data.details.entries.2.adjustment_status', 'rejected');
     }
 
     private function createEmployee(): User
