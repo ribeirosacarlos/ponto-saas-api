@@ -5,7 +5,7 @@ namespace App\Swagger\Employee;
 /**
  * @OA\Tag(
  *     name="Employee - Adjustments",
- *     description="Ajustes de ponto solicitados pelo funcionário"
+ *     description="Ajustes de ponto solicitados pelo funcionario"
  * )
  */
 class Adjustment {}
@@ -18,7 +18,7 @@ class Adjustment {}
  * @OA\Post(
  *     path="/v1/employee/time-entries/{timeEntry}/adjustment",
  *     summary="Solicita ajuste para um registro existente",
- *     description="Solicita ajustes sobre um time entry existente. O registro permanece com os dados oficiais até a aprovação.",
+ *     description="Solicita ajuste sobre um time entry existente. O registro oficial so muda apos aprovacao.",
  *     tags={"Employee - Adjustments"},
  *     security={{"bearerAuth":{}}},
  *
@@ -44,6 +44,7 @@ class Adjustment {}
  *             @OA\Property(
  *                 property="proposed_type",
  *                 type="string",
+ *                 enum={"in", "out"},
  *                 example="in"
  *             ),
  *             @OA\Property(
@@ -78,23 +79,25 @@ class Adjustment {}
  *             @OA\Property(property="id", type="string", format="uuid"),
  *             @OA\Property(property="company_id", type="string", format="uuid"),
  *             @OA\Property(property="user_id", type="string", format="uuid"),
+ *             @OA\Property(property="user_shift_id", type="string", format="uuid", nullable=true),
  *             @OA\Property(property="clocked_at", type="string", format="date-time"),
- *             @OA\Property(property="type", type="string"),
+ *             @OA\Property(property="type", type="string", enum={"in", "out"}),
+ *             @OA\Property(property="event_kind", type="string", nullable=true),
  *             @OA\Property(property="source", type="string"),
  *             @OA\Property(property="adjustment_status", type="string", example="pending"),
  *             @OA\Property(property="adjustment_reason", type="string"),
- *             @OA\Property(property="proposed_clocked_at", type="string", format="date-time"),
- *             @OA\Property(property="proposed_type", type="string"),
- *             @OA\Property(property="proposed_latitude", type="number"),
- *             @OA\Property(property="proposed_longitude", type="number"),
- *             @OA\Property(property="proposed_source", type="string"),
+ *             @OA\Property(property="proposed_clocked_at", type="string", format="date-time", nullable=true),
+ *             @OA\Property(property="proposed_type", type="string", nullable=true, enum={"in", "out"}),
+ *             @OA\Property(property="proposed_latitude", type="number", nullable=true),
+ *             @OA\Property(property="proposed_longitude", type="number", nullable=true),
+ *             @OA\Property(property="proposed_source", type="string", nullable=true),
  *             @OA\Property(property="adjustment_requested_at", type="string", format="date-time")
  *         )
  *     ),
  *
  *     @OA\Response(
  *         response=403,
- *         description="Usuário não autorizado"
+ *         description="Usuario nao autorizado"
  *     )
  * )
  */

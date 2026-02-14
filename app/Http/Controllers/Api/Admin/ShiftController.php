@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreShiftRequest;
 use App\Http\Requests\UpdateShiftRequest;
 use App\Models\Shift;
+use App\Models\ShiftDay;
 use App\Models\User;
+use App\Support\ShiftDayEventNormalizer;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +18,14 @@ class ShiftController extends Controller
 {
     public function index(Request $request)
     {
-        return Shift::with(['shiftDays' => function ($query) {
-            $query->orderBy('weekday');
-        }])
+        return Shift::with([
+            'shiftDays' => function ($query) {
+                $query->orderBy('weekday');
+            },
+            'shiftDays.events' => function ($query) {
+                $query->orderBy('sort_order');
+            },
+        ])
             ->where('company_id', $request->user()->company_id)
             ->orderBy('name')
             ->paginate(20);
@@ -45,9 +52,14 @@ class ShiftController extends Controller
                 $this->syncShiftDays($shift, $data['days']);
                 $this->toggleDefault($shift, $data['is_default'] ?? false);
 
-                return $shift->load(['shiftDays' => function ($query) {
-                    $query->orderBy('weekday');
-                }]);
+                return $shift->load([
+                    'shiftDays' => function ($query) {
+                        $query->orderBy('weekday');
+                    },
+                    'shiftDays.events' => function ($query) {
+                        $query->orderBy('sort_order');
+                    },
+                ]);
             });
         } catch (QueryException $exception) {
             throw $this->handleShiftQueryException($exception);
@@ -60,9 +72,14 @@ class ShiftController extends Controller
     {
         $this->authorizeCompany($request, $shift);
 
-        return $shift->load(['shiftDays' => function ($query) {
-            $query->orderBy('weekday');
-        }]);
+        return $shift->load([
+            'shiftDays' => function ($query) {
+                $query->orderBy('weekday');
+            },
+            'shiftDays.events' => function ($query) {
+                $query->orderBy('sort_order');
+            },
+        ]);
     }
 
     public function byUser(Request $request, User $user)
@@ -71,9 +88,14 @@ class ShiftController extends Controller
             abort(403, 'Usuário não pertence à empresa atual.');
         }
 
-        return Shift::with(['shiftDays' => function ($query) {
-            $query->orderBy('weekday');
-        }])->where('company_id', $user->company_id)->get();
+        return Shift::with([
+            'shiftDays' => function ($query) {
+                $query->orderBy('weekday');
+            },
+            'shiftDays.events' => function ($query) {
+                $query->orderBy('sort_order');
+            },
+        ])->where('company_id', $user->company_id)->get();
     }
 
     public function update(UpdateShiftRequest $request, Shift $shift)
@@ -112,9 +134,14 @@ class ShiftController extends Controller
                     $this->toggleDefault($shift, (bool) $data['is_default']);
                 }
 
-                return $shift->load(['shiftDays' => function ($query) {
-                    $query->orderBy('weekday');
-                }]);
+                return $shift->load([
+                    'shiftDays' => function ($query) {
+                        $query->orderBy('weekday');
+                    },
+                    'shiftDays.events' => function ($query) {
+                        $query->orderBy('sort_order');
+                    },
+                ]);
             });
         } catch (QueryException $exception) {
             throw $this->handleShiftQueryException($exception);
@@ -147,7 +174,8 @@ class ShiftController extends Controller
             $weekdays[] = $day['weekday'];
             $isWorkingDay = (bool) ($day['is_working_day'] ?? false);
 
-            $shift->shiftDays()->updateOrCreate(
+            /** @var ShiftDay $shiftDay */
+            $shiftDay = $shift->shiftDays()->updateOrCreate(
                 ['weekday' => $day['weekday']],
                 [
                     'is_working_day'   => $isWorkingDay ? 'true' : 'false',
@@ -158,9 +186,22 @@ class ShiftController extends Controller
                     'break_minutes'    => $isWorkingDay ? ($day['break_minutes'] ?? null) : null,
                 ]
             );
+
+            $this->syncShiftDayEvents($shiftDay);
         }
 
         $shift->shiftDays()->whereNotIn('weekday', $weekdays)->delete();
+    }
+
+    protected function syncShiftDayEvents(ShiftDay $shiftDay): void
+    {
+        $shiftDay->events()->delete();
+
+        $events = ShiftDayEventNormalizer::fromLegacyColumns($shiftDay);
+
+        foreach ($events as $event) {
+            $shiftDay->events()->create($event);
+        }
     }
 
     protected function resolveShiftTimes(array $days): array

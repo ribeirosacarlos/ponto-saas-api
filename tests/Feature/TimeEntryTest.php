@@ -2,67 +2,231 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Http\Middleware\EnsureCompanyHasAccess;
+use App\Models\Role;
+use App\Models\Shift;
+use App\Models\ShiftDay;
 use App\Models\TimeEntry;
+use App\Models\User;
+use App\Models\UserShift;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class TimeEntryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_clock_in()
+    protected function setUp(): void
     {
-        $user = User::factory()->create();
+        parent::setUp();
 
-        $response = $this->actingAs($user)->postJson('/api/employee/clock', [
-            'type' => 'in',
-        ]);
+        $this->withoutMiddleware(EnsureCompanyHasAccess::class);
 
-        $response->assertStatus(201);
+        Role::updateOrCreate(['name' => 'employee'], ['display_name' => 'Employee']);
+    }
+
+    protected function tearDown(): void
+    {
+        CarbonImmutable::setTestNow();
+
+        parent::tearDown();
+    }
+
+    public function test_non_working_day_creates_pending_adjustment(): void
+    {
+        $this->freezeNow('2026-02-16 09:00:00'); // Monday
+
+        $user = $this->createEmployee();
+        $this->createShiftDayWithEvents($user, 1, false, []);
+
+        $response = $this->actingAs($user)->postJson('/v1/employee/clock', []);
+
+        $response->assertStatus(202)
+            ->assertJsonPath('status', 'adjustment_requested');
+
         $this->assertDatabaseHas('time_entries', [
+            'company_id' => $user->company_id,
             'user_id' => $user->id,
-            'type' => 'in',
+            'adjustment_status' => 'pending',
+            'adjustment_reason' => 'Fora do turno/jornada (dia nao trabalhado ou sem jornada).',
         ]);
     }
 
-    public function test_cannot_clock_in_twice_within_one_minute()
+    public function test_working_day_with_break_first_event_is_in(): void
+    {
+        $this->freezeNow('2026-02-16 08:00:00');
+
+        $user = $this->createEmployee();
+        $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+
+        $this->actingAs($user)
+            ->postJson('/v1/employee/clock')
+            ->assertStatus(201)
+            ->assertJsonPath('entry.type', 'in')
+            ->assertJsonPath('entry.event_kind', 'work_start');
+    }
+
+    public function test_working_day_with_break_second_event_is_out(): void
+    {
+        $this->freezeNow('2026-02-16 12:00:00');
+
+        $user = $this->createEmployee();
+        $assignment = $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+        $this->seedEntries($user, $assignment->id, [
+            ['clocked_at' => '2026-02-16 08:00:00', 'type' => 'in', 'event_kind' => 'work_start'],
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/v1/employee/clock')
+            ->assertStatus(201)
+            ->assertJsonPath('entry.type', 'out')
+            ->assertJsonPath('entry.event_kind', 'break_start');
+    }
+
+    public function test_working_day_with_break_third_event_is_in(): void
+    {
+        $this->freezeNow('2026-02-16 13:00:00');
+
+        $user = $this->createEmployee();
+        $assignment = $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+        $this->seedEntries($user, $assignment->id, [
+            ['clocked_at' => '2026-02-16 08:00:00', 'type' => 'in', 'event_kind' => 'work_start'],
+            ['clocked_at' => '2026-02-16 12:00:00', 'type' => 'out', 'event_kind' => 'break_start'],
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/v1/employee/clock')
+            ->assertStatus(201)
+            ->assertJsonPath('entry.type', 'in')
+            ->assertJsonPath('entry.event_kind', 'break_end');
+    }
+
+    public function test_working_day_with_break_fourth_event_is_out(): void
+    {
+        $this->freezeNow('2026-02-16 17:00:00');
+
+        $user = $this->createEmployee();
+        $assignment = $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+        $this->seedEntries($user, $assignment->id, [
+            ['clocked_at' => '2026-02-16 08:00:00', 'type' => 'in', 'event_kind' => 'work_start'],
+            ['clocked_at' => '2026-02-16 12:00:00', 'type' => 'out', 'event_kind' => 'break_start'],
+            ['clocked_at' => '2026-02-16 13:00:00', 'type' => 'in', 'event_kind' => 'break_end'],
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/v1/employee/clock')
+            ->assertStatus(201)
+            ->assertJsonPath('entry.type', 'out')
+            ->assertJsonPath('entry.event_kind', 'work_end');
+    }
+
+    public function test_working_day_without_break_second_event_is_out(): void
+    {
+        $this->freezeNow('2026-02-16 17:00:00');
+
+        $user = $this->createEmployee();
+        $assignment = $this->createShiftDayWithEvents($user, 1, true, [
+            ['kind' => 'work_start', 'time' => '08:00:00', 'day_offset' => 0, 'expected_type' => 'in'],
+            ['kind' => 'work_end', 'time' => '17:00:00', 'day_offset' => 0, 'expected_type' => 'out'],
+        ]);
+
+        $this->seedEntries($user, $assignment->id, [
+            ['clocked_at' => '2026-02-16 08:00:00', 'type' => 'in', 'event_kind' => 'work_start'],
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/v1/employee/clock')
+            ->assertStatus(201)
+            ->assertJsonPath('entry.type', 'out')
+            ->assertJsonPath('entry.event_kind', 'work_end');
+    }
+
+    /**
+     * @return array<int, array{kind: string, time: string, day_offset: int, expected_type: string}>
+     */
+    private function breakDayEvents(): array
+    {
+        return [
+            ['kind' => 'work_start', 'time' => '08:00:00', 'day_offset' => 0, 'expected_type' => 'in'],
+            ['kind' => 'break_start', 'time' => '12:00:00', 'day_offset' => 0, 'expected_type' => 'out'],
+            ['kind' => 'break_end', 'time' => '13:00:00', 'day_offset' => 0, 'expected_type' => 'in'],
+            ['kind' => 'work_end', 'time' => '17:00:00', 'day_offset' => 0, 'expected_type' => 'out'],
+        ];
+    }
+
+    private function createEmployee(): User
     {
         $user = User::factory()->create();
+        $user->assignRole('employee');
 
-        // First clock in
-        $this->actingAs($user)->postJson('/api/employee/clock', [
-            'type' => 'in',
+        return $user;
+    }
+
+    /**
+     * @param  array<int, array{kind: string, time: string, day_offset: int, expected_type: string}>  $events
+     */
+    private function createShiftDayWithEvents(User $user, int $weekday, bool $isWorkingDay, array $events): UserShift
+    {
+        $shift = Shift::create([
+            'company_id' => $user->company_id,
+            'name' => 'Shift ' . Str::random(4),
+            'is_default' => false,
+            'is_flexible' => false,
+            'start_time' => collect($events)->firstWhere('kind', 'work_start')['time'] ?? null,
+            'end_time' => collect($events)->firstWhere('kind', 'work_end')['time'] ?? null,
         ]);
 
-        // Second clock in immediately
-        $response = $this->actingAs($user)->postJson('/api/employee/clock', [
-            'type' => 'out',
+        $shiftDay = ShiftDay::create([
+            'shift_id' => $shift->id,
+            'weekday' => $weekday,
+            'is_working_day' => $isWorkingDay,
+            'start_time' => collect($events)->firstWhere('kind', 'work_start')['time'] ?? null,
+            'end_time' => collect($events)->firstWhere('kind', 'work_end')['time'] ?? null,
+            'break_start_time' => collect($events)->firstWhere('kind', 'break_start')['time'] ?? null,
+            'break_end_time' => collect($events)->firstWhere('kind', 'break_end')['time'] ?? null,
         ]);
 
-        $response->assertStatus(422)
-            ->assertJson([
-                'message' => 'Aguarde 1 minuto entre os registros.',
+        foreach ($events as $index => $event) {
+            $shiftDay->events()->create([
+                'kind' => $event['kind'],
+                'expected_time' => $event['time'],
+                'day_offset' => $event['day_offset'],
+                'expected_type' => $event['expected_type'],
+                'sort_order' => ($index + 1) * 10,
             ]);
+        }
+
+        return UserShift::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'shift_id' => $shift->id,
+            'start_date' => '2026-01-01',
+            'end_date' => null,
+        ]);
     }
 
-    public function test_can_clock_in_after_one_minute()
+    /**
+     * @param  array<int, array{clocked_at: string, type: string, event_kind: string}>  $entries
+     */
+    private function seedEntries(User $user, string $assignmentId, array $entries): void
     {
-        $user = User::factory()->create();
+        foreach ($entries as $entry) {
+            TimeEntry::create([
+                'company_id' => $user->company_id,
+                'user_id' => $user->id,
+                'user_shift_id' => $assignmentId,
+                'clocked_at' => CarbonImmutable::parse($entry['clocked_at'], 'Europe/Madrid'),
+                'type' => $entry['type'],
+                'event_kind' => $entry['event_kind'],
+                'source' => 'web',
+            ]);
+        }
+    }
 
-        // First clock in 61 seconds ago
-        TimeEntry::create([
-            'user_id' => $user->id,
-            'clocked_at' => now()->subSeconds(61),
-            'type' => 'in',
-            'source' => 'web',
-        ]);
-
-        // Second clock in now
-        $response = $this->actingAs($user)->postJson('/api/employee/clock', [
-            'type' => 'out',
-        ]);
-
-        $response->assertStatus(201);
+    private function freezeNow(string $datetime): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse($datetime, 'Europe/Madrid'));
     }
 }

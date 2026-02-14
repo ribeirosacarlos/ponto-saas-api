@@ -18,8 +18,10 @@ class TimeEntry extends Model
     protected $fillable = [
         'company_id',
         'user_id',
+        'user_shift_id',
         'clocked_at',
         'type',
+        'event_kind',
         'latitude',
         'longitude',
         'source',
@@ -55,6 +57,11 @@ class TimeEntry extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function userShift()
+    {
+        return $this->belongsTo(UserShift::class);
     }
 
     public function isAdjustmentPending(): bool
