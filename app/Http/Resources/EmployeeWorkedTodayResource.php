@@ -18,6 +18,7 @@ class EmployeeWorkedTodayResource extends JsonResource
             'open_session' => $this->resource['open_session'],
             'details' => [
                 'pairs' => $this->resource['details']['pairs'] ?? [],
+                'entries' => $this->resource['details']['entries'] ?? [],
             ],
         ];
     }
