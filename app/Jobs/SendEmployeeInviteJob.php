@@ -24,6 +24,7 @@ class SendEmployeeInviteJob implements ShouldQueue
     public function __construct(
         public string $userId,
         public array $payload,
+        public ?string $recipientEmail = null,
     ) {}
 
     public function handle(): void
@@ -40,12 +41,14 @@ class SendEmployeeInviteJob implements ShouldQueue
         $metadata = [
             'company_id' => $user->company_id,
             'user_id' => $user->id,
-            'email' => $user->email,
+            'email' => $this->recipientEmail ?? $user->email,
         ];
 
         Log::info('Starting employee invite job', $metadata);
 
-        Mail::to($user->email)->queue(new EmployeeInviteMail(
+        $targetEmail = $this->recipientEmail ?? $user->email;
+
+        Mail::to($targetEmail)->queue(new EmployeeInviteMail(
             userName: $user->name,
             userEmail: $user->email,
             companyName: $this->payload['companyName'] ?? $user->company?->name,
