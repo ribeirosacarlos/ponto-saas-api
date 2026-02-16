@@ -48,7 +48,7 @@ class WorkedTodayService
         $shift = $this->shiftResolver->resolve($user)['shift'];
         $shiftDay = $this->resolveShiftDay($shift, $now);
 
-        [$pairs, $openSession] = $this->buildWorkPairs($entries, $now, $timezone);
+        [$pairs, $openSession] = $this->buildWorkPairs($entries, $timezone);
         $workedSecondsBruto = (int) array_sum(array_column($pairs, 'seconds'));
         $expectedBreakMinutes = $this->determineExpectedBreakMinutes($shiftDay);
         $breakSecondsDeducted = 0;
@@ -86,7 +86,7 @@ class WorkedTodayService
         return $definition;
     }
 
-    private function buildWorkPairs(Collection $entries, CarbonImmutable $now, string $timezone): array
+    private function buildWorkPairs(Collection $entries, string $timezone): array
     {
         $pairs = [];
         /** @var CarbonImmutable|null $pendingIn */
@@ -110,12 +110,7 @@ class WorkedTodayService
             }
         }
 
-        $openSession = false;
-
-        if ($pendingIn) {
-            $pairs[] = $this->createPair($pendingIn, $now);
-            $openSession = true;
-        }
+        $openSession = (bool) $pendingIn;
 
         return [$pairs, $openSession];
     }

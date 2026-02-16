@@ -78,16 +78,14 @@ class WorkedTodayTest extends TestCase
         $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.details.pairs.0.in', '2025-12-19T08:00:00+00:00')
-            ->assertJsonPath('data.details.pairs.0.out', '2025-12-19T15:00:00+00:00')
-            ->assertJsonPath('data.details.pairs.0.seconds', 25200)
+            ->assertJsonCount(0, 'data.details.pairs')
             ->assertJson([
                 'data' => [
-                    'worked_seconds' => 21600,
-                    'worked_minutes' => 360,
-                    'worked_hours_decimal' => 6.0,
+                    'worked_seconds' => 0,
+                    'worked_minutes' => 0,
+                    'worked_hours_decimal' => 0,
                     'expected_break_minutes' => 60,
-                    'break_seconds_deducted' => 3600,
+                    'break_seconds_deducted' => 0,
                     'open_session' => true,
                 ],
             ]);
