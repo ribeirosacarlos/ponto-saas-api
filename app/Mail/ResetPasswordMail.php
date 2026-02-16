@@ -35,9 +35,8 @@ class ResetPasswordMail extends Mailable implements ShouldQueue
     {
         $frontendUrl = config('app.frontend_url');
 
-        $resetUrl = "{$frontendUrl}/reset-password"
-            . "?token={$this->token}"
-            . "&email=" . urlencode($this->email);
+        $resetUrl = "app.{$frontendUrl}reset-password"
+            . "?email=" . urlencode($this->email);
 
         return new Content(
             view: 'emails.reset_password',
