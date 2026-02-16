@@ -60,4 +60,4 @@ Route::get('/debug/send-employee-invite-job', function (Request $request) {
         'recipient_email' => $recipientEmail,
         'payload' => $payload,
     ]);
-});
+})->withoutMiddleware(['auth:sanctum', 'company.timezone']);

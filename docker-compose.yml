@@ -1,28 +1,10 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: ./.docker/php/Dockerfile
-    image: jornafy-api:latest
+    image: 511758682326.dkr.ecr.us-east-1.amazonaws.com/ponto-saas-api:latest
     container_name: laravel-app
     restart: unless-stopped
-    environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      LOG_CHANNEL: stderr
-      RUN_COMPOSER_INSTALL: "false"
-      RUN_MIGRATIONS: "true"
-      RUN_OPTIMIZE: "true"
-      WAIT_FOR_DB: "true"
     env_file:
-      - .env
-    networks:
-      - laravel
-
-  queue-worker:
-    image: jornafy-api:latest
-    container_name: laravel-queue
-    restart: unless-stopped
+      - .env.production
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
@@ -31,9 +13,27 @@ services:
       RUN_COMPOSER_INSTALL: "false"
       RUN_MIGRATIONS: "false"
       RUN_OPTIMIZE: "false"
-      WAIT_FOR_DB: "true"
+      WAIT_FOR_DB: "false"
+    networks:
+      - laravel
+    volumes:
+      - public_data:/var/www/public
+
+  queue-worker:
+    image: 511758682326.dkr.ecr.us-east-1.amazonaws.com/ponto-saas-api:latest
+    container_name: laravel-queue
+    restart: unless-stopped
     env_file:
-      - .env
+      - .env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      LOG_CHANNEL: stderr
+
+      RUN_COMPOSER_INSTALL: "false"
+      RUN_MIGRATIONS: "false"
+      RUN_OPTIMIZE: "false"
+      WAIT_FOR_DB: "false"
     depends_on:
       - app
     command: ["php", "/var/www/artisan", "queue:work", "database", "--queue=default", "--sleep=1", "--tries=3", "--timeout=120"]
@@ -46,13 +46,17 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-    volumes:
-      - ./.docker/nginx:/etc/nginx/conf.d:ro
     depends_on:
       - app
     networks:
       - laravel
+    volumes:
+      - ./.docker/nginx:/etc/nginx/conf.d:ro
+      - public_data:/var/www/public:ro
 
 networks:
   laravel:
     driver: bridge
+
+volumes:
+  public_data: {}
