@@ -17,6 +17,7 @@ class EmployeeWorkedTodayResource extends JsonResource
             'break_seconds_deducted' => $this->resource['break_seconds_deducted'],
             'open_session' => $this->resource['open_session'],
             'details' => [
+                'open_pair' => $this->resource['details']['open_pair'] ?? null,
                 'pairs' => $this->resource['details']['pairs'] ?? [],
                 'entries' => $this->resource['details']['entries'] ?? [],
             ],

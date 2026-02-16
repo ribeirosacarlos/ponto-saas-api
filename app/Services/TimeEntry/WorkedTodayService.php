@@ -48,12 +48,14 @@ class WorkedTodayService
         $shift = $this->shiftResolver->resolve($user)['shift'];
         $shiftDay = $this->resolveShiftDay($shift, $now);
 
-        [$pairs, $openSession] = $this->buildWorkPairs($entries, $timezone);
+        [$pairs, $pendingIn] = $this->buildWorkPairs($entries, $timezone);
         $workedSecondsBruto = (int) array_sum(array_column($pairs, 'seconds'));
         $expectedBreakMinutes = $this->determineExpectedBreakMinutes($shiftDay);
         $breakSecondsDeducted = 0;
         $workedSeconds = $workedSecondsBruto;
         $detailsPairs = $this->formatPairsForOutput($pairs, $timezone);
+        $openSession = (bool) $pendingIn;
+        $openPair = $this->formatOpenPair($pendingIn, $timezone);
 
         return [
             'date' => $now->toDateString(),
@@ -64,6 +66,7 @@ class WorkedTodayService
             'break_seconds_deducted' => $breakSecondsDeducted,
             'open_session' => $openSession,
             'details' => [
+                'open_pair' => $openPair,
                 'pairs' => $detailsPairs,
                 'entries' => $this->formatEntriesForOutput($entries, $timezone),
             ],
@@ -110,9 +113,7 @@ class WorkedTodayService
             }
         }
 
-        $openSession = (bool) $pendingIn;
-
-        return [$pairs, $openSession];
+        return [$pairs, $pendingIn];
     }
 
     private function createPair(CarbonImmutable $start, CarbonImmutable $end): array
@@ -159,5 +160,16 @@ class WorkedTodayService
                 'source' => $entry->source,
             ];
         })->values()->all();
+    }
+
+    private function formatOpenPair(?CarbonImmutable $pendingIn, string $timezone): ?array
+    {
+        if (! $pendingIn) {
+            return null;
+        }
+
+        return [
+            'in' => $pendingIn->timezone($timezone)->toIso8601String(),
+        ];
     }
 }

@@ -77,8 +77,13 @@ class WorkedTodayTest extends TestCase
 
         $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
+        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 08:00:00', 'UTC')
+            ->setTimezone(config('app.timezone') ?? 'UTC')
+            ->toIso8601String();
+
         $response->assertStatus(200)
             ->assertJsonCount(0, 'data.details.pairs')
+            ->assertJsonPath('data.details.open_pair.in', $expectedOpenPairIn)
             ->assertJson([
                 'data' => [
                     'worked_seconds' => 0,
