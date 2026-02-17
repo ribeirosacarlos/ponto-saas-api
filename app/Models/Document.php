@@ -57,6 +57,8 @@ class Document extends Model
         'size_bytes',
         'path',
         'storage_disk',
+        'original_name',
+        'uploaded_by',
         'notes',
         'rejected_comment',
         'rejected_by',

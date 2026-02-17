@@ -103,18 +103,40 @@ class DocumentReviewController extends Controller
     public function uploadForEmployee(AdminDocumentStoreRequest $request)
     {
         $admin = $request->user();
+        $this->authorize('adminList', Document::class);
+
         $targetUser = User::where('id', $request->input('user_id'))
             ->where('company_id', $admin->company_id)
             ->firstOrFail();
 
         $created = [];
+        $disk = 's3';
 
         foreach ($request->file('files', []) as $file) {
-            $directory = sprintf('private/documents/%s/%s', $targetUser->company_id, $targetUser->id);
-            $filename = sprintf('%s.%s', Str::uuid(), Str::lower($file->getClientOriginalExtension()));
-            $path = $file->storeAs($directory, $filename, Document::STORAGE_DISK);
+            $id = (string) Str::ulid();
+            $rawExtension = Str::lower($file->getClientOriginalExtension() ?: ($file->guessExtension() ?: 'bin'));
+            $extension = preg_replace('/[^a-z0-9]+/', '', $rawExtension) ?: 'bin';
+            $path = sprintf(
+                'companies/%s/employees/%s/documents/%s.%s',
+                $targetUser->company_id,
+                $targetUser->id,
+                $id,
+                $extension,
+            );
 
-            if (! $path) {
+            $stream = fopen($file->getRealPath(), 'rb');
+            $uploaded = $stream
+                ? Storage::disk($disk)->put($path, $stream, [
+                    'visibility' => 'private',
+                    'ContentType' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
+                ])
+                : false;
+
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+
+            if (! $uploaded) {
                 throw new RuntimeException('Não foi possível salvar o arquivo.');
             }
 
@@ -125,15 +147,17 @@ class DocumentReviewController extends Controller
                     'title' => $this->resolveTitle($file->getClientOriginalName(), $request->input('title')),
                     'category' => $request->input('category'),
                     'status' => Document::STATUS_PENDING,
-                    'mime_type' => $file->getClientMimeType(),
-                    'ext' => Str::lower($file->getClientOriginalExtension()),
+                    'mime_type' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
+                    'ext' => $extension,
                     'size_bytes' => $file->getSize() ?: 0,
                     'path' => $path,
-                    'storage_disk' => Document::STORAGE_DISK,
+                    'storage_disk' => $disk,
+                    'original_name' => $file->getClientOriginalName(),
+                    'uploaded_by' => $admin->id,
                     'notes' => $request->input('notes'),
                 ]);
             } catch (Throwable $exception) {
-                Storage::disk(Document::STORAGE_DISK)->delete($path);
+                Storage::disk($disk)->delete($path);
                 throw $exception;
             }
 

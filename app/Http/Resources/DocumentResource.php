@@ -13,9 +13,13 @@ class DocumentResource extends JsonResource
             'title' => $this->title,
             'category' => $this->category,
             'status' => $this->status,
+            'original_name' => $this->original_name,
             'size_bytes' => $this->size_bytes,
             'mime_type' => $this->mime_type,
             'ext' => $this->ext,
+            'storage_disk' => $this->storage_disk,
+            'storage_path' => $this->path,
+            'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
 

@@ -11,6 +11,7 @@ use App\Http\Resources\DocumentResource;
 use App\Models\Document;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -19,6 +20,7 @@ use Throwable;
 class DocumentController extends Controller
 {
     use LogsDocumentAudits;
+
     private const PRIVILEGED_ROLES = ['admin', 'manager', 'area_manager'];
     private const SORT_FIELDS = ['updated_at'];
     private const DEFAULT_SORT_FIELD = 'updated_at';
@@ -69,15 +71,14 @@ class DocumentController extends Controller
     {
         $user = $request->user();
         $created = [];
+        $disk = 's3';
 
         foreach ($request->file('files', []) as $file) {
-            $directory = sprintf('private/documents/%s/%s', $user->company_id, $user->id);
-            $filename = sprintf('%s.%s', Str::uuid(), Str::lower($file->getClientOriginalExtension()));
-            $path = $file->storeAs($directory, $filename, Document::STORAGE_DISK);
-
-            if (! $path) {
-                throw new RuntimeException('Não foi possível salvar o arquivo.');
-            }
+            [$path, $extension, $mime] = $this->uploadPrivateEmployeeDocumentToS3(
+                $file,
+                $user->company_id,
+                $user->id,
+            );
 
             try {
                 $document = Document::create([
@@ -86,15 +87,17 @@ class DocumentController extends Controller
                     'title' => $this->resolveTitle($file->getClientOriginalName(), $request->input('title')),
                     'category' => $request->input('category'),
                     'status' => Document::STATUS_PENDING,
-                    'mime_type' => $file->getClientMimeType(),
-                    'ext' => Str::lower($file->getClientOriginalExtension()),
+                    'mime_type' => $mime,
+                    'ext' => $extension,
                     'size_bytes' => $file->getSize() ?: 0,
                     'path' => $path,
-                    'storage_disk' => Document::STORAGE_DISK,
+                    'storage_disk' => $disk,
+                    'original_name' => $file->getClientOriginalName(),
+                    'uploaded_by' => $user->id,
                     'notes' => $request->input('notes'),
                 ]);
             } catch (Throwable $exception) {
-                Storage::disk(Document::STORAGE_DISK)->delete($path);
+                Storage::disk($disk)->delete($path);
                 throw $exception;
             }
 
@@ -157,7 +160,8 @@ class DocumentController extends Controller
     {
         $this->authorize('download', $document);
 
-        $disk = Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
+        $diskName = $document->storage_disk ?? Document::STORAGE_DISK;
+        $disk = Storage::disk($diskName);
         $path = $this->resolveDocumentPath($document, $disk);
 
         if (! $path || ! $disk->exists($path)) {
@@ -165,6 +169,18 @@ class DocumentController extends Controller
         }
 
         $this->logDocumentAudit($document, 'download');
+
+        if ($diskName === 's3' && method_exists($disk, 'temporaryUrl')) {
+            $url = $disk->temporaryUrl($path, now()->addMinutes(5), [
+                'ResponseContentDisposition' => sprintf(
+                    'attachment; filename="%s"',
+                    addslashes($this->sanitizeFilename($document)),
+                ),
+                'ResponseContentType' => $document->mime_type ?? 'application/octet-stream',
+            ]);
+
+            return redirect()->away($url);
+        }
 
         return $disk->download($path, $this->sanitizeFilename($document), [
             'Cache-Control' => 'no-store',
@@ -215,7 +231,6 @@ class DocumentController extends Controller
         $this->authorize('delete', $document);
 
         $disk = Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
-
         $path = $this->resolveDocumentPath($document, $disk);
 
         if ($path && $disk->exists($path)) {
@@ -237,34 +252,41 @@ class DocumentController extends Controller
             return response()->json(['message' => 'Documento não está em revisão'], 422);
         }
 
-        $disk = Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
-        $resolved = $this->resolveDocumentPath($document, $disk);
+        $currentDisk = Storage::disk($document->storage_disk ?? Document::STORAGE_DISK);
+        $resolved = $this->resolveDocumentPath($document, $currentDisk);
 
-        if ($resolved && $disk->exists($resolved)) {
-            $disk->delete($resolved);
+        if ($resolved && $currentDisk->exists($resolved)) {
+            $currentDisk->delete($resolved);
         }
 
         $file = $request->file('file');
-        $directory = sprintf('private/documents/%s/%s', $document->company_id, $document->user_id);
-        $filename = sprintf('%s.%s', Str::uuid(), Str::lower($file->getClientOriginalExtension()));
-        $path = $file->storeAs($directory, $filename, Document::STORAGE_DISK);
+        $disk = 's3';
+        [$path, $extension, $mime] = $this->uploadPrivateEmployeeDocumentToS3(
+            $file,
+            $document->company_id,
+            $document->user_id,
+        );
 
-        if (! $path) {
-            throw new RuntimeException('Não foi possível salvar o arquivo.');
+        try {
+            $document->fill([
+                'mime_type' => $mime,
+                'ext' => $extension,
+                'size_bytes' => $file->getSize() ?: 0,
+                'path' => $path,
+                'storage_disk' => $disk,
+                'original_name' => $file->getClientOriginalName(),
+                'uploaded_by' => $request->user()->id,
+                'status' => Document::STATUS_PENDING,
+                'rejected_comment' => null,
+                'rejected_by' => null,
+                'rejected_at' => null,
+            ]);
+
+            $document->save();
+        } catch (Throwable $exception) {
+            Storage::disk($disk)->delete($path);
+            throw $exception;
         }
-
-        $document->fill([
-            'mime_type' => $file->getClientMimeType(),
-            'ext' => Str::lower($file->getClientOriginalExtension()),
-            'size_bytes' => $file->getSize() ?: 0,
-            'path' => $path,
-            'status' => Document::STATUS_PENDING,
-            'rejected_comment' => null,
-            'rejected_by' => null,
-            'rejected_at' => null,
-        ]);
-
-        $document->save();
 
         $this->logDocumentAudit($document, 'resend');
         $this->logDocumentAudit($document, 'status_change', [
@@ -327,9 +349,44 @@ class DocumentController extends Controller
         return null;
     }
 
+    private function uploadPrivateEmployeeDocumentToS3(UploadedFile $file, string $companyId, string $employeeId): array
+    {
+        $id = (string) Str::ulid();
+        $rawExtension = Str::lower($file->getClientOriginalExtension() ?: ($file->guessExtension() ?: 'bin'));
+        $extension = preg_replace('/[^a-z0-9]+/', '', $rawExtension) ?: 'bin';
+        $path = sprintf(
+            'companies/%s/employees/%s/documents/%s.%s',
+            $companyId,
+            $employeeId,
+            $id,
+            $extension,
+        );
+
+        $stream = fopen($file->getRealPath(), 'rb');
+        $uploaded = $stream
+            ? Storage::disk('s3')->put($path, $stream, [
+                'visibility' => 'private',
+                'ContentType' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
+            ])
+            : false;
+
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+
+        if (! $uploaded) {
+            throw new RuntimeException('Não foi possível salvar o arquivo.');
+        }
+
+        return [
+            $path,
+            $extension,
+            $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
+        ];
+    }
+
     private function isPrivileged(User $user): bool
     {
         return $user->hasRole(self::PRIVILEGED_ROLES);
     }
-
 }
