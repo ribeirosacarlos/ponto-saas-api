@@ -3441,6 +3441,152 @@
                 }
             }
         },
+        "/v1/debug/send-employee-invite-job": {
+            "get": {
+                "tags": [
+                    "Debug"
+                ],
+                "summary": "Cria o job SendEmployeeInviteJob para testes de filas",
+                "operationId": "a481472e7d89a1bcb53687a7d27fe0e4",
+                "parameters": [
+                    {
+                        "name": "send_email",
+                        "in": "query",
+                        "description": "Determina se o job deve ser gerado (valores verdadeiros: sim, s, yes, y, true, 1)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "sim"
+                        }
+                    },
+                    {
+                        "name": "enviar_email",
+                        "in": "query",
+                        "description": "Alias em português para 'send_email'",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "sim"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "UUID do usuário que deve receber o convite (usar para direcionar o job)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "recipient_email",
+                        "in": "query",
+                        "description": "Email que deve receber o convite (padrão dev.carlosdesa@gmail.com)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "email",
+                            "example": "dev.carlosdesa@gmail.com"
+                        }
+                    },
+                    {
+                        "name": "override_email",
+                        "in": "query",
+                        "description": "Alias para recipient_email",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "email"
+                        }
+                    },
+                    {
+                        "name": "invite_url",
+                        "in": "query",
+                        "description": "URL de convite usada pelo payload (caso não seja configurada, usa config('app.invite_url'))",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    {
+                        "name": "invite_code",
+                        "in": "query",
+                        "description": "Código de convite personalizado",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "temporary_password",
+                        "in": "query",
+                        "description": "Senha temporária enviada no convite",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Retorna indicação de job criado e payload usado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "job_created": {
+                                            "type": "boolean"
+                                        },
+                                        "reason": {
+                                            "type": "string",
+                                            "example": "send_email parameter is not affirmative",
+                                            "nullable": true
+                                        },
+                                        "user_id": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        },
+                                        "recipient_email": {
+                                            "type": "string",
+                                            "format": "email"
+                                        },
+                                        "payload": {
+                                            "properties": {
+                                                "companyName": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "inviteUrl": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "inviteCode": {
+                                                    "type": "string"
+                                                },
+                                                "temporaryPassword": {
+                                                    "type": "string"
+                                                },
+                                                "supportEmail": {
+                                                    "type": "string",
+                                                    "format": "email"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Rota disponível apenas em ambientes locais ou de teste"
+                    }
+                }
+            }
+        },
         "/v1/documents": {
             "get": {
                 "tags": [
@@ -7921,6 +8067,10 @@
         {
             "name": "Settings",
             "description": "Endpoints que expõem o overview de billing e configurações da empresa logada"
+        },
+        {
+            "name": "Debug",
+            "description": "Debug"
         }
     ]
 }

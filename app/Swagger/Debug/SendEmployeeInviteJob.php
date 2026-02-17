@@ -24,7 +24,7 @@ namespace App\Swagger\Debug;
  *     @OA\Parameter(
  *         name="enviar_email",
  *         in="query",
- *         description="Alias em português para \"send_email\"",
+ *         description="Alias em português para 'send_email'",
  *         required=false,
  *         @OA\Schema(type="string", example="sim")
  *     ),
