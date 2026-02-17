@@ -2,6 +2,19 @@
 
 use Illuminate\Support\Str;
 
+$pgsqlOptions = [];
+
+if (extension_loaded('pdo_pgsql')) {
+    // Keep native typing for parameters (booleans, dates, etc.)
+    $pgsqlOptions[\PDO::ATTR_EMULATE_PREPARES] = false;
+
+    // Avoid server-side prepared statement lifecycle issues with poolers
+    // (e.g. PgBouncer in transaction mode / proxies that recycle backend sessions).
+    if (defined('\PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
+        $pgsqlOptions[\PDO::PGSQL_ATTR_DISABLE_PREPARES] = true;
+    }
+}
+
 return [
 
     /*
@@ -45,9 +58,7 @@ return [
             'search_path' => 'public',
             'sslmode' => 'prefer',
 
-            'options' => extension_loaded('pdo_pgsql') ? [
-                \PDO::ATTR_EMULATE_PREPARES => false,
-            ] : [],
+            'options' => $pgsqlOptions,
 
         ],
 
