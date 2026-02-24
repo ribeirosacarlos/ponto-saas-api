@@ -13,9 +13,6 @@
         {
             "url": "https://api.jornafy.com/api",
             "description": "Produção"
-        },
-        {
-            "url": "/api"
         }
     ],
     "paths": {
@@ -3006,7 +3003,7 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "admin@teste.com"
+                                        "example": "ana.pereira@empresa.com"
                                     },
                                     "password": {
                                         "type": "string",
