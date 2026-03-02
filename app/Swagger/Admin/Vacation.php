@@ -145,13 +145,17 @@ class VacationReject {}
  *         response=200,
  *         description="Saldo atual",
  *         @OA\JsonContent(
- *             @OA\Property(property="policy", type="object",
- *                 @OA\Property(property="name", type="string", example="Política Padrão Espanha")
- *             ),
- *             @OA\Property(property="accrued", type="number", example=12.5),
- *             @OA\Property(property="used", type="number", example=5.0),
- *             @OA\Property(property="adjustment", type="number", example=0.5),
- *             @OA\Property(property="available", type="number", example=8.0)
+ *             @OA\Property(property="period_start", type="string", format="date", example="2026-01-01"),
+ *             @OA\Property(property="period_end", type="string", format="date", example="2026-12-31"),
+ *             @OA\Property(property="annual_entitlement_days", type="number", example=30.0),
+ *             @OA\Property(property="accrual_basis", type="string", example="calendar_days"),
+ *             @OA\Property(property="computable_days", type="integer", example=365),
+ *             @OA\Property(property="non_computable_days", type="integer", example=0),
+ *             @OA\Property(property="accrual_rate", type="number", example=0.082191),
+ *             @OA\Property(property="accrued_days", type="number", example=12.5),
+ *             @OA\Property(property="used_days", type="number", example=5.0),
+ *             @OA\Property(property="available_days", type="number", example=8.0),
+ *             @OA\Property(property="breakdown", type="object")
  *         )
  *     ),
  *     @OA\Response(response=404, description="Funcionário não encontrado")

@@ -17,7 +17,9 @@ class VacationExampleSeeder extends Seeder
             return;
         }
 
-        $user = User::first();
+        $user = User::where('email', 'edudtk7@gmail.com')
+            ->orWhere('name', 'EDUARDO CHEFE')
+            ->first() ?? User::first();
 
         if (! $user) {
             return;
@@ -35,7 +37,7 @@ class VacationExampleSeeder extends Seeder
         $pendingStart = Carbon::now()->addWeeks(2)->startOfWeek();
         $pendingEnd = $pendingStart->copy()->addDays(4);
 
-        $pendingCalc = $service->calculateRequestedDays($user, $pendingStart, $pendingEnd, $policy->counting_method);
+        $pendingCalc = $service->calculateRequestedDays($user, $pendingStart, $pendingEnd, $policy->counting_method ?? 'calendar_days');
 
         VacationRequest::firstOrCreate(
             [
@@ -46,7 +48,7 @@ class VacationExampleSeeder extends Seeder
             ],
             [
                 'requested_days' => $pendingCalc['count'],
-                'counting_method_snapshot' => $policy->counting_method,
+                'counting_method_snapshot' => $policy->counting_method ?? 'calendar_days',
                 'status' => 'pending',
                 'requested_by' => $user->id,
             ]
@@ -54,7 +56,7 @@ class VacationExampleSeeder extends Seeder
 
         $approvedStart = Carbon::now()->subMonthNoOverflow()->startOfMonth();
         $approvedEnd = $approvedStart->copy()->addDays(4);
-        $approvedCalc = $service->calculateRequestedDays($user, $approvedStart, $approvedEnd, $policy->counting_method);
+        $approvedCalc = $service->calculateRequestedDays($user, $approvedStart, $approvedEnd, $policy->counting_method ?? 'calendar_days');
 
         $approved = VacationRequest::firstOrCreate(
             [
@@ -66,7 +68,7 @@ class VacationExampleSeeder extends Seeder
             ],
             [
                 'requested_days' => $approvedCalc['count'],
-                'counting_method_snapshot' => $policy->counting_method,
+                'counting_method_snapshot' => $policy->counting_method ?? 'calendar_days',
                 'requested_by' => $user->id,
                 'approved_by' => $user->id,
                 'approved_at' => now()->subMonth(),

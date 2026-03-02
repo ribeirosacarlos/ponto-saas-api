@@ -8,7 +8,12 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 
-class VacationDaysCalculator
+/**
+ * Vacation consumption engine.
+ *
+ * Calculates how many days will be deducted when a vacation request is made.
+ */
+class VacationConsumptionService
 {
     public function calculate(User $user, Carbon $start, Carbon $end, string $countingMethod): array
     {
@@ -39,7 +44,7 @@ class VacationDaysCalculator
         $workingWeekdays = $shift?->shiftDays?->where('is_working_day', true)->pluck('weekday')->map(fn ($w) => (int) $w)->unique()->values();
 
         if (! $workingWeekdays || $workingWeekdays->isEmpty()) {
-            $workingWeekdays = collect([1,2,3,4,5]);
+            $workingWeekdays = collect([1, 2, 3, 4, 5]);
         }
 
         $holidays = Holiday::where('company_id', $user->company_id)

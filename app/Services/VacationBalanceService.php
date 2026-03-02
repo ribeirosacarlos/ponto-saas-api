@@ -11,6 +11,11 @@ use Carbon\Carbon;
 
 class VacationBalanceService
 {
+    public function __construct(
+        protected VacationAccrualService $accrualService
+    ) {
+    }
+
     public function getActivePolicyForUser(User $user): ?LeavePolicy
     {
         $assignment = UserLeavePolicy::where('user_id', $user->id)
@@ -38,59 +43,77 @@ class VacationBalanceService
 
         if (! $policy) {
             return [
-                'policy'    => null,
-                'accrued'   => 0.0,
-                'used'      => 0.0,
-                'available' => 0.0,
-                'adjustment'=> 0.0,
+                'policy' => null,
+                'period_start' => null,
+                'period_end' => null,
+                'annual_entitlement_days' => 0.0,
+                'accrual_basis' => null,
+                'computable_days' => 0,
+                'non_computable_days' => 0,
+                'accrual_rate' => 0.0,
+                'accrued_days' => 0.0,
+                'used_days' => 0.0,
+                'available_days' => 0.0,
+                'adjustment_days' => 0.0,
+                'breakdown' => [],
             ];
         }
 
-        $accrued = $this->calculateAccruedDays($user, $policy, $year);
-        $used = $this->calculateUsedDays($user, $year);
-        $adjustment = $this->getManualAdjustment($user, $year);
-
-        return [
-            'policy'    => $policy,
-            'accrued'   => $accrued,
-            'used'      => $used,
-            'adjustment'=> $adjustment,
-            'available' => round($accrued - $used + $adjustment, 2),
-        ];
-    }
-
-    protected function calculateAccruedDays(User $user, LeavePolicy $policy, int $year): float
-    {
-        $startDate = $user->created_at?->copy()->startOfDay() ?? now();
-
-        if (! empty($user->employment_start_date)) {
-            $startDate = Carbon::parse($user->employment_start_date)->startOfDay();
-        }
-
-        $periodStart = Carbon::create($year, 1, 1);
-        $periodEnd = Carbon::create($year, 12, 31);
+        $periodStart = Carbon::create($year, 1, 1)->startOfDay();
+        $periodEnd = Carbon::create($year, 12, 31)->startOfDay();
         $today = Carbon::today();
 
         if ($today->lt($periodEnd)) {
             $periodEnd = $today;
         }
 
+        $startDate = $user->created_at?->copy()->startOfDay() ?? now()->startOfDay();
+
+        if (! empty($user->employment_start_date)) {
+            $startDate = Carbon::parse($user->employment_start_date)->startOfDay();
+        }
+
         if ($startDate->greaterThan($periodEnd)) {
-            return 0.0;
+            return [
+                'policy' => $policy,
+                'period_start' => $periodStart->toDateString(),
+                'period_end' => $periodEnd->toDateString(),
+                'annual_entitlement_days' => (float) ($policy->annual_entitlement_days ?? $policy->days_per_year ?? 30),
+                'accrual_basis' => $policy->accrual_basis ?? 'calendar_days',
+                'computable_days' => 0,
+                'non_computable_days' => 0,
+                'accrual_rate' => 0.0,
+                'accrued_days' => 0.0,
+                'used_days' => 0.0,
+                'available_days' => 0.0,
+                'adjustment_days' => 0.0,
+                'breakdown' => [],
+            ];
         }
 
         $effectiveStart = $startDate->greaterThan($periodStart) ? $startDate : $periodStart;
-        $monthsWorked = $this->monthsBetween($effectiveStart, $periodEnd);
 
-        return round($monthsWorked * (float) $policy->accrual_rate_per_month, 2);
+        $accrual = $this->accrualService->calculate($user, $policy, $effectiveStart, $periodEnd);
+        $usedDays = $this->calculateUsedDays($user, $effectiveStart, $periodEnd);
+        $adjustment = $this->getManualAdjustment($user, $year);
+        $availableDays = round($accrual['accrued_days'] - $usedDays + $adjustment, 2);
+
+        return [
+            'policy' => $policy,
+            ...$accrual,
+            'used_days' => $usedDays,
+            'available_days' => $availableDays,
+            'adjustment_days' => $adjustment,
+        ];
     }
 
-    protected function calculateUsedDays(User $user, int $year): float
+    protected function calculateUsedDays(User $user, Carbon $periodStart, Carbon $periodEnd): float
     {
         return (float) VacationRequest::approved()
             ->where('company_id', $user->company_id)
             ->where('user_id', $user->id)
-            ->whereYear('start_date', $year)
+            ->whereDate('start_date', '>=', $periodStart->toDateString())
+            ->whereDate('start_date', '<=', $periodEnd->toDateString())
             ->sum('requested_days');
     }
 
@@ -104,21 +127,9 @@ class VacationBalanceService
         return (float) ($balance?->manual_adjustment_days ?? 0);
     }
 
-    protected function monthsBetween(Carbon $start, Carbon $end): int
-    {
-        if ($start->gt($end)) {
-            return 0;
-        }
-
-        $startMonth = $start->copy()->startOfMonth();
-        $endMonth = $end->copy()->startOfMonth();
-
-        return $startMonth->diffInMonths($endMonth) + 1;
-    }
-
     public function ensureEnoughBalance(User $user, float $requestedDays): bool
     {
         $balance = $this->calculateBalance($user);
-        return $balance['available'] >= $requestedDays;
+        return ($balance['available_days'] ?? 0) >= $requestedDays;
     }
 }

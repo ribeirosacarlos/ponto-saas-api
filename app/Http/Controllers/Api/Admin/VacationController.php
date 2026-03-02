@@ -223,11 +223,17 @@ class VacationController extends Controller
         $balance = $this->balanceService->calculateBalance($employee);
 
         return response()->json([
-            'policy'    => $balance['policy'],
-            'accrued'   => $balance['accrued'],
-            'used'      => $balance['used'],
-            'adjustment'=> $balance['adjustment'],
-            'available' => $balance['available'],
+            'period_start' => $balance['period_start'],
+            'period_end' => $balance['period_end'],
+            'annual_entitlement_days' => $balance['annual_entitlement_days'],
+            'accrual_basis' => $balance['accrual_basis'],
+            'computable_days' => $balance['computable_days'],
+            'non_computable_days' => $balance['non_computable_days'],
+            'accrual_rate' => $balance['accrual_rate'],
+            'accrued_days' => $balance['accrued_days'],
+            'used_days' => $balance['used_days'],
+            'available_days' => $balance['available_days'],
+            'breakdown' => $balance['breakdown'],
         ]);
     }
 

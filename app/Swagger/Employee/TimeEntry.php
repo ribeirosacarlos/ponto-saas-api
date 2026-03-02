@@ -97,6 +97,48 @@ class TimeEntryMyEntries {}
 
 /**
  * ==========================================
+ * Historico diario de marcacoes
+ * ==========================================
+ *
+ * @OA\Get(
+ *     path="/v1/employee/entries/history",
+ *     summary="Historico diario de marcacoes do funcionario autenticado",
+ *     tags={"Employee - Time Entries"},
+ *     security={{"bearerAuth":{}}},
+ *
+ *     @OA\Parameter(
+ *         name="from",
+ *         in="query",
+ *         required=false,
+ *         description="Data inicial (YYYY-MM-DD).",
+ *         @OA\Schema(type="string", format="date", example="2026-02-01")
+ *     ),
+ *     @OA\Parameter(
+ *         name="to",
+ *         in="query",
+ *         required=false,
+ *         description="Data final (YYYY-MM-DD).",
+ *         @OA\Schema(type="string", format="date", example="2026-02-28")
+ *     ),
+ *     @OA\Parameter(
+ *         name="limit",
+ *         in="query",
+ *         required=false,
+ *         description="Quantidade de dias para retorno quando from/to nao forem informados.",
+ *         @OA\Schema(type="integer", example=7)
+ *     ),
+ *
+ *     @OA\Response(
+ *         response=200,
+ *         description="Resumo diario retornado com sucesso",
+ *         @OA\JsonContent(ref="#/components/schemas/EmployeeTimeEntryHistoryResponse")
+ *     )
+ * )
+ */
+class EmployeeTimeEntryHistory {}
+
+/**
+ * ==========================================
  * Status de ponto aberto
  * ==========================================
  *
@@ -245,6 +287,36 @@ class EmployeeShiftDayEventSchema {}
  * )
  */
 class EmployeeShiftAssignmentSchema {}
+
+/**
+ * @OA\Schema(
+ *     schema="EmployeeTimeEntryHistoryDay",
+ *     @OA\Property(property="date", type="string", format="date", example="2026-02-08"),
+ *     @OA\Property(property="first_in", type="string", format="date-time", nullable=true, example="2026-02-08T08:05:00-03:00"),
+ *     @OA\Property(property="last_out", type="string", format="date-time", nullable=true, example="2026-02-08T17:45:00-03:00"),
+ *     @OA\Property(property="worked_hhmm", type="string", example="08:10"),
+ *     @OA\Property(property="expected_hhmm", type="string", example="08:00"),
+ *     @OA\Property(property="balance_hhmm", type="string", example="+00:10"),
+ *     @OA\Property(property="status", type="string", enum={"extra","debt","even"}, example="extra"),
+ *     @OA\Property(property="open_day", type="boolean", example=false)
+ * )
+ */
+class EmployeeTimeEntryHistoryDaySchema {}
+
+/**
+ * @OA\Schema(
+ *     schema="EmployeeTimeEntryHistoryResponse",
+ *     @OA\Property(property="from", type="string", format="date", example="2026-02-01"),
+ *     @OA\Property(property="to", type="string", format="date", example="2026-02-28"),
+ *     @OA\Property(property="timezone", type="string", example="America/Sao_Paulo"),
+ *     @OA\Property(
+ *         property="days",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/EmployeeTimeEntryHistoryDay")
+ *     )
+ * )
+ */
+class EmployeeTimeEntryHistoryResponseSchema {}
 
 /**
  * ==========================================

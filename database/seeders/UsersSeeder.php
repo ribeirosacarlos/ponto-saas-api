@@ -34,6 +34,7 @@ class UsersSeeder extends Seeder
 
         $users = [
             ['name' => 'Ana Pereira', 'email' => 'ana.pereira@empresa.com', 'role' => 'admin', 'shift' => 'Jornada Padrão (Seg–Sex)'],
+            ['name' => 'EDUARDO CHEFE', 'email' => 'edudtk7@gmail.com', 'role' => 'admin', 'shift' => 'Jornada Padrão (Seg–Sex)'],
             ['name' => 'Bruno Carvalho', 'email' => 'bruno.carvalho@empresa.com', 'role' => 'manager', 'shift' => 'Turno Manhã'],
             ['name' => 'Carla Nunes', 'email' => 'carla.nunes@empresa.com', 'role' => 'area_manager', 'shift' => 'Jornada Padrão (Seg–Sex)'],
             ['name' => 'Diego Martins', 'email' => 'diego.martins@empresa.com', 'role' => 'employee', 'shift' => 'Turno Manhã'],

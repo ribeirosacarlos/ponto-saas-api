@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementCo
 use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
+use App\Http\Controllers\Api\Admin\AbsenceController as AdminAbsenceController;
 use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
 use App\Http\Controllers\Api\Admin\ReportController;
@@ -62,6 +63,9 @@ Route::prefix('admin')->group(function () {
         Route::get('/vacations/balance/{employee}', [AdminVacationController::class, 'balance']);
 
         Route::apiResource('leave-policies', LeavePolicyController::class)->only(['index', 'store', 'update', 'destroy']);
+
+        Route::get('/absences', [AdminAbsenceController::class, 'index']);
+        Route::post('/absences', [AdminAbsenceController::class, 'store']);
 
         Route::apiResource('announcements', AdminAnnouncementController::class);
     });
