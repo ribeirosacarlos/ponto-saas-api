@@ -64,8 +64,24 @@ class LeavePolicyController extends Controller
 
     protected function preparePayload(array $data, bool $isStore = true): array
     {
-        if (! isset($data['days_per_year']) && $isStore) {
-            $data['days_per_year'] = 30;
+        if (isset($data['days_per_year']) && ! isset($data['annual_entitlement_days'])) {
+            $data['annual_entitlement_days'] = $data['days_per_year'];
+        }
+
+        if (! isset($data['annual_entitlement_days']) && $isStore) {
+            $data['annual_entitlement_days'] = 30;
+        }
+
+        if (! isset($data['accrual_basis']) && $isStore) {
+            $data['accrual_basis'] = 'calendar_days';
+        }
+
+        if (! isset($data['day_work_threshold_minutes']) && $isStore) {
+            $data['day_work_threshold_minutes'] = 1;
+        }
+
+        if (isset($data['annual_entitlement_days'])) {
+            $data['days_per_year'] = $data['annual_entitlement_days'];
         }
 
         if (! isset($data['accrual_rate_per_month']) && isset($data['days_per_year'])) {

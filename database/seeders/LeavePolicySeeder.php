@@ -19,6 +19,9 @@ class LeavePolicySeeder extends Seeder
                 [
                     'days_per_year' => 30.00,
                     'accrual_rate_per_month' => 2.500,
+                    'annual_entitlement_days' => 30.00,
+                    'accrual_basis' => 'calendar_days',
+                    'day_work_threshold_minutes' => 1,
                     'counting_method' => 'calendar_days',
                     'allow_carry_over' => false,
                 ]

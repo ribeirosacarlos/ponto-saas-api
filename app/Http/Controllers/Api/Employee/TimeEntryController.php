@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api\Employee;
 use App\Actions\TimeEntries\CreateTimeEntryAdjustmentAction;
 use App\Actions\TimeEntries\ResolveNextExpectedClockAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\EmployeeTimeEntryHistoryRequest;
 use App\Http\Requests\TimeEntryStoreRequest;
 use App\Models\TimeEntry;
 use App\Models\VacationDay;
+use App\Services\TimeEntry\OvertimeCalculatorService;
 use App\Services\UserShiftResolver;
+use App\Support\CompanyTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -118,6 +121,118 @@ class TimeEntryController extends Controller
         }
 
         return response()->json($entries);
+    }
+
+    public function history(
+        EmployeeTimeEntryHistoryRequest $request,
+        OvertimeCalculatorService $overtimeCalculator
+    ) {
+        $user = $request->user();
+        $timezone = CompanyTime::companyTz($request);
+        $limit = (int) ($request->input('limit', 7));
+        $limit = max(1, min($limit, 60));
+
+        $today = CarbonImmutable::now($timezone)->startOfDay();
+        $fromInput = $request->input('from');
+        $toInput = $request->input('to');
+
+        $from = $fromInput ? CarbonImmutable::parse($fromInput, $timezone)->startOfDay() : null;
+        $to = $toInput ? CarbonImmutable::parse($toInput, $timezone)->startOfDay() : null;
+
+        if ($from && ! $to) {
+            $to = $from;
+        }
+
+        if ($to && ! $from) {
+            $from = $to->subDays($limit - 1);
+        }
+
+        if (! $from && ! $to) {
+            $to = $today;
+            $from = $today->subDays($limit - 1);
+        }
+
+        $fromLocal = $from->startOfDay();
+        $toLocal = $to->endOfDay();
+
+        $overtime = $overtimeCalculator->calculateForEmployee($user, $fromLocal, $toLocal, true);
+        $daySummaries = collect($overtime['days'] ?? [])->keyBy('date');
+
+        $fromUtc = $fromLocal->setTimezone('UTC');
+        $toUtc = $toLocal->setTimezone('UTC');
+
+        $entries = $user->timeEntries()
+            ->excludeRejected()
+            ->whereBetween('clocked_at', [$fromUtc->toDateTimeString(), $toUtc->toDateTimeString()])
+            ->orderBy('clocked_at')
+            ->get();
+
+        $entriesByDate = [];
+
+        foreach ($entries as $entry) {
+            if (! in_array($entry->type, ['in', 'out'], true)) {
+                continue;
+            }
+
+            $local = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone);
+            $date = $local->toDateString();
+
+            $entriesByDate[$date][] = [
+                'type' => $entry->type,
+                'time' => $local,
+            ];
+        }
+
+        foreach ($entriesByDate as &$items) {
+            usort($items, fn ($a, $b) => $a['time']->lessThan($b['time']) ? -1 : 1);
+        }
+
+        $days = [];
+        $cursor = $fromLocal->startOfDay();
+        $end = $toLocal->startOfDay();
+
+        while ($cursor->lessThanOrEqualTo($end)) {
+            $date = $cursor->toDateString();
+            $items = $entriesByDate[$date] ?? [];
+
+            $firstIn = null;
+            $lastOut = null;
+            $entryCount = 0;
+
+            foreach ($items as $item) {
+                $entryCount++;
+
+                if ($item['type'] === 'in' && ! $firstIn) {
+                    $firstIn = $item['time'];
+                }
+
+                if ($item['type'] === 'out') {
+                    $lastOut = $item['time'];
+                }
+            }
+
+            $summary = $daySummaries->get($date);
+
+            $days[] = [
+                'date' => $date,
+                'first_in' => $firstIn?->toIso8601String(),
+                'last_out' => $lastOut?->toIso8601String(),
+                'worked_hhmm' => $summary['worked_hhmm'] ?? '00:00',
+                'expected_hhmm' => $summary['expected_hhmm'] ?? '00:00',
+                'balance_hhmm' => $summary['balance_hhmm'] ?? '00:00',
+                'status' => $summary['status'] ?? 'even',
+                'open_day' => $entryCount % 2 !== 0,
+            ];
+
+            $cursor = $cursor->addDay();
+        }
+
+        return response()->json([
+            'from' => $fromLocal->toDateString(),
+            'to' => $toLocal->toDateString(),
+            'timezone' => $timezone,
+            'days' => $days,
+        ]);
     }
 
     public function openStatus(Request $request, ResolveNextExpectedClockAction $resolveNextExpectedClock)

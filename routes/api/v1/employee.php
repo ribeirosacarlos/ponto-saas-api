@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
 use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
+use App\Http\Controllers\Api\Employee\AbsenceController as EmployeeAbsenceController;
 use App\Http\Controllers\Api\Employee\TimeEntryAdjustmentController as EmployeeTimeEntryAdjustmentController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
@@ -17,6 +18,7 @@ Route::prefix('employee')
 
         // Listar batidas do próprio usuário
         Route::get('/entries', [EmployeeTimeEntryController::class, 'myEntries']);
+        Route::get('/entries/history', [EmployeeTimeEntryController::class, 'history']);
 
         Route::get('/time-entries/open-status', [EmployeeTimeEntryController::class, 'openStatus']);
         Route::get('/shift', [EmployeeTimeEntryController::class, 'shift']);
@@ -31,6 +33,7 @@ Route::prefix('employee')
         Route::post('/vacations', [EmployeeVacationController::class, 'store']);
         Route::get('/vacations/balance', [EmployeeVacationController::class, 'balance']);
         Route::delete('/vacations/{vacation}', [EmployeeVacationController::class, 'destroy']);
+        Route::get('/absences', [EmployeeAbsenceController::class, 'index']);
 
         Route::get('/announcements', [EmployeeAnnouncementController::class, 'index']);
         Route::get('/announcements/pending-count', [EmployeeAnnouncementController::class, 'pendingCount']);

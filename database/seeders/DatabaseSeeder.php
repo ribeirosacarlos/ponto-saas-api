@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             LeavePolicySeeder::class,
             UsersSeeder::class,
             TimeEntriesSeeder::class,
+            AbsenceSeeder::class,
             VacationExampleSeeder::class,
             AnnouncementSeeder::class,
         ]);

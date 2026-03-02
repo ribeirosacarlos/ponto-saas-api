@@ -14,14 +14,14 @@ use Illuminate\Validation\ValidationException;
 class VacationRequestService
 {
     public function __construct(
-        protected VacationDaysCalculator $daysCalculator,
+        protected VacationConsumptionService $consumptionService,
         protected VacationBalanceService $balanceService
     ) {
     }
 
     public function calculateRequestedDays(User $user, Carbon $start, Carbon $end, string $countingMethod): array
     {
-        return $this->daysCalculator->calculate($user, $start, $end, $countingMethod);
+        return $this->consumptionService->calculate($user, $start, $end, $countingMethod);
     }
 
     public function ensureNoConflicts(User $user, Carbon $start, Carbon $end, ?string $ignoreRequestId = null): void
