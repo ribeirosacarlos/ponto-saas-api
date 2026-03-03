@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Shift;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Services\UserShiftService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,8 @@ class TimeEntriesSeeder extends Seeder
 
         // Dica para validação: rode php artisan db:seed --class=TimeEntriesSeeder e use queries agrupadas por usuário/dia para confirmar atrasos e horas extras.
 
+        $userShiftService = app(UserShiftService::class);
+
         $users = User::with(['userShifts' => function ($query) {
             $query->active()
                 ->with('shift.shiftDays')
@@ -46,7 +49,11 @@ class TimeEntriesSeeder extends Seeder
 
             if (! $shift) {
                 Log::info('TimeEntriesSeeder: usuário sem jornada ativa, pulando', ['user_id' => $user->id]);
-                continue;
+                $shift = $this->assignCompanyShift($user, $userShiftService);
+
+                if (! $shift) {
+                    continue;
+                }
             }
 
             if (! $shift->start_time || ! $shift->end_time) {
@@ -81,6 +88,26 @@ class TimeEntriesSeeder extends Seeder
         }
 
         $shift?->loadMissing('shiftDays');
+
+        return $shift;
+    }
+
+    private function assignCompanyShift(User $user, UserShiftService $userShiftService): ?Shift
+    {
+        if (! $user->company_id) {
+            return null;
+        }
+
+        $shift = Shift::where('company_id', $user->company_id)
+            ->with('shiftDays')
+            ->orderByDesc('is_default')
+            ->first();
+
+        if (! $shift) {
+            return null;
+        }
+
+        $userShiftService->assign($user, $shift);
 
         return $shift;
     }
