@@ -60,6 +60,12 @@ class StripeWebhookController extends Controller
         $eventRecord->payload_json = $decodedPayload;
         $eventRecord->type = $event->type;
 
+        Log::debug('Stripe webhook processing', [
+            'event_id' => $event->id,
+            'type' => $event->type,
+            'record_id' => $eventRecord->id,
+        ]);
+
         try {
             $this->stripeBillingService->processEvent($event);
             $eventRecord->processed_at = now();
@@ -69,6 +75,9 @@ class StripeWebhookController extends Controller
                 'event_id' => $event->id,
                 'type' => $event->type,
                 'error' => $e->getMessage(),
+                'exception' => $e,
+                'payload' => $decodedPayload,
+                'record_id' => $eventRecord->id,
             ]);
 
             return response()->json(['message' => 'Erro ao processar webhook.'], 500);
