@@ -130,7 +130,8 @@ class StripeBillingService
             return;
         }
 
-        $stripeSubscription = $this->stripe->subscriptions->retrieve($session->subscription);
+        $stripeSubscription = $this->buildTestSubscriptionFromMetadata($metadata)
+            ?? $this->stripe->subscriptions->retrieve($session->subscription);
 
         $this->syncStripeSubscription($company, $stripeSubscription);
     }
@@ -293,5 +294,24 @@ class StripeBillingService
         }
 
         return $base . '/' . $relative;
+    }
+
+    /**
+     * Build a fake Stripe subscription when the metadata carries one, which is
+     * useful for manual/local webhook testing without calling Stripe.
+     */
+    protected function buildTestSubscriptionFromMetadata(array $metadata): ?StripeSubscription
+    {
+        if (empty($metadata['mock_subscription'])) {
+            return null;
+        }
+
+        $payload = json_decode($metadata['mock_subscription'], true);
+
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        return StripeSubscription::constructFrom($payload);
     }
 }
