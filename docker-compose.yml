@@ -20,6 +20,13 @@ services:
       - laravel
     volumes:
       - public_data:/var/www/public
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: laravel-app
+        awslogs-create-group: "true"
 
   queue-worker:
     image: 511758682326.dkr.ecr.us-east-1.amazonaws.com/ponto-saas-api:latest
@@ -41,6 +48,13 @@ services:
     command: ["php", "/var/www/artisan", "queue:work", "database", "--queue=default", "--sleep=1", "--tries=3", "--timeout=120"]
     networks:
       - laravel
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: laravel-queue
+        awslogs-create-group: "true"
 
   nginx:
     image: nginx:alpine
@@ -55,6 +69,13 @@ services:
     volumes:
       - ./.docker/nginx:/etc/nginx/conf.d:ro
       - public_data:/var/www/public:ro
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: nginx
+        awslogs-create-group: "true"
 
 networks:
   laravel:
