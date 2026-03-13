@@ -14,6 +14,10 @@ class EnsureCompanyHasAccess
 
     public function handle(Request $request, Closure $next)
     {
+        if ($request->user()?->hasRole('super_admin')) {
+            return $next($request);
+        }
+
         $company = $request->user()?->company;
 
         if (! $company) {

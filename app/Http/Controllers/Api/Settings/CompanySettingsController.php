@@ -27,6 +27,10 @@ class CompanySettingsController extends Controller
         $company = $user?->company;
 
         if (! $company) {
+            if ($user?->hasRole('super_admin')) {
+                return new CompanySettingsOverviewResource($this->buildPlatformAdminPayload($user));
+            }
+
             return response()->json(['message' => 'Empresa não encontrada.'], 404);
         }
 
@@ -53,6 +57,68 @@ class CompanySettingsController extends Controller
         ];
 
         return new CompanySettingsOverviewResource($payload);
+    }
+
+    private function buildPlatformAdminPayload($user): array
+    {
+        return [
+            'billing' => [
+                'plan' => $this->buildPlanPayload(null),
+                'subscription' => [
+                    'status' => null,
+                    'status_label' => 'N/A',
+                    'next_action' => 'NONE',
+                    'stripe_customer_id' => null,
+                    'stripe_subscription_id' => null,
+                    'subscription_status' => null,
+                    'trial_ends_at' => null,
+                    'trial_days_remaining' => null,
+                    'current_period_end' => null,
+                    'billing_days_remaining' => null,
+                    'subscription_ends_at' => null,
+                    'cancel_at_period_end' => null,
+                    'canceled_at' => null,
+                ],
+            ],
+            'flags' => [
+                'can_access_system' => true,
+                'is_trial' => false,
+                'is_trial_active' => false,
+                'is_subscription_active' => false,
+                'requires_action' => false,
+                'is_platform_admin' => true,
+            ],
+            'links' => [
+                'checkout_url' => null,
+                'customer_portal_url' => null,
+            ],
+            'company' => [
+                'name' => 'Platform',
+                'timezone' => config('app.timezone'),
+                'country' => null,
+                'locale' => config('app.locale'),
+                'created_at' => null,
+            ],
+            'workday' => [
+                'default_shift' => null,
+                'tolerance_minutes' => self::WORKDAY_TOLERANCE_MINUTES,
+                'rounding_minutes' => config('workday.rounding_minutes'),
+                'geolocation_enabled' => false,
+                'require_photo' => null,
+            ],
+            'security' => $this->buildSecurityPayload($user),
+            'usage' => [
+                'employees' => [
+                    'current' => 0,
+                    'limit' => null,
+                    'over_limit' => false,
+                ],
+            ],
+            'compliance' => [
+                'log_retention_days' => null,
+                'export_enabled' => false,
+            ],
+        ];
     }
 
     private function buildFlags(Company $company, ?string $subscriptionStatus): array
