@@ -16,17 +16,18 @@ class StripeWebhookController extends Controller
 
     public function handle(Request $request)
     {
+        $logger = Log::channel('stripe_webhooks');
         $signature = $request->header('Stripe-Signature');
         $secret = config('services.stripe.webhook_secret');
         $payload = $request->getContent();
 
-        Log::info('Stripe webhook received', [
+        $logger->info('Stripe webhook received', [
             'signature_present' => (bool) $signature,
             'payload' => json_decode($payload, true),
         ]);
 
         if (! $signature || ! $secret) {
-            Log::warning('Stripe webhook configurações ausentes', [
+            $logger->warning('Stripe webhook configurações ausentes', [
                 'signature' => (bool) $signature,
                 'secret_configured' => (bool) $secret,
             ]);
@@ -37,11 +38,11 @@ class StripeWebhookController extends Controller
         try {
             $event = \Stripe\Webhook::constructEvent($payload, $signature, $secret);
         } catch (\Stripe\Exception\SignatureVerificationException $e) {
-            Log::warning('Stripe webhook assinatura inválida', ['error' => $e->getMessage()]);
+            $logger->warning('Stripe webhook assinatura inválida', ['error' => $e->getMessage()]);
 
             return response()->json(['message' => 'Assinatura inválida.'], 400);
         } catch (\UnexpectedValueException $e) {
-            Log::warning('Stripe webhook payload inválido', ['error' => $e->getMessage()]);
+            $logger->warning('Stripe webhook payload inválido', ['error' => $e->getMessage()]);
 
             return response()->json(['message' => 'Payload inválido.'], 400);
         }
@@ -60,7 +61,7 @@ class StripeWebhookController extends Controller
         $eventRecord->payload_json = $decodedPayload;
         $eventRecord->type = $event->type;
 
-        Log::debug('Stripe webhook processing', [
+        $logger->debug('Stripe webhook processing', [
             'event_id' => $event->id,
             'type' => $event->type,
             'record_id' => $eventRecord->id,
@@ -71,7 +72,7 @@ class StripeWebhookController extends Controller
             $eventRecord->processed_at = now();
             $eventRecord->save();
         } catch (\Throwable $e) {
-            Log::error('Stripe webhook processamento falhou', [
+            $logger->error('Stripe webhook processamento falhou', [
                 'event_id' => $event->id,
                 'type' => $event->type,
                 'error' => $e->getMessage(),

@@ -73,6 +73,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'stripe_webhooks' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/stripe-webhooks.log'),
+            'level' => env('STRIPE_WEBHOOK_LOG_LEVEL', 'debug'),
+            'days' => env('STRIPE_WEBHOOK_LOG_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
