@@ -14,6 +14,13 @@ class CompanyTimezoneController extends Controller
         $company = $request->user()?->company;
 
         if (! $company) {
+            if ($request->user()?->hasRole('super_admin')) {
+                return response()->json([
+                    'timezone' => config('app.timezone'),
+                    'available_timezones' => CompanyTime::availableTimezones(),
+                ]);
+            }
+
             return response()->json(['message' => 'Empresa não encontrada.'], 404);
         }
 

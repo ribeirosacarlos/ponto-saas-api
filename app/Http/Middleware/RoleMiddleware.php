@@ -18,6 +18,10 @@ class RoleMiddleware
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        if ($user->hasRole('super_admin')) {
+            return $next($request);
+        }
+
         $roles = explode('|', $roles);
 
         foreach ($roles as $role) {
