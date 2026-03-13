@@ -43,7 +43,7 @@ class InviteEmployeeAction
 
         $payload = [
             'companyName' => $companyName,
-            'inviteUrl' => $this->resolveInviteUrl($inviteCodePlain),
+            'inviteUrl' => $this->resolveInviteUrl($user->email),
             'inviteCode' => $inviteCodePlain,
             'temporaryPassword' => $temporaryPasswordPlain,
             'supportEmail' => $supportEmail,
@@ -93,7 +93,7 @@ class InviteEmployeeAction
         return $inviteCode;
     }
 
-    protected function resolveInviteUrl(string $code): ?string
+    protected function resolveInviteUrl(string $email): ?string
     {
         $template = config('app.invite_url');
 
@@ -101,14 +101,14 @@ class InviteEmployeeAction
             return null;
         }
 
-        $encodedCode = urlencode($code);
+        $encodedEmail = urlencode($email);
 
-        if (str_contains($template, '{code}')) {
-            return str_replace('{code}', $encodedCode, $template);
+        if (str_contains($template, '{email}')) {
+            return str_replace('{email}', $encodedEmail, $template);
         }
 
         $separator = str_contains($template, '?') ? '&' : '?';
 
-        return "{$template}{$separator}invite_code={$encodedCode}";
+        return "{$template}{$separator}email={$encodedEmail}";
     }
 }

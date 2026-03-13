@@ -60,8 +60,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | This URL is used when generating the link that employees click to
-    | accept their invite. You can include "{code}" or let the system
-    | append the invite_code query parameter automatically.
+    | accept their invite. You can include "{email}" or let the system
+    | append the email query parameter automatically.
     |
     */
 

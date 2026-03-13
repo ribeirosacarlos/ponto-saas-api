@@ -16,6 +16,7 @@ class InviteEmployeeActionTest extends TestCase
     public function test_it_creates_employee_and_dispatches_invite_job()
     {
         Bus::fake();
+        config(['app.invite_url' => 'https://app.jornafy.com/activate-account']);
 
         $inviter = User::factory()->create();
 
@@ -33,6 +34,14 @@ class InviteEmployeeActionTest extends TestCase
         $this->assertTrue($employee->must_change_password);
         $this->assertNotNull($employee->invite_code_hash);
 
-        Bus::assertDispatched(SendEmployeeInviteJob::class, fn (SendEmployeeInviteJob $job) => $job->userId === $employee->id);
+        Bus::assertDispatched(SendEmployeeInviteJob::class, function (SendEmployeeInviteJob $job) use ($employee) {
+            if ($job->userId !== $employee->id) {
+                return false;
+            }
+
+            return ($job->payload['inviteUrl'] ?? null) === 'https://app.jornafy.com/activate-account?email=convite%40example.com'
+                && ! empty($job->payload['inviteCode'])
+                && ! str_contains($job->payload['inviteUrl'] ?? '', 'invite_code=');
+        });
     }
 }
