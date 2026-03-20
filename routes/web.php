@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\SuperAdminPageController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -37,4 +38,8 @@ Route::get('/debug/datetime', function () {
             'timezone' => $dbTimezone->TimeZone ?? null,
         ],
     ]);
+});
+
+Route::middleware(['auth:sanctum', 'super_admin'])->group(function () {
+    Route::get('/super-admin', [SuperAdminPageController::class, 'index']);
 });

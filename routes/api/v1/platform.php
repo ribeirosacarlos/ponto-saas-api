@@ -4,11 +4,18 @@ use App\Http\Controllers\Api\Admin\Billing\CompanySubscriptionController;
 use App\Http\Controllers\Api\Admin\Billing\PlanController;
 use App\Http\Controllers\Api\Platform\CompanyController;
 use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
+use App\Http\Controllers\Api\SuperAdmin\CompanyMetricsController as SuperAdminCompanyMetricsController;
+use App\Http\Controllers\Api\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('platform')->group(function () {
 
-    Route::middleware(['role:super_admin'])->group(function () {
+    Route::middleware(['super_admin'])->group(function () {
+        Route::prefix('super-admin')->group(function () {
+            Route::get('/dashboard', [SuperAdminDashboardController::class, 'show']);
+            Route::get('/companies', [SuperAdminCompanyMetricsController::class, 'index']);
+        });
+
         Route::post('/companies/register', [CompanyRegistrationController::class, 'store']);
 
         Route::apiResource('companies', CompanyController::class);
