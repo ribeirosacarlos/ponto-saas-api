@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ]);
             $middleware->alias([
                 'role' => \App\Http\Middleware\RoleMiddleware::class,
+                'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
                 'subscription.active' => \App\Http\Middleware\EnsureSubscriptionTrialOrActive::class,
                 'subscription.access' => \App\Http\Middleware\EnsureCompanyHasAccess::class,
                 'plan.feature' => \App\Http\Middleware\EnsurePlanFeature::class,
