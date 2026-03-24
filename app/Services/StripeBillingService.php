@@ -134,7 +134,6 @@ class StripeBillingService
             ?? $this->stripe->subscriptions->retrieve($session->subscription);
 
         $this->syncStripeSubscription($company, $stripeSubscription);
-        app(CompanySubscriptionBillingService::class)->syncRecurringUsage($company->fresh(['subscription.plan', 'currentPlan']));
     }
 
     protected function handleStripeSubscription(?StripeSubscription $stripeSubscription): void
@@ -155,7 +154,6 @@ class StripeBillingService
         }
 
         $this->syncStripeSubscription($company, $stripeSubscription);
-        app(CompanySubscriptionBillingService::class)->syncRecurringUsage($company->fresh(['subscription.plan', 'currentPlan']));
     }
 
     protected function handleInvoicePaymentFailed(?\Stripe\Invoice $invoice): void

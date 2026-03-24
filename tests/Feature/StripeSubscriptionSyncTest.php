@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Company;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Services\CompanySubscriptionBillingService;
 use App\Services\StripeBillingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -46,10 +45,6 @@ class StripeSubscriptionSyncTest extends TestCase
             'stripe_price_id' => 'price_base_br',
             'stripe_extra_employee_price_id' => 'price_extra_br',
         ]);
-
-        $billingService = Mockery::mock(CompanySubscriptionBillingService::class);
-        $billingService->shouldReceive('syncRecurringUsage')->once()->andReturn([]);
-        $this->app->instance(CompanySubscriptionBillingService::class, $billingService);
 
         $event = Event::constructFrom([
             'id' => 'evt_test',

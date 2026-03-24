@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Company;
 use App\Models\Plan;
-use App\Models\Subscription;
 use Illuminate\Support\Facades\Log;
 
 class CompanySubscriptionBillingService
@@ -83,16 +82,23 @@ class CompanySubscriptionBillingService
         }
     }
 
-    public function syncRecurringUsageForCompanyId(?string $companyId): ?array
+    public function syncExtraEmployeesAfterAdminConfirmation(Company $company): array
     {
-        if (! $companyId) {
-            return null;
+        $company->loadMissing(['subscription.plan', 'currentPlan']);
+
+        $subscription = $company->subscription;
+        $plan = $company->currentPlan ?? $subscription?->plan;
+
+        if (! $subscription || ! $plan) {
+            throw new \LogicException('Assinatura não encontrada.');
         }
 
-        $company = Company::with(['subscription.plan', 'currentPlan'])->find($companyId);
+        if (! $subscription->isActive()) {
+            throw new \LogicException('A sincronização de colaboradores extras só pode ocorrer com assinatura ativa.');
+        }
 
-        if (! $company) {
-            return null;
+        if (! $this->planSupportsExtraEmployees($plan)) {
+            throw new \LogicException('O plano atual não possui cobrança recorrente de colaboradores extras.');
         }
 
         return $this->syncRecurringUsage($company);
