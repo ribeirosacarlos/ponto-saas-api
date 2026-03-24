@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
 use App\Http\Controllers\Api\Admin\AbsenceController as AdminAbsenceController;
+use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeSyncController;
 use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
 use App\Http\Controllers\Api\Admin\ReportController;
@@ -19,6 +20,7 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['role:admin|super_admin', 'subscription.access'])->group(function () {
         Route::get('/company/timezone', [CompanyTimezoneController::class, 'show']);
         Route::put('/company/timezone', [CompanyTimezoneController::class, 'update']);
+        Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);
     });
 
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {

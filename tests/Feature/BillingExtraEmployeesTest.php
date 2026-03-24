@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\Plan;
+use App\Models\Role;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\CompanySubscriptionBillingService;
@@ -12,6 +13,7 @@ use Database\Seeders\PlansSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Mockery;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class BillingExtraEmployeesTest extends TestCase
@@ -89,18 +91,75 @@ class BillingExtraEmployeesTest extends TestCase
         $this->assertSame(16500, $summary['total_price_cents']);
     }
 
-    public function test_user_observer_triggers_company_billing_sync_when_user_is_created_or_deleted(): void
+    public function test_user_observer_does_not_trigger_company_billing_sync_automatically(): void
     {
         $company = Company::factory()->create();
 
         $service = Mockery::mock(CompanySubscriptionBillingService::class);
-        $service->shouldReceive('syncRecurringUsageForCompanyId')->with($company->id)->twice();
+        $service->shouldNotReceive('syncRecurringUsage');
+        $service->shouldNotReceive('syncExtraEmployeesAfterAdminConfirmation');
         $this->app->instance(CompanySubscriptionBillingService::class, $service);
 
         $user = User::factory()->create(['company_id' => $company->id]);
         $user->delete();
 
         $this->addToAssertionCount(1);
+    }
+
+    public function test_admin_can_trigger_extra_employee_sync_after_confirmation(): void
+    {
+        Role::updateOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+
+        $company = Company::factory()->create([
+            'subscription_status' => 'active',
+        ]);
+
+        $plan = $this->makePlan([
+            'currency' => 'BRL',
+            'price_cents' => 12000,
+            'quotas' => ['max_employees' => 15],
+            'extra_employee_price_cents' => 1500,
+            'stripe_price_id' => 'price_1TEdOEHo1sUcOy0oZN37fpdT',
+            'stripe_extra_employee_price_id' => 'price_1TEdaYHo1sUcOy0oZB6iychw',
+        ]);
+
+        Subscription::create([
+            'company_id' => $company->id,
+            'plan_id' => $plan->id,
+            'status' => 'active',
+            'stripe_subscription_id' => 'sub_123',
+            'stripe_customer_id' => 'cus_123',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+        Sanctum::actingAs($admin, ['*']);
+
+        $service = Mockery::mock(CompanySubscriptionBillingService::class);
+        $service->shouldReceive('syncExtraEmployeesAfterAdminConfirmation')
+            ->once()
+            ->andReturn([
+                'active_employees' => 18,
+                'included_employees' => 15,
+                'extra_employees' => 3,
+                'stripe_price_id' => 'price_1TEdOEHo1sUcOy0oZN37fpdT',
+                'stripe_extra_employee_price_id' => 'price_1TEdaYHo1sUcOy0oZB6iychw',
+            ]);
+        $this->app->instance(CompanySubscriptionBillingService::class, $service);
+
+        $response = $this->postJson('/v1/admin/billing/extra-employees/sync');
+
+        $response->assertOk()
+            ->assertJson([
+                'message' => 'Colaboradores extras sincronizados para a próxima cobrança.',
+                'summary' => [
+                    'active_employees' => 18,
+                    'included_employees' => 15,
+                    'extra_employees' => 3,
+                    'stripe_price_id' => 'price_1TEdOEHo1sUcOy0oZN37fpdT',
+                    'stripe_extra_employee_price_id' => 'price_1TEdaYHo1sUcOy0oZB6iychw',
+                ],
+            ]);
     }
 
     protected function makePlan(array $overrides = []): Plan
