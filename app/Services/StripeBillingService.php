@@ -134,6 +134,7 @@ class StripeBillingService
             ?? $this->stripe->subscriptions->retrieve($session->subscription);
 
         $this->syncStripeSubscription($company, $stripeSubscription);
+        app(CompanySubscriptionBillingService::class)->syncRecurringUsage($company->fresh(['subscription.plan', 'currentPlan']));
     }
 
     protected function handleStripeSubscription(?StripeSubscription $stripeSubscription): void
@@ -154,6 +155,7 @@ class StripeBillingService
         }
 
         $this->syncStripeSubscription($company, $stripeSubscription);
+        app(CompanySubscriptionBillingService::class)->syncRecurringUsage($company->fresh(['subscription.plan', 'currentPlan']));
     }
 
     protected function handleInvoicePaymentFailed(?\Stripe\Invoice $invoice): void
@@ -196,6 +198,8 @@ class StripeBillingService
             'stripe_subscription_id' => $stripeSubscription->id,
             'stripe_customer_id' => $stripeSubscription->customer,
             'stripe_price_id' => $this->resolvePriceId($stripeSubscription),
+            'stripe_subscription_item_id' => $this->resolveBaseSubscriptionItemId($stripeSubscription, $plan),
+            'stripe_extra_subscription_item_id' => $this->resolveExtraSubscriptionItemId($stripeSubscription, $plan),
             'metadata' => $this->metadataToArray($stripeSubscription->metadata ?? []),
         ]);
 
@@ -229,9 +233,77 @@ class StripeBillingService
 
     protected function resolvePriceId(StripeSubscription $subscription): ?string
     {
-        $item = $subscription->items?->data[0] ?? null;
+        $item = $this->resolveBaseSubscriptionItem($subscription) ?? ($subscription->items?->data[0] ?? null);
 
         return $item?->price?->id ?? null;
+    }
+
+    public function syncExtraEmployeeSubscriptionItem(
+        Company $company,
+        Subscription $subscription,
+        Plan $plan,
+        array $summary
+    ): array {
+        $stripeSubscription = $this->stripe->subscriptions->retrieve($subscription->stripe_subscription_id);
+        $extraItem = $this->resolveExtraSubscriptionItem($stripeSubscription, $plan);
+        $currentExtraEmployees = (int) ($extraItem?->quantity ?? 0);
+        $targetExtraEmployees = (int) ($summary['extra_employees'] ?? 0);
+
+        Log::info('Recurring billing sync started', [
+            'company_id' => $company->id,
+            'subscription_id' => $subscription->id,
+            'stripe_subscription_id' => $subscription->stripe_subscription_id,
+            'current_extra_employees' => $currentExtraEmployees,
+            'target_extra_employees' => $targetExtraEmployees,
+        ]);
+
+        if ($currentExtraEmployees === $targetExtraEmployees) {
+            Log::info('Recurring billing sync skipped: extras unchanged', [
+                'company_id' => $company->id,
+                'subscription_id' => $subscription->id,
+                'extra_employees' => $targetExtraEmployees,
+            ]);
+
+            $this->syncStripeSubscription($company, $stripeSubscription);
+
+            return $summary;
+        }
+
+        Log::info('Recurring billing extra employees changed', [
+            'company_id' => $company->id,
+            'subscription_id' => $subscription->id,
+            'from' => $currentExtraEmployees,
+            'to' => $targetExtraEmployees,
+        ]);
+
+        if ($targetExtraEmployees > 0 && ! $extraItem) {
+            $this->stripe->subscriptionItems->create([
+                'subscription' => $subscription->stripe_subscription_id,
+                'price' => $plan->stripe_extra_employee_price_id,
+                'quantity' => $targetExtraEmployees,
+                'proration_behavior' => 'none',
+            ]);
+        } elseif ($targetExtraEmployees > 0 && $extraItem) {
+            $this->stripe->subscriptionItems->update($extraItem->id, [
+                'quantity' => $targetExtraEmployees,
+                'proration_behavior' => 'none',
+            ]);
+        } elseif ($extraItem) {
+            $this->stripe->subscriptionItems->delete($extraItem->id, [
+                'proration_behavior' => 'none',
+            ]);
+        }
+
+        $updatedStripeSubscription = $this->stripe->subscriptions->retrieve($subscription->stripe_subscription_id);
+        $this->syncStripeSubscription($company, $updatedStripeSubscription);
+
+        Log::info('Recurring billing sync succeeded', [
+            'company_id' => $company->id,
+            'subscription_id' => $subscription->id,
+            'extra_employees' => $targetExtraEmployees,
+        ]);
+
+        return $summary;
     }
 
     protected function mapStripeStatus(string $status): SubscriptionStatus
@@ -273,6 +345,70 @@ class StripeBillingService
         }
 
         return [];
+    }
+
+    protected function resolveBaseSubscriptionItem(StripeSubscription $subscription): mixed
+    {
+        $items = $subscription->items?->data ?? [];
+
+        foreach ($items as $item) {
+            if (! $this->looksLikeExtraSubscriptionItem($item)) {
+                return $item;
+            }
+        }
+
+        return $items[0] ?? null;
+    }
+
+    protected function resolveBaseSubscriptionItemId(StripeSubscription $subscription, ?Plan $plan): ?string
+    {
+        $items = $subscription->items?->data ?? [];
+
+        foreach ($items as $item) {
+            if ($plan && $item?->price?->id === $plan->stripe_price_id) {
+                return $item->id;
+            }
+        }
+
+        return $this->resolveBaseSubscriptionItem($subscription)?->id;
+    }
+
+    protected function resolveExtraSubscriptionItem(StripeSubscription $subscription, ?Plan $plan): mixed
+    {
+        $items = $subscription->items?->data ?? [];
+
+        foreach ($items as $item) {
+            if ($plan && filled($plan->stripe_extra_employee_price_id) && $item?->price?->id === $plan->stripe_extra_employee_price_id) {
+                return $item;
+            }
+
+            if ($this->looksLikeExtraSubscriptionItem($item)) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    protected function resolveExtraSubscriptionItemId(StripeSubscription $subscription, ?Plan $plan): ?string
+    {
+        return $this->resolveExtraSubscriptionItem($subscription, $plan)?->id;
+    }
+
+    protected function looksLikeExtraSubscriptionItem(mixed $item): bool
+    {
+        $nickname = strtolower((string) data_get($item, 'price.nickname', ''));
+        $lookupKey = strtolower((string) data_get($item, 'price.lookup_key', ''));
+        $metadata = array_change_key_case($this->metadataToArray(data_get($item, 'price.metadata', [])), CASE_LOWER);
+
+        if (($metadata['billing_component'] ?? null) === 'extra_employee') {
+            return true;
+        }
+
+        return str_contains($nickname, 'extra employee')
+            || str_contains($nickname, 'extra collaborator')
+            || str_contains($lookupKey, 'extra_employee')
+            || str_contains($lookupKey, 'extra-collaborator');
     }
 
     protected function toCarbon(?int $timestamp): ?Carbon

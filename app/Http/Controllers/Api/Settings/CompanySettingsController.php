@@ -151,6 +151,7 @@ class CompanySettingsController extends Controller
             'price_cents' => $plan->price_cents,
             'currency' => $plan->currency,
             'billing_interval' => $plan->billing_interval,
+            'extra_employee_price_cents' => $plan->extra_employee_price_cents,
             'limits' => $plan->quotas ?? [],
         ];
     }

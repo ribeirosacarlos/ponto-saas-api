@@ -31,6 +31,7 @@ class PlansSeeder extends Seeder
                 'quotas' => [
                     'max_employees' => 5,
                 ],
+                'extra_employee_price_cents' => 0,
             ],
             [
                 'slug' => 'pro',
@@ -51,6 +52,7 @@ class PlansSeeder extends Seeder
                 'quotas' => [
                     'max_employees' => 20, // recomendado para “degrau” natural
                 ],
+                'extra_employee_price_cents' => 0,
             ],
             [
                 'slug' => 'business',
@@ -72,6 +74,28 @@ class PlansSeeder extends Seeder
                 'quotas' => [
                     'max_employees' => 50,
                 ],
+                'extra_employee_price_cents' => 0,
+            ],
+            [
+                'slug' => 'pro_br',
+                'name' => 'Plano Pro BR',
+                'description' => 'Para equipes em crescimento no Brasil: ate 15 colaboradores ativos com cobranca recorrente por extra.',
+                'price_cents' => 12000,
+                'currency' => 'BRL',
+                'billing_interval' => 'month',
+                'trial_days' => 0,
+                'is_active' => true,
+                'sort_order' => 40,
+                'features' => [
+                    'reports' => true,
+                    'exports' => true,
+                    'geolocation' => true,
+                    'api' => true,
+                ],
+                'quotas' => [
+                    'max_employees' => 15,
+                ],
+                'extra_employee_price_cents' => 1500,
             ],
         ];
 

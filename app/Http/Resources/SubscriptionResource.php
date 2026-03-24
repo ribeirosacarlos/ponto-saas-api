@@ -24,6 +24,8 @@ class SubscriptionResource extends JsonResource
             'stripe_customer_id' => $this->stripe_customer_id,
             'stripe_subscription_id' => $this->stripe_subscription_id,
             'stripe_price_id' => $this->stripe_price_id,
+            'stripe_subscription_item_id' => $this->stripe_subscription_item_id,
+            'stripe_extra_subscription_item_id' => $this->stripe_extra_subscription_item_id,
             'metadata' => $this->metadata ?? [],
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
