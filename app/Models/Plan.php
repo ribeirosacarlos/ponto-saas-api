@@ -27,7 +27,9 @@ class Plan extends Model
         'sort_order',
         'features',
         'quotas',
+        'extra_employee_price_cents',
         'stripe_price_id',
+        'stripe_extra_employee_price_id',
     ];
 
     protected $casts = [
@@ -37,6 +39,7 @@ class Plan extends Model
         'sort_order' => 'integer',
         'features' => 'array',
         'quotas' => 'array',
+        'extra_employee_price_cents' => 'integer',
     ];
 
     public function subscriptions()

@@ -30,6 +30,8 @@ class Subscription extends Model
         'metadata',
         'cancel_at_period_end',
         'stripe_price_id',
+        'stripe_subscription_item_id',
+        'stripe_extra_subscription_item_id',
     ];
 
     protected $casts = [

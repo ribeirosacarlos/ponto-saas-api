@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Company;
+use App\Models\User;
 use App\Observers\CompanyObserver;
+use App\Observers\UserObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -37,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Company::observe(CompanyObserver::class);
+        User::observe(UserObserver::class);
 
         RateLimiter::for('public-company-registration', function (Request $request) {
             $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'public-company-registration';

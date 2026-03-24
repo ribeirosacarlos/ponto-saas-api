@@ -28,6 +28,9 @@ class StorePlanRequest extends FormRequest
             'features.*' => 'nullable',
             'quotas' => 'sometimes|array',
             'quotas.*' => 'nullable',
+            'extra_employee_price_cents' => 'sometimes|nullable|integer|min:0',
+            'stripe_price_id' => 'sometimes|nullable|string',
+            'stripe_extra_employee_price_id' => 'sometimes|nullable|string',
         ];
     }
 }
