@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Api\AreaManager;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AreaManagerTeamEntriesRequest;
 use App\Models\TimeEntry;
-use App\Http\Requests\TimeEntryStoreRequest;
 use App\Support\CompanyTime;
-use Illuminate\Http\Request;
 
 class TimeEntryController extends Controller
 {
-    public function teamEntries(TimeEntryStoreRequest $request)
+    public function teamEntries(AreaManagerTeamEntriesRequest $request)
     {
         $user = $request->user();
 
