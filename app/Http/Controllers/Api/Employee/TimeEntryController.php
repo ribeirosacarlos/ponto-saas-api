@@ -328,4 +328,5 @@ class TimeEntryController extends Controller
     {
         return $user->company?->timezone ?: config('app.timezone', 'UTC');
     }
+
 }

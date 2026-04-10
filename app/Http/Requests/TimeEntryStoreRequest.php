@@ -100,6 +100,10 @@ class TimeEntryStoreRequest extends FormRequest
         /** @var Plan|null $plan */
         $plan = $company->currentPlan ?? $company->subscription?->plan;
 
-        return (bool) ($plan?->hasFeature('geolocation') ?? false);
+        if (! (bool) ($plan?->hasFeature('geolocation') ?? false)) {
+            return false;
+        }
+
+        return (bool) $company->geolocation_required;
     }
 }

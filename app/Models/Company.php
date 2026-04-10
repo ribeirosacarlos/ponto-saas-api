@@ -32,6 +32,7 @@ class Company extends Model
         'timezone',
         'country',
         'locale',
+        'geolocation_required',
     ];
 
     protected $casts = [
@@ -43,6 +44,7 @@ class Company extends Model
         'timezone' => 'string',
         'country' => 'string',
         'locale' => 'string',
+        'geolocation_required' => 'boolean',
     ];
 
     public function users()

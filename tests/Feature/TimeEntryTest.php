@@ -170,11 +170,13 @@ class TimeEntryTest extends TestCase
         ]);
     }
 
-    public function test_clock_requires_geolocation_when_company_plan_has_feature_enabled(): void
+    public function test_clock_requires_geolocation_when_company_setting_is_enabled(): void
     {
         $this->freezeNow('2026-02-16 08:00:00');
 
-        $user = $this->createEmployeeWithGeolocationPlan();
+        $user = $this->createEmployeeWithGeolocationPlan([
+            'geolocation_required' => true,
+        ]);
         $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
 
         $this->actingAs($user)
@@ -204,7 +206,7 @@ class TimeEntryTest extends TestCase
         return $user;
     }
 
-    private function createEmployeeWithGeolocationPlan(): User
+    private function createEmployeeWithGeolocationPlan(array $companyOverrides = []): User
     {
         $user = $this->createEmployee();
         $plan = Plan::create([
@@ -222,9 +224,9 @@ class TimeEntryTest extends TestCase
             'quotas' => [],
         ]);
 
-        $user->company()->update([
+        $user->company()->update(array_merge([
             'current_plan_id' => $plan->id,
-        ]);
+        ], $companyOverrides));
         $user->unsetRelation('company');
         $user->refresh();
 

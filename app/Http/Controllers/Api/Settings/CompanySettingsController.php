@@ -104,6 +104,7 @@ class CompanySettingsController extends Controller
                 'tolerance_minutes' => self::WORKDAY_TOLERANCE_MINUTES,
                 'rounding_minutes' => config('workday.rounding_minutes'),
                 'geolocation_enabled' => false,
+                'geolocation_required' => false,
                 'require_photo' => null,
             ],
             'security' => $this->buildSecurityPayload($user),
@@ -232,6 +233,7 @@ class CompanySettingsController extends Controller
             'tolerance_minutes' => self::WORKDAY_TOLERANCE_MINUTES,
             'rounding_minutes' => config('workday.rounding_minutes'),
             'geolocation_enabled' => (bool) ($plan?->hasFeature('geolocation') ?? false),
+            'geolocation_required' => (bool) $company->geolocation_required,
             'require_photo' => null,
         ];
     }

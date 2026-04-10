@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Api\Admin\CompanyGeolocationController;
 use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
@@ -20,6 +21,8 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['role:admin|super_admin', 'subscription.access'])->group(function () {
         Route::get('/company/timezone', [CompanyTimezoneController::class, 'show']);
         Route::put('/company/timezone', [CompanyTimezoneController::class, 'update']);
+        Route::get('/company/geolocation', [CompanyGeolocationController::class, 'show']);
+        Route::put('/company/geolocation', [CompanyGeolocationController::class, 'update']);
         Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);
     });
 

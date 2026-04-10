@@ -19,4 +19,9 @@ class CompanyPolicy
 
         return $user->company_id === $company->id;
     }
+
+    public function updateGeolocation(User $user, Company $company): bool
+    {
+        return $this->updateTimezone($user, $company);
+    }
 }
