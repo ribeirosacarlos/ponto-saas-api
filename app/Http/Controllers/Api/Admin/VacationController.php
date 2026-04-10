@@ -55,14 +55,6 @@ class VacationController extends Controller
         $admin = $request->user();
         $user = User::where('company_id', $admin->company_id)->findOrFail($request->user_id);
 
-        $policy = $this->balanceService->getActivePolicyForUser($user);
-
-        if (! $policy) {
-            throw ValidationException::withMessages([
-                'policy' => 'Nenhuma política de férias configurada para este usuário.',
-            ]);
-        }
-
         $start = Carbon::parse($request->start_date)->startOfDay();
         $end = Carbon::parse($request->end_date)->startOfDay();
 
@@ -72,7 +64,7 @@ class VacationController extends Controller
             $user,
             $start,
             $end,
-            $policy->counting_method ?? 'calendar_days'
+            'calendar_days'
         );
 
         $requestedDays = $calculation['count'];
@@ -83,8 +75,6 @@ class VacationController extends Controller
             ]);
         }
 
-        $this->vacationRequestService->ensureEnoughBalance($user, $requestedDays);
-
         $status = $request->status ?? 'pending';
 
         $vacationRequest = DB::transaction(function () use (
@@ -94,7 +84,6 @@ class VacationController extends Controller
             $start,
             $end,
             $requestedDays,
-            $policy,
             $calculation,
             $status
         ) {
@@ -104,7 +93,7 @@ class VacationController extends Controller
                 'start_date'               => $start->toDateString(),
                 'end_date'                 => $end->toDateString(),
                 'requested_days'           => $requestedDays,
-                'counting_method_snapshot' => $policy->counting_method ?? 'calendar_days',
+                'counting_method_snapshot' => 'calendar_days',
                 'status'                   => $status,
                 'requested_by'             => $admin->id,
                 'notes'                    => $request->notes,
@@ -146,10 +135,8 @@ class VacationController extends Controller
             $user,
             $start,
             $end,
-            $vacation->counting_method_snapshot
+            $vacation->counting_method_snapshot ?: 'calendar_days'
         );
-
-        $this->vacationRequestService->ensureEnoughBalance($user, $calculation['count']);
 
         DB::transaction(function () use ($vacation, $admin, $calculation, $request) {
             $vacation->update([
