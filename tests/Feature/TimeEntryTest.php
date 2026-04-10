@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\EnsureCompanyHasAccess;
+use App\Models\Plan;
 use App\Models\Role;
 use App\Models\Shift;
 use App\Models\ShiftDay;
@@ -143,6 +144,45 @@ class TimeEntryTest extends TestCase
             ->assertJsonPath('entry.event_kind', 'work_end');
     }
 
+    public function test_clock_saves_geolocation_when_sent(): void
+    {
+        $this->freezeNow('2026-02-16 08:00:00');
+
+        $user = $this->createEmployee();
+        $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+
+        $this->actingAs($user)
+            ->postJson('/v1/employee/clock', [
+                'latitude' => '-23.55052',
+                'longitude' => '-46.633308',
+                'source' => 'mobile',
+            ])
+            ->assertStatus(201)
+            ->assertJsonPath('entry.latitude', '-23.550520')
+            ->assertJsonPath('entry.longitude', '-46.633308');
+
+        $this->assertDatabaseHas('time_entries', [
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'latitude' => '-23.550520',
+            'longitude' => '-46.633308',
+            'source' => 'mobile',
+        ]);
+    }
+
+    public function test_clock_requires_geolocation_when_company_plan_has_feature_enabled(): void
+    {
+        $this->freezeNow('2026-02-16 08:00:00');
+
+        $user = $this->createEmployeeWithGeolocationPlan();
+        $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+
+        $this->actingAs($user)
+            ->postJson('/v1/employee/clock', [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['latitude', 'longitude']);
+    }
+
     /**
      * @return array<int, array{kind: string, time: string, day_offset: int, expected_type: string}>
      */
@@ -160,6 +200,33 @@ class TimeEntryTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('employee');
+
+        return $user;
+    }
+
+    private function createEmployeeWithGeolocationPlan(): User
+    {
+        $user = $this->createEmployee();
+        $plan = Plan::create([
+            'name' => 'Plano com Geo',
+            'slug' => 'geo-required',
+            'price_cents' => 1000,
+            'currency' => 'BRL',
+            'billing_interval' => 'month',
+            'trial_days' => 0,
+            'is_active' => true,
+            'sort_order' => 1,
+            'features' => [
+                'geolocation' => true,
+            ],
+            'quotas' => [],
+        ]);
+
+        $user->company()->update([
+            'current_plan_id' => $plan->id,
+        ]);
+        $user->unsetRelation('company');
+        $user->refresh();
 
         return $user;
     }

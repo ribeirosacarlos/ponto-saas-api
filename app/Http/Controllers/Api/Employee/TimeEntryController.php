@@ -39,7 +39,7 @@ class TimeEntryController extends Controller
 
         if ($isOnVacation) {
             return response()->json([
-                'message' => 'Voce esta de ferias e nao pode registrar ponto neste dia.',
+                'message' => 'Você esta de ferias e não pode registrar ponto neste dia.',
             ], 422);
         }
 

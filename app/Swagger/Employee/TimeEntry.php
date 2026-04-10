@@ -18,16 +18,16 @@ class TimeEntry {}
  * @OA\Post(
  *     path="/v1/employee/clock",
  *     summary="Registrar batida de ponto",
- *     description="O backend define automaticamente o type (in/out) com base no proximo evento esperado da jornada.",
+ *     description="O backend define automaticamente o type (in/out) com base no proximo evento esperado da jornada. Quando a empresa possui geolocalizacao habilitada no plano, latitude e longitude passam a ser obrigatorias.",
  *     tags={"Employee - Time Entries"},
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\RequestBody(
  *         required=false,
- *         description="Dados opcionais da batida",
+ *         description="Dados da batida. Latitude e longitude sao obrigatorias quando a geolocalizacao estiver habilitada para a empresa.",
  *         @OA\JsonContent(
- *             @OA\Property(property="latitude", type="string", nullable=true, example="-23.550520"),
- *             @OA\Property(property="longitude", type="string", nullable=true, example="-46.633308"),
+ *             @OA\Property(property="latitude", type="number", format="double", nullable=true, example=-23.550520),
+ *             @OA\Property(property="longitude", type="number", format="double", nullable=true, example=-46.633308),
  *             @OA\Property(property="source", type="string", nullable=true, example="web")
  *         )
  *     ),
@@ -207,8 +207,8 @@ class EmployeeShiftShow {}
  *     @OA\Property(property="clocked_at", type="string", format="date-time"),
  *     @OA\Property(property="type", type="string", enum={"in", "out"}, example="in"),
  *     @OA\Property(property="event_kind", type="string", nullable=true, example="work_start"),
- *     @OA\Property(property="latitude", type="string", nullable=true),
- *     @OA\Property(property="longitude", type="string", nullable=true),
+ *     @OA\Property(property="latitude", type="string", nullable=true, example="-23.550520"),
+ *     @OA\Property(property="longitude", type="string", nullable=true, example="-46.633308"),
  *     @OA\Property(property="source", type="string", example="web"),
  *     @OA\Property(property="adjustment_status", type="string", nullable=true, example="pending"),
  *     @OA\Property(property="adjustment_reason", type="string", nullable=true),
