@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Admin\ShiftController;
 use App\Http\Controllers\Api\Admin\TimeEntryAdjustmentController as AdminTimeEntryAdjustmentController;
 use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
+use App\Http\Controllers\Api\Settings\CompanyLocationSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -23,6 +24,9 @@ Route::prefix('admin')->group(function () {
         Route::put('/company/timezone', [CompanyTimezoneController::class, 'update']);
         Route::get('/company/geolocation', [CompanyGeolocationController::class, 'show']);
         Route::put('/company/geolocation', [CompanyGeolocationController::class, 'update']);
+        Route::get('/settings/location', [CompanyLocationSettingsController::class, 'show']);
+        Route::put('/settings/location', [CompanyLocationSettingsController::class, 'update']);
+        Route::patch('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);
     });
 

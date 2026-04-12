@@ -33,6 +33,10 @@ class Company extends Model
         'country',
         'locale',
         'geolocation_required',
+        'company_latitude',
+        'company_longitude',
+        'allowed_radius_meters',
+        'location_validation_enabled',
     ];
 
     protected $casts = [
@@ -45,6 +49,10 @@ class Company extends Model
         'country' => 'string',
         'locale' => 'string',
         'geolocation_required' => 'boolean',
+        'company_latitude' => 'decimal:7',
+        'company_longitude' => 'decimal:7',
+        'allowed_radius_meters' => 'integer',
+        'location_validation_enabled' => 'boolean',
     ];
 
     public function users()

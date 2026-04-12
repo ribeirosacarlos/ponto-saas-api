@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\CompanyScoped;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -59,6 +60,11 @@ class TimeEntry extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function userShift()
     {
         return $this->belongsTo(UserShift::class);
@@ -73,5 +79,4 @@ class TimeEntry extends Model
     {
         return $this->adjustment_status !== null;
     }
-
 }

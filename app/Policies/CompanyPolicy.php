@@ -24,4 +24,14 @@ class CompanyPolicy
     {
         return $this->updateTimezone($user, $company);
     }
+
+    public function viewLocationSettings(User $user, Company $company): bool
+    {
+        return $this->updateTimezone($user, $company);
+    }
+
+    public function updateLocationSettings(User $user, Company $company): bool
+    {
+        return $this->updateTimezone($user, $company);
+    }
 }
