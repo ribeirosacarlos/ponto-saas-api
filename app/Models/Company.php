@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Company extends Model
@@ -58,6 +59,18 @@ class Company extends Model
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    public function employeeUsers(): HasMany
+    {
+        return $this->users()->whereHas('roles', function ($query) {
+            $query->where('name', 'employee');
+        });
+    }
+
+    public function employeeUsersCount(): int
+    {
+        return (int) $this->employeeUsers()->count();
     }
 
     public function shifts()

@@ -250,7 +250,7 @@ class CompanySettingsController extends Controller
 
     private function buildUsagePayload(Company $company, ?Plan $plan): array
     {
-        $employeeCount = $company->users()->count();
+        $employeeCount = $company->employeeUsersCount();
         $employeeLimit = data_get($plan?->quotas ?? [], 'max_employees');
         $overLimit = is_numeric($employeeLimit) && $employeeLimit !== null
             && $employeeCount > (int) $employeeLimit;

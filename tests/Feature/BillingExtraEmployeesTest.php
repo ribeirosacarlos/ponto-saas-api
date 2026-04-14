@@ -42,6 +42,9 @@ class BillingExtraEmployeesTest extends TestCase
 
     public function test_company_subscription_billing_service_calculates_and_syncs_extra_employees(): void
     {
+        Role::updateOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        Role::updateOrCreate(['name' => 'employee'], ['display_name' => 'Employee']);
+
         $company = Company::factory()->create();
         $plan = $this->makePlan([
             'currency' => 'BRL',
@@ -61,7 +64,18 @@ class BillingExtraEmployeesTest extends TestCase
         ]);
 
         User::withoutEvents(function () use ($company): void {
-            User::factory()->count(18)->create(['company_id' => $company->id]);
+            $employees = User::factory()->count(16)->create(['company_id' => $company->id]);
+
+            foreach ($employees as $employee) {
+                $employee->assignRole('employee');
+            }
+
+            $hybridUser = User::factory()->create(['company_id' => $company->id]);
+            $hybridUser->assignRole('employee');
+            $hybridUser->assignRole('admin');
+
+            $adminOnly = User::factory()->create(['company_id' => $company->id]);
+            $adminOnly->assignRole('admin');
         });
 
         $stripeService = Mockery::mock(StripeBillingService::class);
@@ -74,11 +88,11 @@ class BillingExtraEmployeesTest extends TestCase
                     && $summary['currency'] === 'BRL'
                     && $summary['base_price_cents'] === 12000
                     && $summary['included_employees'] === 15
-                    && $summary['active_employees'] === 18
-                    && $summary['extra_employees'] === 3
+                    && $summary['active_employees'] === 17
+                    && $summary['extra_employees'] === 2
                     && $summary['extra_employee_price_cents'] === 1500
-                    && $summary['extra_total_cents'] === 4500
-                    && $summary['total_price_cents'] === 16500;
+                    && $summary['extra_total_cents'] === 3000
+                    && $summary['total_price_cents'] === 15000;
             })
             ->andReturnUsing(fn ($argCompany, $argSubscription, $argPlan, array $summary) => $summary);
 
@@ -87,8 +101,9 @@ class BillingExtraEmployeesTest extends TestCase
         $summary = $this->app->make(CompanySubscriptionBillingService::class)
             ->syncRecurringUsage($company->fresh(['subscription.plan', 'currentPlan']));
 
-        $this->assertSame(3, $summary['extra_employees']);
-        $this->assertSame(16500, $summary['total_price_cents']);
+        $this->assertSame(17, $summary['active_employees']);
+        $this->assertSame(2, $summary['extra_employees']);
+        $this->assertSame(15000, $summary['total_price_cents']);
     }
 
     public function test_user_observer_does_not_trigger_company_billing_sync_automatically(): void
