@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SubscriptionStatus;
 use App\Models\Company;
+use App\Models\ExtraEmployeeCharge;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
@@ -63,6 +64,38 @@ class StripeBillingService
         ]);
     }
 
+    public function createExtraEmployeeCheckoutSession(
+        Company $company,
+        Plan $plan,
+        ExtraEmployeeCharge $charge,
+        ?User $user = null
+    ): StripeCheckoutSession {
+        $customerId = $this->ensureCustomer($company, $user);
+
+        return $this->stripe->checkout->sessions->create([
+            'customer' => $customerId,
+            'client_reference_id' => $company->id,
+            'mode' => 'payment',
+            'line_items' => [
+                [
+                    'price' => $plan->stripe_extra_employee_price_id,
+                    'quantity' => $charge->quantity,
+                ],
+            ],
+            'success_url' => $this->buildFrontendUrl('/billing/success?session_id={CHECKOUT_SESSION_ID}&context=extra-employees'),
+            'cancel_url' => $this->buildFrontendUrl('/billing/canceled?context=extra-employees'),
+            'payment_method_types' => ['card'],
+            'metadata' => [
+                'billing_component' => 'extra_employee_pending',
+                'company_id' => $company->id,
+                'user_id' => $user?->id,
+                'plan_id' => $plan->id,
+                'extra_employee_charge_id' => $charge->id,
+                'quantity' => (string) $charge->quantity,
+            ],
+        ]);
+    }
+
     public function ensureCustomer(Company $company, ?User $user = null): string
     {
         if ($company->stripe_customer_id) {
@@ -111,15 +144,25 @@ class StripeBillingService
 
     protected function handleCheckoutSession(?StripeCheckoutSession $session): void
     {
-        if (! $session || empty($session->subscription)) {
+        if (! $session) {
+            return;
+        }
+
+        $metadata = $this->metadataToArray($session->metadata ?? []);
+
+        if (($metadata['billing_component'] ?? null) === 'extra_employee_pending') {
+            $this->handleExtraEmployeeCheckoutSession($session, $metadata);
+            return;
+        }
+
+        if (empty($session->subscription)) {
             Log::warning('Stripe checkout.session.completed without subscription', [
-                'session' => $session?->id,
+                'session' => $session->id,
             ]);
 
             return;
         }
 
-        $metadata = $this->metadataToArray($session->metadata ?? []);
         $company = $this->resolveCompanyFromMetadata($metadata, $session->customer);
 
         if (! $company) {
@@ -134,6 +177,55 @@ class StripeBillingService
             ?? $this->stripe->subscriptions->retrieve($session->subscription);
 
         $this->syncStripeSubscription($company, $stripeSubscription);
+    }
+
+    protected function handleExtraEmployeeCheckoutSession(StripeCheckoutSession $session, array $metadata): void
+    {
+        $chargeId = $metadata['extra_employee_charge_id'] ?? null;
+
+        if (! $chargeId) {
+            Log::warning('Stripe extra employee checkout without charge id', [
+                'session' => $session->id,
+            ]);
+
+            return;
+        }
+
+        $charge = ExtraEmployeeCharge::with('company')->find($chargeId);
+
+        if (! $charge) {
+            Log::warning('Stripe extra employee checkout charge not found', [
+                'session' => $session->id,
+                'charge_id' => $chargeId,
+            ]);
+
+            return;
+        }
+
+        if ($charge->isPaid()) {
+            return;
+        }
+
+        $company = $charge->company;
+
+        if (! $company) {
+            Log::warning('Stripe extra employee checkout without company', [
+                'session' => $session->id,
+                'charge_id' => $chargeId,
+            ]);
+
+            return;
+        }
+
+        $company->update([
+            'paid_extra_employee_allowance' => max(0, (int) $company->paid_extra_employee_allowance) + (int) $charge->quantity,
+        ]);
+
+        $charge->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+            'stripe_checkout_session_id' => $session->id,
+        ]);
     }
 
     protected function handleStripeSubscription(?StripeSubscription $stripeSubscription): void

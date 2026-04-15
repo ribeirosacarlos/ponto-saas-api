@@ -30,6 +30,7 @@ class Company extends Model
         'stripe_customer_id',
         'subscription_status',
         'current_plan_id',
+        'paid_extra_employee_allowance',
         'timezone',
         'country',
         'locale',
@@ -45,6 +46,7 @@ class Company extends Model
         'blocked_at' => 'datetime',
         'deleted_at' => 'datetime',
         'current_plan_id' => 'string',
+        'paid_extra_employee_allowance' => 'integer',
         'subscription_status' => 'string',
         'timezone' => 'string',
         'country' => 'string',
@@ -138,5 +140,10 @@ class Company extends Model
     public function currentPlan()
     {
         return $this->belongsTo(Plan::class, 'current_plan_id');
+    }
+
+    public function extraEmployeeCharges()
+    {
+        return $this->hasMany(ExtraEmployeeCharge::class);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeCheckoutSessionController;
 use App\Http\Controllers\Api\Admin\CompanyGeolocationController;
 use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
@@ -28,6 +29,7 @@ Route::prefix('admin')->group(function () {
         Route::put('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::patch('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);
+        Route::post('/billing/extra-employees/checkout-session', [ExtraEmployeeCheckoutSessionController::class, 'store']);
     });
 
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {

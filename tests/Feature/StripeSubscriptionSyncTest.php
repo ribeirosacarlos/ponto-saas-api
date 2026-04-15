@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Company;
+use App\Models\ExtraEmployeeCharge;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Services\StripeBillingService;
@@ -95,5 +96,67 @@ class StripeSubscriptionSyncTest extends TestCase
         $this->assertSame('price_base_br', $subscription->stripe_price_id);
         $this->assertSame('si_base_123', $subscription->stripe_subscription_item_id);
         $this->assertSame('si_extra_123', $subscription->stripe_extra_subscription_item_id);
+    }
+
+    public function test_checkout_session_completed_marks_extra_employee_charge_as_paid(): void
+    {
+        $company = Company::factory()->create([
+            'stripe_customer_id' => 'cus_test_123',
+            'paid_extra_employee_allowance' => 1,
+        ]);
+
+        $plan = Plan::create([
+            'slug' => 'extra-pay-' . Str::lower(Str::random(6)),
+            'name' => 'Extra pay',
+            'description' => 'Plano extra',
+            'price_cents' => 1000,
+            'currency' => 'BRL',
+            'billing_interval' => 'month',
+            'trial_days' => 0,
+            'is_active' => true,
+            'sort_order' => 10,
+            'features' => [],
+            'quotas' => ['max_employees' => 15],
+            'extra_employee_price_cents' => 500,
+            'stripe_extra_employee_price_id' => 'price_extra_br',
+        ]);
+
+        $charge = ExtraEmployeeCharge::create([
+            'company_id' => $company->id,
+            'plan_id' => $plan->id,
+            'quantity' => 2,
+            'status' => 'pending',
+            'due_at' => now()->addDays(7),
+        ]);
+
+        $event = Event::constructFrom([
+            'id' => 'evt_checkout_extra_paid',
+            'type' => 'checkout.session.completed',
+            'data' => [
+                'object' => [
+                    'object' => 'checkout.session',
+                    'id' => 'cs_extra_paid',
+                    'customer' => 'cus_test_123',
+                    'payment_status' => 'paid',
+                    'metadata' => [
+                        'billing_component' => 'extra_employee_pending',
+                        'company_id' => $company->id,
+                        'plan_id' => $plan->id,
+                        'extra_employee_charge_id' => $charge->id,
+                        'quantity' => '2',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->app->make(StripeBillingService::class)->processEvent($event);
+
+        $charge->refresh();
+        $company->refresh();
+
+        $this->assertSame('paid', $charge->status);
+        $this->assertNotNull($charge->paid_at);
+        $this->assertSame('cs_extra_paid', $charge->stripe_checkout_session_id);
+        $this->assertSame(3, $company->paid_extra_employee_allowance);
     }
 }

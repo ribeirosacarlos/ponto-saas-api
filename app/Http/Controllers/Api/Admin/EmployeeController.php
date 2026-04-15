@@ -7,6 +7,7 @@ use App\Http\Requests\EmployeeStoreRequest;
 use App\Models\Shift;
 use App\Models\User;
 use App\Actions\Employees\InviteEmployeeAction;
+use App\Services\ExtraEmployeeChargeService;
 use App\Services\UserShiftService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -16,7 +17,8 @@ use Illuminate\Validation\ValidationException;
 class EmployeeController extends Controller
 {
     public function __construct(
-        protected UserShiftService $userShiftService
+        protected UserShiftService $userShiftService,
+        protected ExtraEmployeeChargeService $extraEmployeeChargeService
     ) {
     }
 
@@ -64,6 +66,13 @@ class EmployeeController extends Controller
         }
 
         if (! empty($data['role'])) {
+            $currentlyEmployee = $employee->hasRole('employee');
+            $willBeEmployee = $data['role'] === 'employee';
+
+            if (! $currentlyEmployee && $willBeEmployee) {
+                $this->extraEmployeeChargeService->registerPendingExtraEmployees($employee->company);
+            }
+
             $employee->syncRoles([$data['role']]);
         }
 

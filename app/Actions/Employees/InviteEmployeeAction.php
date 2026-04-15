@@ -5,6 +5,7 @@ namespace App\Actions\Employees;
 use App\Jobs\SendEmployeeInviteJob;
 use App\Models\Shift;
 use App\Models\User;
+use App\Services\ExtraEmployeeChargeService;
 use App\Services\UserShiftService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -13,11 +14,16 @@ use Illuminate\Validation\ValidationException;
 class InviteEmployeeAction
 {
     public function __construct(
-        protected UserShiftService $userShiftService
+        protected UserShiftService $userShiftService,
+        protected ExtraEmployeeChargeService $extraEmployeeChargeService
     ) {}
 
     public function execute(User $inviter, array $data): User
     {
+        if (($data['role'] ?? null) === 'employee' && $inviter->company) {
+            $this->extraEmployeeChargeService->registerPendingExtraEmployees($inviter->company);
+        }
+
         $temporaryPasswordPlain = Str::password(12);
         $inviteCodePlain = $this->generateInviteCode();
 

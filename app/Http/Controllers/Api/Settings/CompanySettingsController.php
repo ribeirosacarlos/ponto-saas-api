@@ -10,6 +10,7 @@ use App\Models\Plan;
 use App\Models\Shift;
 use App\Models\Subscription;
 use App\Services\CompanySubscriptionService;
+use App\Services\ExtraEmployeeChargeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -17,7 +18,10 @@ class CompanySettingsController extends Controller
 {
     private const WORKDAY_TOLERANCE_MINUTES = 10;
 
-    public function __construct(protected CompanySubscriptionService $subscriptionService)
+    public function __construct(
+        protected CompanySubscriptionService $subscriptionService,
+        protected ExtraEmployeeChargeService $extraEmployeeChargeService
+    )
     {
     }
 
@@ -261,6 +265,7 @@ class CompanySettingsController extends Controller
                 'limit' => $employeeLimit,
                 'over_limit' => $overLimit,
             ],
+            'extra_employees' => $this->extraEmployeeChargeService->buildOverviewPayload($company),
         ];
     }
 
