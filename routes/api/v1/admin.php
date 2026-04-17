@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Api\Admin\AreaController;
 use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeCheckoutSessionController;
 use App\Http\Controllers\Api\Admin\CompanyGeolocationController;
 use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
@@ -56,6 +57,9 @@ Route::prefix('admin')->group(function () {
 
         Route::post('/time-entries/{timeEntry}/adjustment/approve', [AdminTimeEntryAdjustmentController::class, 'approve']);
         Route::post('/time-entries/{timeEntry}/adjustment/reject', [AdminTimeEntryAdjustmentController::class, 'reject']);
+
+        Route::get('/areas', [AreaController::class, 'index']);
+        Route::get('/areas/{area}', [AreaController::class, 'show']);
     });
 
     Route::middleware(['role:area_manager|manager|admin', 'subscription.access'])->group(function () {
@@ -79,5 +83,12 @@ Route::prefix('admin')->group(function () {
         Route::post('/absences', [AdminAbsenceController::class, 'store']);
 
         Route::apiResource('announcements', AdminAnnouncementController::class);
+    });
+
+    Route::middleware(['role:admin', 'subscription.access'])->group(function () {
+        Route::post('/areas', [AreaController::class, 'store']);
+        Route::put('/areas/{area}', [AreaController::class, 'update']);
+        Route::patch('/areas/{area}', [AreaController::class, 'update']);
+        Route::delete('/areas/{area}', [AreaController::class, 'destroy']);
     });
 });
