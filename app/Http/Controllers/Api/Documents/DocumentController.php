@@ -9,6 +9,7 @@ use App\Http\Requests\DocumentStoreRequest;
 use App\Http\Requests\DocumentUpdateRequest;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
+use App\Models\User;
 use App\Services\UserVisibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
