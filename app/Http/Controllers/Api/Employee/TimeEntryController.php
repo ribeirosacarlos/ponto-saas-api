@@ -9,6 +9,7 @@ use App\Http\Requests\EmployeeTimeEntryHistoryRequest;
 use App\Http\Requests\TimeEntryStoreRequest;
 use App\Models\TimeEntry;
 use App\Models\VacationDay;
+use App\Services\ExtraEmployeeChargeService;
 use App\Services\TimeEntry\OvertimeCalculatorService;
 use App\Services\UserShiftResolver;
 use App\Support\CompanyTime;
@@ -23,7 +24,8 @@ class TimeEntryController extends Controller
     public function clock(
         TimeEntryStoreRequest $request,
         ResolveNextExpectedClockAction $resolveNextExpectedClock,
-        CreateTimeEntryAdjustmentAction $createAdjustment
+        CreateTimeEntryAdjustmentAction $createAdjustment,
+        ExtraEmployeeChargeService $extraEmployeeChargeService
     ) {
         $this->authorize('create', TimeEntry::class);
 
@@ -41,6 +43,10 @@ class TimeEntryController extends Controller
             return response()->json([
                 'message' => 'Você esta de ferias e não pode registrar ponto neste dia.',
             ], 422);
+        }
+
+        if (! $user->hasRole('employee') && ! $user->timeEntries()->exists() && $user->company) {
+            $extraEmployeeChargeService->registerPendingExtraEmployees($user->company);
         }
 
         $lastEntry = $user->timeEntries()->excludeRejected()->latest('clocked_at')->first();

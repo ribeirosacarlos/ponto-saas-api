@@ -80,6 +80,20 @@ class Company extends Model
         return (int) $this->employeeUsers()->count();
     }
 
+    public function billableUsers(): HasMany
+    {
+        return $this->users()->where(function ($query) {
+            $query->whereHas('roles', function ($roleQuery) {
+                $roleQuery->where('name', 'employee');
+            })->orWhereHas('timeEntries');
+        });
+    }
+
+    public function billableUsersCount(): int
+    {
+        return (int) $this->billableUsers()->count();
+    }
+
     public function shifts()
     {
         return $this->hasMany(Shift::class);

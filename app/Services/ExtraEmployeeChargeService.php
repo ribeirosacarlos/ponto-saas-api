@@ -31,7 +31,7 @@ class ExtraEmployeeChargeService
             return null;
         }
 
-        $employeeCount = $company->employeeUsersCount();
+        $employeeCount = $company->billableUsersCount();
         $paidAllowance = max(0, (int) ($company->paid_extra_employee_allowance ?? 0));
         $prospectivePendingQuantity = max(0, ($employeeCount + $incrementBy) - ($includedEmployees + $paidAllowance));
 

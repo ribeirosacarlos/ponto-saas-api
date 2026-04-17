@@ -25,6 +25,7 @@ class TimeEntryTest extends TestCase
 
         $this->withoutMiddleware(EnsureCompanyHasAccess::class);
 
+        Role::updateOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
         Role::updateOrCreate(['name' => 'employee'], ['display_name' => 'Employee']);
     }
 
@@ -183,6 +184,45 @@ class TimeEntryTest extends TestCase
             ->postJson('/v1/employee/clock', [])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['latitude', 'longitude']);
+    }
+
+    public function test_admin_first_clock_counts_as_billable_employee_for_plan_usage(): void
+    {
+        $this->freezeNow('2026-02-16 08:00:00');
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $plan = Plan::create([
+            'slug' => 'time-entry-billable-admin',
+            'name' => 'Plano ponto admin',
+            'description' => 'Plano para contar admin que bate ponto.',
+            'price_cents' => 1000,
+            'currency' => 'BRL',
+            'billing_interval' => 'month',
+            'trial_days' => 0,
+            'is_active' => true,
+            'sort_order' => 1,
+            'features' => [],
+            'quotas' => ['max_employees' => 0],
+            'extra_employee_price_cents' => 500,
+            'stripe_price_id' => 'price_base',
+            'stripe_extra_employee_price_id' => 'price_extra',
+        ]);
+
+        $admin->company()->update(['current_plan_id' => $plan->id]);
+        $this->createShiftDayWithEvents($admin, 1, true, $this->breakDayEvents());
+
+        $this->actingAs($admin)
+            ->postJson('/v1/employee/clock')
+            ->assertStatus(201)
+            ->assertJsonPath('entry.type', 'in');
+
+        $this->assertDatabaseHas('extra_employee_charges', [
+            'company_id' => $admin->company_id,
+            'status' => 'pending',
+            'quantity' => 1,
+        ]);
     }
 
     /**

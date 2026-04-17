@@ -24,7 +24,7 @@ class CompanySettingsOverviewTest extends TestCase
         Role::updateOrCreate(['name' => 'employee'], ['display_name' => 'Employee']);
     }
 
-    public function test_usage_counts_only_users_with_employee_role(): void
+    public function test_usage_counts_employees_and_non_employees_with_time_entries(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -55,13 +55,19 @@ class CompanySettingsOverviewTest extends TestCase
 
         $adminOnly = User::factory()->create(['company_id' => $admin->company_id]);
         $adminOnly->assignRole('admin');
+        $adminOnly->timeEntries()->create([
+            'company_id' => $admin->company_id,
+            'clocked_at' => now(),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
 
         $response = $this->actingAs($admin)->getJson('/v1/settings/overview');
 
         $response->assertOk()
-            ->assertJsonPath('data.usage.employees.current', 2)
+            ->assertJsonPath('data.usage.employees.current', 3)
             ->assertJsonPath('data.usage.employees.limit', 2)
-            ->assertJsonPath('data.usage.employees.over_limit', false)
+            ->assertJsonPath('data.usage.employees.over_limit', true)
             ->assertJsonPath('data.usage.extra_employees.paid_allowance', 0)
             ->assertJsonPath('data.usage.extra_employees.has_pending_payment', false);
     }

@@ -106,7 +106,7 @@ class CompanySubscriptionBillingService
 
     protected function countBillableEmployees(Company $company): int
     {
-        return $company->employeeUsersCount();
+        return $company->billableUsersCount();
     }
 
     protected function planSupportsExtraEmployees(Plan $plan): bool
