@@ -128,12 +128,11 @@ class ExtraEmployeeChargeService
     public function buildOverviewPayload(Company $company): array
     {
         $pendingCharge = $this->getPendingCharge($company);
-        $currentPendingQuantity = $this->currentPendingQuantity($company);
 
         return [
             'paid_allowance' => max(0, (int) ($company->paid_extra_employee_allowance ?? 0)),
             'has_pending_payment' => (bool) $pendingCharge,
-            'pending_quantity' => max($currentPendingQuantity, (int) ($pendingCharge?->quantity ?? 0)),
+            'pending_quantity' => $this->currentPendingQuantity($company),
             'payment_due_at' => $pendingCharge?->due_at?->toIso8601String(),
             'payment_overdue' => $pendingCharge?->isExpired() ?? false,
             'max_unpaid_extra_employees' => self::MAX_UNPAID_EXTRA_EMPLOYEES,
