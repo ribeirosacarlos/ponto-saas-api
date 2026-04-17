@@ -24,6 +24,7 @@ class ExtraEmployeeCheckoutSessionTest extends TestCase
         $this->withoutMiddleware(EnsureCompanyHasAccess::class);
 
         Role::updateOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        Role::updateOrCreate(['name' => 'employee'], ['display_name' => 'Employee']);
     }
 
     protected function tearDown(): void
@@ -57,6 +58,14 @@ class ExtraEmployeeCheckoutSessionTest extends TestCase
 
         $admin->company()->update(['current_plan_id' => $plan->id]);
 
+        foreach (range(1, 3) as $index) {
+            $employee = User::factory()->create([
+                'company_id' => $admin->company_id,
+                'email' => "checkout-extra-{$index}@example.com",
+            ]);
+            $employee->assignRole('employee');
+        }
+
         $charge = ExtraEmployeeCharge::create([
             'company_id' => $admin->company_id,
             'plan_id' => $plan->id,
@@ -85,5 +94,55 @@ class ExtraEmployeeCheckoutSessionTest extends TestCase
             'id' => $charge->id,
             'stripe_checkout_session_id' => 'cs_extra_123',
         ]);
+    }
+
+    public function test_admin_cannot_create_checkout_session_for_stale_pending_charge_after_plan_limit_change(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $plan = Plan::create([
+            'slug' => 'extra-employee-stale-test',
+            'name' => 'Plano teste stale',
+            'description' => 'Plano com extra employee stale',
+            'price_cents' => 1000,
+            'currency' => 'BRL',
+            'billing_interval' => 'month',
+            'trial_days' => 0,
+            'is_active' => true,
+            'sort_order' => 1,
+            'features' => [],
+            'quotas' => ['max_employees' => 15],
+            'extra_employee_price_cents' => 500,
+            'stripe_price_id' => 'price_base',
+            'stripe_extra_employee_price_id' => 'price_extra',
+        ]);
+
+        $admin->company()->update(['current_plan_id' => $plan->id]);
+
+        foreach (range(1, 7) as $index) {
+            $employee = User::factory()->create([
+                'company_id' => $admin->company_id,
+                'email' => "checkout-stale-{$index}@example.com",
+            ]);
+            $employee->assignRole('employee');
+        }
+
+        ExtraEmployeeCharge::create([
+            'company_id' => $admin->company_id,
+            'plan_id' => $plan->id,
+            'quantity' => 2,
+            'status' => 'pending',
+            'due_at' => now()->addDays(7),
+        ]);
+
+        $service = Mockery::mock(StripeBillingService::class);
+        $service->shouldNotReceive('createExtraEmployeeCheckoutSession');
+        $this->app->instance(StripeBillingService::class, $service);
+
+        $response = $this->actingAs($admin)->postJson('/v1/admin/billing/extra-employees/checkout-session');
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('extra_employees');
     }
 }

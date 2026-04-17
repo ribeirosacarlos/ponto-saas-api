@@ -110,8 +110,9 @@ class CompanySettingsOverviewTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.usage.extra_employees.paid_allowance', 1)
-            ->assertJsonPath('data.usage.extra_employees.has_pending_payment', true)
+            ->assertJsonPath('data.usage.extra_employees.has_pending_payment', false)
             ->assertJsonPath('data.usage.extra_employees.pending_quantity', 0)
+            ->assertJsonPath('data.usage.extra_employees.payment_due_at', null)
             ->assertJsonPath('data.usage.extra_employees.payment_overdue', false);
     }
 
@@ -214,7 +215,7 @@ class CompanySettingsOverviewTest extends TestCase
             ->assertJsonPath('data.usage.employees.current', 7)
             ->assertJsonPath('data.usage.employees.limit', 15)
             ->assertJsonPath('data.usage.employees.over_limit', false)
-            ->assertJsonPath('data.usage.extra_employees.has_pending_payment', true)
+            ->assertJsonPath('data.usage.extra_employees.has_pending_payment', false)
             ->assertJsonPath('data.usage.extra_employees.pending_quantity', 0);
     }
 }

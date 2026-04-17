@@ -88,10 +88,17 @@ class ExtraEmployeeChargeService
     public function createCheckoutSessionForPendingCharge(Company $company, ?User $user = null): StripeCheckoutSession
     {
         $pendingCharge = $this->getPendingCharge($company);
+        $currentPendingQuantity = $this->currentPendingQuantity($company);
 
         if (! $pendingCharge) {
             throw ValidationException::withMessages([
                 'extra_employees' => 'Não existe cobrança pendente de colaboradores extras.',
+            ]);
+        }
+
+        if ($currentPendingQuantity <= 0) {
+            throw ValidationException::withMessages([
+                'extra_employees' => 'Não existe cobrança pendente válida de colaboradores extras.',
             ]);
         }
 
@@ -101,6 +108,15 @@ class ExtraEmployeeChargeService
             throw ValidationException::withMessages([
                 'extra_employees' => 'O plano atual não possui Stripe price configurado para colaboradores extras.',
             ]);
+        }
+
+        if ((int) $pendingCharge->quantity !== $currentPendingQuantity || $pendingCharge->plan_id !== $plan->id) {
+            $pendingCharge->update([
+                'quantity' => $currentPendingQuantity,
+                'plan_id' => $plan->id,
+            ]);
+
+            $pendingCharge = $pendingCharge->refresh();
         }
 
         $session = $this->stripeBillingService->createExtraEmployeeCheckoutSession(
@@ -127,12 +143,15 @@ class ExtraEmployeeChargeService
 
     public function buildOverviewPayload(Company $company): array
     {
-        $pendingCharge = $this->getPendingCharge($company);
+        $currentPendingQuantity = $this->currentPendingQuantity($company);
+        $pendingCharge = $currentPendingQuantity > 0
+            ? $this->getPendingCharge($company)
+            : null;
 
         return [
             'paid_allowance' => max(0, (int) ($company->paid_extra_employee_allowance ?? 0)),
             'has_pending_payment' => (bool) $pendingCharge,
-            'pending_quantity' => $this->currentPendingQuantity($company),
+            'pending_quantity' => $currentPendingQuantity,
             'payment_due_at' => $pendingCharge?->due_at?->toIso8601String(),
             'payment_overdue' => $pendingCharge?->isExpired() ?? false,
             'max_unpaid_extra_employees' => self::MAX_UNPAID_EXTRA_EMPLOYEES,
