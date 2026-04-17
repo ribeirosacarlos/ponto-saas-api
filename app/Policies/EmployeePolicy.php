@@ -3,43 +3,25 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Services\UserVisibilityService;
 
 class EmployeePolicy
 {
-    /**
-     * Admin can view all employees.
-     * Manager and area_manager can view company employees.
-     */
     public function view(User $user, User $employee): bool
     {
-        if ($user->id === $employee->id) {
-            return true;
-        }
-
-        return $user->company_id === $employee->company_id &&
-            $user->hasRole(['manager', 'area_manager', 'admin']);
+        return app(UserVisibilityService::class)->canViewUser($user, $employee);
     }
 
-    /**
-     * Only admin can create employees in MVP.
-     */
     public function create(User $user): bool
     {
         return $user->hasRole('admin');
     }
 
-    /**
-     * Admin can update employees.
-     */
     public function update(User $user, User $employee): bool
     {
-        return $user->hasRole(['admin', 'manager', 'area_manager']) &&
-               $user->company_id === $employee->company_id;
+        return app(UserVisibilityService::class)->canManageUser($user, $employee);
     }
 
-    /**
-     * Only admin can delete.
-     */
     public function delete(User $user, User $employee): bool
     {
         return $user->hasRole('admin') &&

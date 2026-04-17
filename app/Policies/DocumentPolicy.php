@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Document;
 use App\Models\User;
+use App\Services\UserVisibilityService;
 
 class DocumentPolicy
 {
@@ -15,7 +16,19 @@ class DocumentPolicy
             return false;
         }
 
-        return $user->id === $document->user_id || $this->isPrivileged($user);
+        if ((string) $user->id === (string) $document->user_id) {
+            return true;
+        }
+
+        if (! $this->isPrivileged($user)) {
+            return false;
+        }
+
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return app(UserVisibilityService::class)->canManageUserId($user, $document->user_id);
     }
 
     public function download(User $user, Document $document): bool
@@ -29,7 +42,15 @@ class DocumentPolicy
             return false;
         }
 
-        return $this->isPrivileged($user);
+        if (! $this->isPrivileged($user)) {
+            return false;
+        }
+
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return app(UserVisibilityService::class)->canManageUserId($user, $document->user_id);
     }
 
     public function delete(User $user, Document $document): bool
@@ -39,7 +60,11 @@ class DocumentPolicy
         }
 
         if ($this->isPrivileged($user)) {
-            return true;
+            if ($user->hasRole('admin')) {
+                return true;
+            }
+
+            return app(UserVisibilityService::class)->canManageUserId($user, $document->user_id);
         }
 
         return $user->id === $document->user_id && $document->status === Document::STATUS_PENDING;
@@ -52,7 +77,7 @@ class DocumentPolicy
 
     public function adminShow(User $user, Document $document): bool
     {
-        return $this->sameCompany($user, $document) && $this->isPrivileged($user);
+        return $this->sameCompany($user, $document) && $this->update($user, $document);
     }
 
     public function adminApprove(User $user, Document $document): bool

@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Document;
-use App\Models\User;
+use App\Services\UserVisibilityService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,10 +19,11 @@ class AdminDocumentStoreRequest extends FormRequest
             return false;
         }
 
-        // Check if target user belongs to the same company
-        $targetUser = User::find($this->input('user_id'));
-        
-        return $targetUser && $targetUser->company_id === $user->company_id;
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return app(UserVisibilityService::class)->canManageUserId($user, $this->input('user_id'));
     }
 
     public function rules(): array

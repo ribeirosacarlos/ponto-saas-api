@@ -25,6 +25,9 @@ class EmployeeStoreRequest extends FormRequest
             'email'    => [($this->isMethod('POST') ? 'required' : 'sometimes'), 'email', $emailRule],
             'password' => ['sometimes', 'nullable', 'min:6'],
             'role'     => 'nullable|string|in:admin,manager,area_manager,employee',
+            'area_id' => 'nullable|uuid|exists:areas,id',
+            'managed_area_ids' => 'nullable|array',
+            'managed_area_ids.*' => 'uuid|distinct|exists:areas,id',
             'shift_id' => 'nullable|uuid|exists:shifts,id',
         ];
     }

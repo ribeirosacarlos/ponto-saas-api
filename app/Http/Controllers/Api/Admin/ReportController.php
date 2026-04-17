@@ -3,12 +3,18 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\UserVisibilityService;
 use Illuminate\Http\Request;
 use App\Models\TimeEntry;
 use App\Support\CompanyTime;
 
 class ReportController extends Controller
 {
+    public function __construct(
+        protected UserVisibilityService $userVisibilityService
+    ) {
+    }
+
     public function timeReport(Request $request)
     {
         $request->validate([
@@ -20,11 +26,12 @@ class ReportController extends Controller
         $from = CompanyTime::parseToUtc($request->start, $timezone);
         $to = CompanyTime::parseToUtc($request->end, $timezone);
 
-        $entries = TimeEntry::with('user')
+        $query = TimeEntry::with('user')
             ->whereBetween('clocked_at', [$from->toDateTimeString(), $to->toDateTimeString()])
-            ->orderBy('clocked_at')
-            ->get();
+            ->orderBy('clocked_at');
 
-        return response()->json($entries);
+        $this->userVisibilityService->applyToUserOwnedQuery($query, $request->user());
+
+        return response()->json($query->get());
     }
 }

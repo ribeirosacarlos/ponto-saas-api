@@ -36,7 +36,7 @@ class DocumentReviewUploadForEmployeeTest extends TestCase
 
         $file = UploadedFile::fake()->create('holerite.pdf', 256, 'application/pdf');
 
-        $response = $this->postJson('/api/v1/admin/documents/upload-for-employee', [
+        $response = $this->postJson('/v1/admin/documents/upload-for-employee', [
             'user_id' => $employee->id,
             'category' => Document::CATEGORY_PAYROLL,
             'title' => 'Comprovante',

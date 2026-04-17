@@ -4,26 +4,29 @@ namespace App\Policies;
 
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Services\UserVisibilityService;
 
 class TimeEntryPolicy
 {
-    /**
-     * Employee only sees his own time entries.
-     * Manager, area_manager and admin see all entries from SAME company.
-     */
     public function view(User $user, TimeEntry $entry): bool
     {
         if ((string) $user->company_id !== (string) $entry->company_id) {
             return false;
         }
 
-        // employee sees own entries only
         if ($user->hasRole('employee')) {
             return (string) $entry->user_id === (string) $user->id;
         }
 
-        // manager / area_manager / admin can view all entries from the same company
-        return $user->hasRole(['manager', 'area_manager', 'admin']);
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if (! $user->hasRole(['manager', 'area_manager'])) {
+            return false;
+        }
+
+        return app(UserVisibilityService::class)->canManageUserId($user, $entry->user_id);
     }
 
     public function viewAnyAdjustments(User $user): bool
@@ -45,7 +48,15 @@ class TimeEntryPolicy
             return (string) $entry->user_id === (string) $user->id;
         }
 
-        return $user->hasRole(['manager', 'area_manager', 'admin']);
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if (! $user->hasRole(['manager', 'area_manager'])) {
+            return false;
+        }
+
+        return app(UserVisibilityService::class)->canManageUserId($user, $entry->user_id);
     }
 
     public function approveAdjustment(User $user, TimeEntry $entry): bool
@@ -55,6 +66,10 @@ class TimeEntryPolicy
         }
 
         if (! $user->hasRole(['manager', 'area_manager', 'admin'])) {
+            return false;
+        }
+
+        if (! $user->hasRole('admin') && ! app(UserVisibilityService::class)->canManageUserId($user, $entry->user_id)) {
             return false;
         }
 

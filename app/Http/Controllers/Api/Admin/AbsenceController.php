@@ -6,20 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAbsenceRequest;
 use App\Models\Absence;
 use App\Models\User;
+use App\Services\UserVisibilityService;
 use Illuminate\Http\Request;
 
 class AbsenceController extends Controller
 {
+    public function __construct(
+        protected UserVisibilityService $userVisibilityService
+    ) {
+    }
+
     public function index(Request $request)
     {
         $admin = $request->user();
 
         $query = Absence::query()
-            ->where('company_id', $admin->company_id)
             ->orderByDesc('start_date');
+        $this->userVisibilityService->applyToUserOwnedQuery($query, $admin);
 
         if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+            if ($admin->hasRole('admin') || $this->userVisibilityService->canManageUserId($admin, $request->user_id)) {
+                $query->where('user_id', $request->user_id);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         $from = $request->query('from');
@@ -47,7 +57,10 @@ class AbsenceController extends Controller
     public function store(StoreAbsenceRequest $request)
     {
         $admin = $request->user();
-        $user = User::where('company_id', $admin->company_id)->findOrFail($request->user_id);
+        $targetUserQuery = $admin->hasRole('admin')
+            ? User::query()->where('company_id', $admin->company_id)
+            : $this->userVisibilityService->visibleUsersQuery($admin);
+        $user = $targetUserQuery->whereKey($request->user_id)->firstOrFail();
 
         $start = $request->start_date;
         $end = $request->end_date ?: $start;

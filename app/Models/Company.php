@@ -63,6 +63,11 @@ class Company extends Model
         return $this->hasMany(User::class);
     }
 
+    public function areas(): HasMany
+    {
+        return $this->hasMany(Area::class);
+    }
+
     public function employeeUsers(): HasMany
     {
         return $this->users()->whereHas('roles', function ($query) {

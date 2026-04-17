@@ -3,6 +3,7 @@
 namespace App\Actions\Employees;
 
 use App\Jobs\SendEmployeeInviteJob;
+use App\Models\Area;
 use App\Models\Shift;
 use App\Models\User;
 use App\Services\ExtraEmployeeChargeService;
@@ -29,6 +30,7 @@ class InviteEmployeeAction
 
         $user = User::create([
             'company_id' => $inviter->company_id,
+            'area_id' => $data['area_id'] ?? null,
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($temporaryPasswordPlain),
@@ -42,6 +44,7 @@ class InviteEmployeeAction
             $user->assignRole($data['role']);
         }
 
+        $this->syncManagedAreas($user, $data['managed_area_ids'] ?? []);
         $this->assignShiftFromPayload($user, $data['shift_id'] ?? null);
 
         $companyName = $inviter->company?->name;
@@ -57,7 +60,25 @@ class InviteEmployeeAction
 
         SendEmployeeInviteJob::dispatch($user->id, $payload);
 
-        return $user->load(['userShifts.shift']);
+        return $user->load(['userShifts.shift', 'roles', 'area', 'managedAreas']);
+    }
+
+    protected function syncManagedAreas(User $user, array $managedAreaIds): void
+    {
+        $areaIds = Area::where('company_id', $user->company_id)
+            ->whereIn('id', collect($managedAreaIds)->filter()->unique()->values())
+            ->pluck('id');
+
+        $payload = $areaIds
+            ->filter()
+            ->unique()
+            ->mapWithKeys(fn (string $areaId) => [$areaId => [
+                'id' => (string) Str::uuid(),
+                'company_id' => $user->company_id,
+            ]])
+            ->all();
+
+        $user->managedAreas()->sync($payload);
     }
 
     protected function assignShiftFromPayload(User $user, ?string $shiftId): void

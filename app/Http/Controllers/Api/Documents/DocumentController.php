@@ -9,7 +9,7 @@ use App\Http\Requests\DocumentStoreRequest;
 use App\Http\Requests\DocumentUpdateRequest;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
-use App\Models\User;
+use App\Services\UserVisibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -28,21 +28,24 @@ class DocumentController extends Controller
     private const DEFAULT_PER_PAGE = 20;
     private const MAX_PER_PAGE = 100;
 
+    public function __construct(
+        protected UserVisibilityService $userVisibilityService
+    ) {
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
         $query = Document::query();
 
         if ($this->isPrivileged($user) && $request->filled('user_id')) {
-            $targetUser = User::where('id', $request->input('user_id'))
-                ->where('company_id', $user->company_id)
-                ->first();
-
-            if ($targetUser) {
-                $query->where('user_id', $targetUser->id);
+            if ($this->userVisibilityService->canManageUserId($user, $request->input('user_id'))) {
+                $query->where('user_id', $request->input('user_id'));
             } else {
-                $query->where('user_id', $user->id);
+                $query->whereRaw('1 = 0');
             }
+        } elseif ($this->isPrivileged($user)) {
+            $this->userVisibilityService->applyToUserOwnedQuery($query, $user);
         } else {
             $query->where('user_id', $user->id);
         }

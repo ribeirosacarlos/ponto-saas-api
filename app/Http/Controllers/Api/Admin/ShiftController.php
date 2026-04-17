@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateShiftRequest;
 use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\User;
+use App\Services\UserVisibilityService;
 use App\Support\ShiftDayEventNormalizer;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -16,6 +17,11 @@ use Illuminate\Validation\ValidationException;
 
 class ShiftController extends Controller
 {
+    public function __construct(
+        protected UserVisibilityService $userVisibilityService
+    ) {
+    }
+
     public function index(Request $request)
     {
         return Shift::with([
@@ -84,7 +90,7 @@ class ShiftController extends Controller
 
     public function byUser(Request $request, User $user)
     {
-        if ($user->company_id !== $request->user()->company_id) {
+        if (! $this->userVisibilityService->canViewUser($request->user(), $user)) {
             abort(403, 'Usuário não pertence à empresa atual.');
         }
 

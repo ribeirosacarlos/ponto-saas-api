@@ -8,6 +8,7 @@ use App\Http\Requests\RejectVacationRequestRequest;
 use App\Http\Requests\StoreVacationRequestAdminRequest;
 use App\Models\User;
 use App\Models\VacationRequest;
+use App\Services\UserVisibilityService;
 use App\Services\VacationBalanceService;
 use App\Services\VacationRequestService;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ use Illuminate\Validation\ValidationException;
 class VacationController extends Controller
 {
     public function __construct(
+        protected UserVisibilityService $userVisibilityService,
         protected VacationBalanceService $balanceService,
         protected VacationRequestService $vacationRequestService
     ) {
@@ -28,15 +30,19 @@ class VacationController extends Controller
         $user = $request->user();
 
         $query = VacationRequest::with(['user'])
-            ->where('company_id', $user->company_id)
             ->orderBy('created_at', 'desc');
+        $this->userVisibilityService->applyToUserOwnedQuery($query, $user);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
         if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+            if ($user->hasRole('admin') || $this->userVisibilityService->canManageUserId($user, $request->user_id)) {
+                $query->where('user_id', $request->user_id);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if ($request->filled('start')) {
@@ -53,7 +59,10 @@ class VacationController extends Controller
     public function store(StoreVacationRequestAdminRequest $request)
     {
         $admin = $request->user();
-        $user = User::where('company_id', $admin->company_id)->findOrFail($request->user_id);
+        $targetUserQuery = $admin->hasRole('admin')
+            ? User::query()->where('company_id', $admin->company_id)
+            : $this->userVisibilityService->visibleUsersQuery($admin);
+        $user = $targetUserQuery->whereKey($request->user_id)->firstOrFail();
 
         $start = Carbon::parse($request->start_date)->startOfDay();
         $end = Carbon::parse($request->end_date)->startOfDay();
@@ -117,7 +126,7 @@ class VacationController extends Controller
     public function approve(ApproveVacationRequestRequest $request, VacationRequest $vacation)
     {
         $admin = $request->user();
-        $this->authorizeRequest($admin->company_id, $vacation);
+        $this->authorizeRequest($admin, $vacation);
 
         if ($vacation->status !== 'pending') {
             throw ValidationException::withMessages([
@@ -156,7 +165,7 @@ class VacationController extends Controller
     public function reject(RejectVacationRequestRequest $request, VacationRequest $vacation)
     {
         $admin = $request->user();
-        $this->authorizeRequest($admin->company_id, $vacation);
+        $this->authorizeRequest($admin, $vacation);
 
         if ($vacation->status !== 'pending') {
             throw ValidationException::withMessages([
@@ -177,7 +186,7 @@ class VacationController extends Controller
     public function destroy(Request $request, VacationRequest $vacation)
     {
         $admin = $request->user();
-        $this->authorizeRequest($admin->company_id, $vacation);
+        $this->authorizeRequest($admin, $vacation);
 
         if (! in_array($vacation->status, ['pending', 'approved'])) {
             $vacation->update(['status' => 'cancelled']);
@@ -203,7 +212,7 @@ class VacationController extends Controller
     {
         $admin = $request->user();
 
-        if ($employee->company_id !== $admin->company_id) {
+        if (! $this->userVisibilityService->canViewUser($admin, $employee)) {
             abort(403, 'Funcionário inválido.');
         }
 
@@ -224,10 +233,18 @@ class VacationController extends Controller
         ]);
     }
 
-    protected function authorizeRequest(string $companyId, VacationRequest $vacation): void
+    protected function authorizeRequest(User $admin, VacationRequest $vacation): void
     {
-        if ($vacation->company_id !== $companyId) {
+        if ($vacation->company_id !== $admin->company_id) {
             abort(403, 'Solicitação não pertence à empresa atual.');
+        }
+
+        if ($admin->hasRole('admin')) {
+            return;
+        }
+
+        if (! $this->userVisibilityService->canManageUserId($admin, $vacation->user_id)) {
+            abort(403, 'Solicitação fora do escopo permitido.');
         }
     }
 }

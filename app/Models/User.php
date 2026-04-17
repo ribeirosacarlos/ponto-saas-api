@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'company_id',
+        'area_id',
         'invited_at',
         'password_set_at',
         'invite_code_hash',
@@ -43,9 +44,21 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class);
     }
 
+    public function area()
+    {
+        return $this->belongsTo(Area::class);
+    }
+
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
+    }
+
+    public function managedAreas()
+    {
+        return $this->belongsToMany(Area::class, 'area_user_management', 'user_id', 'area_id')
+            ->withPivot('company_id')
+            ->withTimestamps();
     }
 
     public function timeEntries()

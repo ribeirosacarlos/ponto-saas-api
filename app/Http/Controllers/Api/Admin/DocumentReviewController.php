@@ -11,6 +11,7 @@ use App\Http\Resources\DocumentAdminResource;
 use App\Models\Document;
 use App\Models\DocumentNotification;
 use App\Models\User;
+use App\Services\UserVisibilityService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -19,6 +20,11 @@ use Throwable;
 class DocumentReviewController extends Controller
 {
     use LogsDocumentAudits;
+
+    public function __construct(
+        protected UserVisibilityService $userVisibilityService
+    ) {
+    }
 
     public function pending(AdminPendingIndexRequest $request)
     {
@@ -105,9 +111,11 @@ class DocumentReviewController extends Controller
         $admin = $request->user();
         $this->authorize('adminList', Document::class);
 
-        $targetUser = User::where('id', $request->input('user_id'))
-            ->where('company_id', $admin->company_id)
-            ->firstOrFail();
+        $targetUserQuery = $admin->hasRole('admin')
+            ? User::query()->where('company_id', $admin->company_id)
+            : $this->userVisibilityService->visibleUsersQuery($admin);
+
+        $targetUser = $targetUserQuery->whereKey($request->input('user_id'))->firstOrFail();
 
         $created = [];
         $disk = 's3';
@@ -177,14 +185,19 @@ class DocumentReviewController extends Controller
 
     private function buildQuery(AdminPendingIndexRequest $request)
     {
-        $query = Document::with('user:id,name,email')->where('company_id', $request->user()->company_id);
+        $query = Document::with('user:id,name,email,area_id');
+        $this->userVisibilityService->applyToUserOwnedQuery($query, $request->user());
 
         if ($request->filled('category')) {
             $query->where('category', $request->input('category'));
         }
 
         if ($request->filled('employee_id')) {
-            $query->where('user_id', $request->input('employee_id'));
+            if ($request->user()->hasRole('admin') || $this->userVisibilityService->canManageUserId($request->user(), $request->input('employee_id'))) {
+                $query->where('user_id', $request->input('employee_id'));
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if ($request->filled('search')) {
