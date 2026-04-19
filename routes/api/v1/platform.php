@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\Billing\CompanySubscriptionController;
 use App\Http\Controllers\Api\Admin\Billing\PlanController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\Platform\CompanyController;
 use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 use App\Http\Controllers\Api\SuperAdmin\CompanyMetricsController as SuperAdminCompanyMetricsController;
@@ -22,6 +23,8 @@ Route::prefix('platform')->group(function () {
         Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
         Route::post('/companies/{company}/block', [CompanyController::class, 'block']);
         Route::post('/companies/{company}/unblock', [CompanyController::class, 'unblock']);
+        Route::get('/audit-logs', [AuditLogController::class, 'platformIndex']);
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'platformShow']);
 
         Route::prefix('billing')->group(function () {
             Route::get('plans', [PlanController::class, 'index']);

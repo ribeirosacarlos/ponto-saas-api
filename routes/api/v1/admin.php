@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\CompanyGeolocationController;
 use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\Admin\AbsenceController as AdminAbsenceController;
 use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeSyncController;
 use App\Http\Controllers\Api\Admin\HolidayController;
@@ -31,6 +32,8 @@ Route::prefix('admin')->group(function () {
         Route::patch('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);
         Route::post('/billing/extra-employees/checkout-session', [ExtraEmployeeCheckoutSessionController::class, 'store']);
+        Route::get('/audit-logs', [AuditLogController::class, 'companyIndex']);
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'companyShow']);
     });
 
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
