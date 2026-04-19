@@ -4,10 +4,16 @@ namespace App\Actions\TimeEntries;
 
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Services\AuditLogService;
 use Carbon\CarbonImmutable;
 
 class CreateTimeEntryAdjustmentAction
 {
+    public function __construct(
+        protected AuditLogService $auditLogService
+    ) {
+    }
+
     /**
      * @param  array{
      *   clocked_at: CarbonImmutable,
@@ -30,7 +36,7 @@ class CreateTimeEntryAdjustmentAction
         $clockedAt = $data['clocked_at'];
         $resolvedType = $this->resolveType($targetUser, $clockedAt, $data['resolved_type'] ?? null, $data['proposed_type'] ?? null);
 
-        return TimeEntry::create([
+        $timeEntry = TimeEntry::create([
             'company_id' => $targetUser->company_id,
             'user_id' => $targetUser->id,
             'user_shift_id' => $data['user_shift_id'] ?? null,
@@ -50,6 +56,33 @@ class CreateTimeEntryAdjustmentAction
             'proposed_longitude' => $data['proposed_longitude'] ?? null,
             'proposed_source' => $data['proposed_source'] ?? null,
         ]);
+
+        $this->auditLogService->log(
+            action: 'time_entry.adjustment_requested',
+            entityType: TimeEntry::class,
+            entityId: $timeEntry->id,
+            description: 'Solicitação de ajuste de ponto criada.',
+            newValues: $this->auditLogService->snapshot([
+                'user_id' => $timeEntry->user_id,
+                'clocked_at' => optional($timeEntry->clocked_at)->toIso8601String(),
+                'type' => $timeEntry->type,
+                'event_kind' => $timeEntry->event_kind,
+                'source' => $timeEntry->source,
+                'adjustment_status' => $timeEntry->adjustment_status,
+                'adjustment_reason' => $timeEntry->adjustment_reason,
+                'proposed_clocked_at' => optional($timeEntry->proposed_clocked_at)->toIso8601String(),
+                'proposed_type' => $timeEntry->proposed_type,
+                'proposed_source' => $timeEntry->proposed_source,
+            ]),
+            metadata: [
+                'requested_for_user_id' => $targetUser->id,
+                'requested_by_user_id' => $requestedBy->id,
+                'requested_by_same_user' => $targetUser->is($requestedBy),
+            ],
+            companyId: $targetUser->company_id,
+        );
+
+        return $timeEntry;
     }
 
     private function resolveType(User $user, CarbonImmutable $clockedAt, ?string $resolvedType, ?string $proposedType): string

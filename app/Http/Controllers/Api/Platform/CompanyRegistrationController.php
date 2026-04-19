@@ -8,6 +8,7 @@ use App\Http\Resources\CompanyResource;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\CompanySlugService;
+use App\Services\AuditLogService;
 use App\Jobs\SendCompanyAdminInviteJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -15,7 +16,8 @@ use Illuminate\Support\Str;
 class CompanyRegistrationController extends Controller
 {
     public function __construct(
-        protected CompanySlugService $slugService
+        protected CompanySlugService $slugService,
+        protected AuditLogService $auditLogService
     ) {
     }
 
@@ -58,6 +60,28 @@ class CompanyRegistrationController extends Controller
             'inviteCode' => $adminInviteCode,
             'supportEmail' => $supportEmail,
         ]);
+
+        $this->auditLogService->log(
+            action: 'platform.company_registered',
+            entityType: Company::class,
+            entityId: $company->id,
+            description: 'Empresa criada por super admin com administrador inicial.',
+            newValues: $this->auditLogService->snapshot([
+                'company' => [
+                    'name' => $company->name,
+                    'slug' => $company->slug,
+                    'document' => $company->document,
+                    'email' => $company->email,
+                ],
+                'admin_user' => [
+                    'id' => $admin->id,
+                    'name' => $admin->name,
+                    'email' => $admin->email,
+                    'role' => 'admin',
+                ],
+            ]),
+            targetCompanyId: $company->id,
+        );
 
         return response()->json([
             'company' => new CompanyResource($company),

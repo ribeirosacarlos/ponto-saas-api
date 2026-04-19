@@ -6,6 +6,7 @@ use App\Jobs\SendEmployeeInviteJob;
 use App\Models\Area;
 use App\Models\Shift;
 use App\Models\User;
+use App\Services\AuditLogService;
 use App\Services\ExtraEmployeeChargeService;
 use App\Services\UserShiftService;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +17,8 @@ class InviteEmployeeAction
 {
     public function __construct(
         protected UserShiftService $userShiftService,
-        protected ExtraEmployeeChargeService $extraEmployeeChargeService
+        protected ExtraEmployeeChargeService $extraEmployeeChargeService,
+        protected AuditLogService $auditLogService
     ) {}
 
     public function execute(User $inviter, array $data): User
@@ -59,6 +61,19 @@ class InviteEmployeeAction
         ];
 
         SendEmployeeInviteJob::dispatch($user->id, $payload);
+
+        $this->auditLogService->log(
+            action: 'employee.invited',
+            entityType: User::class,
+            entityId: $user->id,
+            description: 'Colaborador convidado para a empresa.',
+            newValues: $this->employeeSnapshot($user),
+            metadata: [
+                'invite_expires_at' => optional($user->invite_expires_at)->toIso8601String(),
+                'invited_by_user_id' => $inviter->id,
+            ],
+            companyId: $user->company_id,
+        );
 
         return $user->load(['userShifts.shift', 'roles', 'area', 'managedAreas']);
     }
@@ -137,5 +152,26 @@ class InviteEmployeeAction
         $separator = str_contains($template, '?') ? '&' : '?';
 
         return "{$template}{$separator}email={$encodedEmail}";
+    }
+
+    protected function employeeSnapshot(User $user): array
+    {
+        $user->loadMissing(['roles', 'area', 'managedAreas', 'userShifts.shift']);
+
+        $activeShift = $user->userShifts
+            ->firstWhere('end_date', null);
+
+        return $this->auditLogService->snapshot([
+            'name' => $user->name,
+            'email' => $user->email,
+            'area_id' => $user->area_id,
+            'area_name' => $user->area?->name,
+            'role' => $user->roles->pluck('name')->first(),
+            'managed_area_ids' => $user->managedAreas->pluck('id')->values()->all(),
+            'managed_area_names' => $user->managedAreas->pluck('name')->values()->all(),
+            'shift_id' => $activeShift?->shift_id,
+            'shift_name' => $activeShift?->shift?->name,
+            'invite_expires_at' => optional($user->invite_expires_at)->toIso8601String(),
+        ]);
     }
 }

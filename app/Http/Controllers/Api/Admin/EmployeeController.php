@@ -8,6 +8,7 @@ use App\Models\Area;
 use App\Models\Shift;
 use App\Models\User;
 use App\Actions\Employees\InviteEmployeeAction;
+use App\Services\AuditLogService;
 use App\Services\ExtraEmployeeChargeService;
 use App\Services\UserVisibilityService;
 use App\Services\UserShiftService;
@@ -23,7 +24,8 @@ class EmployeeController extends Controller
     public function __construct(
         protected UserVisibilityService $userVisibilityService,
         protected UserShiftService $userShiftService,
-        protected ExtraEmployeeChargeService $extraEmployeeChargeService
+        protected ExtraEmployeeChargeService $extraEmployeeChargeService,
+        protected AuditLogService $auditLogService
     ) {
     }
 
@@ -64,6 +66,7 @@ class EmployeeController extends Controller
     {
         $employee = User::where('company_id', $request->user()->company_id)->findOrFail($id);
         $this->authorize('update', $employee);
+        $before = $this->employeeSnapshot($employee);
 
         $data = $request->validated();
         $areas = $this->resolveAreas($request->user()->company_id, $data);
@@ -115,15 +118,40 @@ class EmployeeController extends Controller
             $this->syncManagedAreas($employee, $managedAreas);
         }
 
-        return $employee->load(['userShifts.shift', 'roles', 'area', 'managedAreas']);
+        $employee = $employee->fresh(['userShifts.shift', 'roles', 'area', 'managedAreas']);
+        [$oldValues, $newValues] = $this->auditLogService->diff($before, $this->employeeSnapshot($employee));
+
+        if ($oldValues !== [] || $newValues !== []) {
+            $this->auditLogService->log(
+                action: 'employee.updated',
+                entityType: User::class,
+                entityId: $employee->id,
+                description: 'Dados do colaborador atualizados.',
+                oldValues: $oldValues,
+                newValues: $newValues,
+                companyId: $employee->company_id,
+            );
+        }
+
+        return $employee;
     }
 
     public function destroy($id)
     {
         $employee = User::where('company_id', request()->user()->company_id)->findOrFail($id);
         $this->authorize('delete', $employee);
+        $snapshot = $this->employeeSnapshot($employee);
 
         $employee->delete();
+
+        $this->auditLogService->log(
+            action: 'employee.deleted',
+            entityType: User::class,
+            entityId: $employee->id,
+            description: 'Colaborador removido.',
+            oldValues: $snapshot,
+            companyId: $employee->company_id,
+        );
 
         return response()->json(['message' => 'Deletado']);
     }
@@ -140,11 +168,26 @@ class EmployeeController extends Controller
             'shift_id'   => 'required|uuid|exists:shifts,id',
             'start_date' => 'nullable|date',
         ]);
+        $before = $this->employeeShiftSnapshot($employee);
 
         $shift = $this->resolveShift($request->user()->company_id, $data['shift_id']);
         $startDate = ! empty($data['start_date']) ? Carbon::parse($data['start_date']) : null;
 
         $assignment = $this->userShiftService->assign($employee, $shift, $startDate);
+
+        $this->auditLogService->log(
+            action: 'employee.shift_assigned',
+            entityType: User::class,
+            entityId: $employee->id,
+            description: 'Jornada do colaborador atribuída.',
+            oldValues: $before,
+            newValues: $this->employeeShiftSnapshot($employee->fresh('userShifts.shift')),
+            metadata: [
+                'assignment_id' => $assignment->id,
+                'start_date' => $assignment->start_date,
+            ],
+            companyId: $employee->company_id,
+        );
 
         return $assignment->load('shift');
     }
@@ -209,6 +252,38 @@ class EmployeeController extends Controller
             ->all();
 
         $user->managedAreas()->sync($payload);
+    }
+
+    protected function employeeSnapshot(User $user): array
+    {
+        $user->loadMissing(['roles', 'area', 'managedAreas', 'userShifts.shift']);
+
+        return $this->auditLogService->snapshot([
+            'name' => $user->name,
+            'email' => $user->email,
+            'area_id' => $user->area_id,
+            'area_name' => $user->area?->name,
+            'role' => $user->roles->pluck('name')->first(),
+            'managed_area_ids' => $user->managedAreas->pluck('id')->values()->all(),
+            'managed_area_names' => $user->managedAreas->pluck('name')->values()->all(),
+            ...$this->employeeShiftSnapshot($user),
+        ]);
+    }
+
+    protected function employeeShiftSnapshot(User $user): array
+    {
+        $user->loadMissing(['userShifts.shift']);
+
+        $activeShift = $user->userShifts
+            ->sortByDesc('start_date')
+            ->first(fn ($shift) => $shift->end_date === null);
+
+        return $this->auditLogService->snapshot([
+            'shift_id' => $activeShift?->shift_id,
+            'shift_name' => $activeShift?->shift?->name,
+            'shift_start_date' => $activeShift?->start_date,
+            'shift_end_date' => $activeShift?->end_date,
+        ]);
     }
 
 }

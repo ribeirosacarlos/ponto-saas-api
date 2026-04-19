@@ -4,11 +4,17 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateCompanyTimezoneRequest;
+use App\Services\AuditLogService;
 use App\Support\CompanyTime;
 use Illuminate\Http\Request;
 
 class CompanyTimezoneController extends Controller
 {
+    public function __construct(
+        protected AuditLogService $auditLogService
+    ) {
+    }
+
     public function show(Request $request)
     {
         $company = $request->user()?->company;
@@ -39,10 +45,25 @@ class CompanyTimezoneController extends Controller
         }
 
         $this->authorize('updateTimezone', $company);
+        $before = $this->auditLogService->snapshot([
+            'timezone' => $company->timezone ?? config('app.timezone'),
+        ]);
 
         $company->update([
             'timezone' => $request->timezone,
         ]);
+
+        $this->auditLogService->log(
+            action: 'company.timezone_updated',
+            entityType: \App\Models\Company::class,
+            entityId: $company->id,
+            description: 'Timezone da empresa atualizada.',
+            oldValues: $before,
+            newValues: $this->auditLogService->snapshot([
+                'timezone' => $company->fresh()->timezone,
+            ]),
+            companyId: $company->id,
+        );
 
         return response()->json([
             'timezone' => $company->timezone,

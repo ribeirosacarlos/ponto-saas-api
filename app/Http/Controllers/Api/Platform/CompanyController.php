@@ -7,6 +7,7 @@ use App\Http\Requests\PlatformCompanyStoreRequest;
 use App\Http\Requests\PlatformCompanyUpdateRequest;
 use App\Http\Resources\CompanyResource;
 use App\Models\Company;
+use App\Services\AuditLogService;
 use App\Services\CompanySlugService;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,10 @@ class CompanyController extends Controller
 {
     private CompanySlugService $slugService;
 
-    public function __construct(CompanySlugService $slugService)
+    public function __construct(
+        CompanySlugService $slugService,
+        protected AuditLogService $auditLogService
+    )
     {
         $this->slugService = $slugService;
     }
@@ -73,6 +77,15 @@ class CompanyController extends Controller
 
         $company = Company::create($payload);
 
+        $this->auditLogService->log(
+            action: 'platform.company_created',
+            entityType: Company::class,
+            entityId: $company->id,
+            description: 'Empresa criada pela plataforma.',
+            newValues: $this->companySnapshot($company),
+            targetCompanyId: $company->id,
+        );
+
         return (new CompanyResource($company))->response()->setStatusCode(201);
     }
 
@@ -91,6 +104,7 @@ class CompanyController extends Controller
             abort(404);
         }
 
+        $before = $this->companySnapshot($company);
         $payload = $request->validated();
 
         if (array_key_exists('name', $payload)) {
@@ -99,13 +113,37 @@ class CompanyController extends Controller
 
         $company->update($payload);
 
+        [$oldValues, $newValues] = $this->auditLogService->diff($before, $this->companySnapshot($company->fresh()));
+
+        if ($oldValues !== [] || $newValues !== []) {
+            $this->auditLogService->log(
+                action: 'platform.company_updated',
+                entityType: Company::class,
+                entityId: $company->id,
+                description: 'Dados da empresa alterados por super admin.',
+                oldValues: $oldValues,
+                newValues: $newValues,
+                targetCompanyId: $company->id,
+            );
+        }
+
         return new CompanyResource($company);
     }
 
     public function destroy(string $company)
     {
         $company = Company::with('subscription.plan')->findOrFail($company);
+        $snapshot = $this->companySnapshot($company);
         $company->delete();
+
+        $this->auditLogService->log(
+            action: 'platform.company_deleted',
+            entityType: Company::class,
+            entityId: $company->id,
+            description: 'Empresa removida da plataforma.',
+            oldValues: $snapshot,
+            targetCompanyId: $company->id,
+        );
 
         return response()->noContent();
     }
@@ -119,6 +157,15 @@ class CompanyController extends Controller
         }
 
         $company->restore();
+
+        $this->auditLogService->log(
+            action: 'platform.company_restored',
+            entityType: Company::class,
+            entityId: $company->id,
+            description: 'Empresa restaurada na plataforma.',
+            newValues: $this->companySnapshot($company->fresh()),
+            targetCompanyId: $company->id,
+        );
 
         return new CompanyResource($company);
     }
@@ -135,11 +182,31 @@ class CompanyController extends Controller
             return new CompanyResource($company);
         }
 
+        $before = $this->auditLogService->snapshot([
+            'is_blocked' => (bool) $company->is_blocked,
+            'blocked_at' => optional($company->blocked_at)->toIso8601String(),
+            'blocked_reason' => $company->blocked_reason,
+        ]);
+
         $company->update([
             'is_blocked' => true,
             'blocked_at' => now(),
             'blocked_reason' => $payload['reason'] ?? null,
         ]);
+
+        $this->auditLogService->log(
+            action: 'platform.company_blocked',
+            entityType: Company::class,
+            entityId: $company->id,
+            description: 'Empresa bloqueada por super admin.',
+            oldValues: $before,
+            newValues: $this->auditLogService->snapshot([
+                'is_blocked' => (bool) $company->fresh()->is_blocked,
+                'blocked_at' => optional($company->blocked_at)->toIso8601String(),
+                'blocked_reason' => $company->blocked_reason,
+            ]),
+            targetCompanyId: $company->id,
+        );
 
         return new CompanyResource($company);
     }
@@ -152,11 +219,31 @@ class CompanyController extends Controller
             return new CompanyResource($company);
         }
 
+        $before = $this->auditLogService->snapshot([
+            'is_blocked' => (bool) $company->is_blocked,
+            'blocked_at' => optional($company->blocked_at)->toIso8601String(),
+            'blocked_reason' => $company->blocked_reason,
+        ]);
+
         $company->update([
             'is_blocked' => false,
             'blocked_at' => null,
             'blocked_reason' => null,
         ]);
+
+        $this->auditLogService->log(
+            action: 'platform.company_unblocked',
+            entityType: Company::class,
+            entityId: $company->id,
+            description: 'Empresa desbloqueada por super admin.',
+            oldValues: $before,
+            newValues: $this->auditLogService->snapshot([
+                'is_blocked' => (bool) $company->fresh()->is_blocked,
+                'blocked_at' => optional($company->blocked_at)->toIso8601String(),
+                'blocked_reason' => $company->blocked_reason,
+            ]),
+            targetCompanyId: $company->id,
+        );
 
         return new CompanyResource($company);
     }
@@ -164,6 +251,23 @@ class CompanyController extends Controller
     protected function findWithTrashed(string $id): Company
     {
         return Company::withTrashed()->with('subscription.plan')->findOrFail($id);
+    }
+
+    protected function companySnapshot(Company $company): array
+    {
+        return $this->auditLogService->snapshot([
+            'name' => $company->name,
+            'slug' => $company->slug,
+            'document' => $company->document,
+            'email' => $company->email,
+            'phone' => $company->phone,
+            'address' => $company->address,
+            'city' => $company->city,
+            'state' => $company->state,
+            'is_blocked' => (bool) $company->is_blocked,
+            'blocked_reason' => $company->blocked_reason,
+            'deleted_at' => optional($company->deleted_at)->toIso8601String(),
+        ]);
     }
 
 }
