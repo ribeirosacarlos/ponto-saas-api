@@ -6,10 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAreaRequest;
 use App\Http\Requests\UpdateAreaRequest;
 use App\Models\Area;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 
 class AreaController extends Controller
 {
+    public function __construct(
+        protected AuditLogService $auditLogService
+    ) {
+    }
+
     public function index(Request $request)
     {
         $query = Area::where('company_id', $request->user()->company_id)
@@ -30,6 +36,15 @@ class AreaController extends Controller
             'name' => $request->input('name'),
         ]);
 
+        $this->auditLogService->log(
+            action: 'area.created',
+            entityType: Area::class,
+            entityId: $area->id,
+            description: 'Área criada.',
+            newValues: $this->auditLogService->snapshot($area, ['name']),
+            companyId: $area->company_id,
+        );
+
         return response()->json($area, 201);
     }
 
@@ -43,8 +58,23 @@ class AreaController extends Controller
     public function update(UpdateAreaRequest $request, Area $area)
     {
         $this->authorizeCompany($request, $area);
+        $before = $this->auditLogService->snapshot($area, ['name']);
 
         $area->update($request->validated());
+
+        [$oldValues, $newValues] = $this->auditLogService->diff($before, $this->auditLogService->snapshot($area->fresh(), ['name']));
+
+        if ($oldValues !== [] || $newValues !== []) {
+            $this->auditLogService->log(
+                action: 'area.updated',
+                entityType: Area::class,
+                entityId: $area->id,
+                description: 'Área atualizada.',
+                oldValues: $oldValues,
+                newValues: $newValues,
+                companyId: $area->company_id,
+            );
+        }
 
         return $area->fresh();
     }
@@ -52,8 +82,18 @@ class AreaController extends Controller
     public function destroy(Request $request, Area $area)
     {
         $this->authorizeCompany($request, $area);
+        $snapshot = $this->auditLogService->snapshot($area, ['name']);
 
         $area->delete();
+
+        $this->auditLogService->log(
+            action: 'area.deleted',
+            entityType: Area::class,
+            entityId: $area->id,
+            description: 'Área removida.',
+            oldValues: $snapshot,
+            companyId: $area->company_id,
+        );
 
         return response()->json(['message' => 'Área removida.']);
     }

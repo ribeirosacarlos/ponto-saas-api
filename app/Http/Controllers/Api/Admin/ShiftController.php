@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateShiftRequest;
 use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\User;
+use App\Services\AuditLogService;
 use App\Services\UserVisibilityService;
 use App\Support\ShiftDayEventNormalizer;
 use Illuminate\Database\QueryException;
@@ -18,7 +19,8 @@ use Illuminate\Validation\ValidationException;
 class ShiftController extends Controller
 {
     public function __construct(
-        protected UserVisibilityService $userVisibilityService
+        protected UserVisibilityService $userVisibilityService,
+        protected AuditLogService $auditLogService
     ) {
     }
 
@@ -71,6 +73,15 @@ class ShiftController extends Controller
             throw $this->handleShiftQueryException($exception);
         }
 
+        $this->auditLogService->log(
+            action: 'shift.created',
+            entityType: Shift::class,
+            entityId: $shift->id,
+            description: 'Jornada criada.',
+            newValues: $this->shiftSnapshot($shift),
+            companyId: $shift->company_id,
+        );
+
         return response()->json($shift, 201);
     }
 
@@ -107,6 +118,10 @@ class ShiftController extends Controller
     public function update(UpdateShiftRequest $request, Shift $shift)
     {
         $this->authorizeCompany($request, $shift);
+        $before = $this->shiftSnapshot($shift->load([
+            'shiftDays' => fn ($query) => $query->orderBy('weekday'),
+            'shiftDays.events' => fn ($query) => $query->orderBy('sort_order'),
+        ]));
 
         $data = $request->validated();
 
@@ -153,14 +168,41 @@ class ShiftController extends Controller
             throw $this->handleShiftQueryException($exception);
         }
 
+        [$oldValues, $newValues] = $this->auditLogService->diff($before, $this->shiftSnapshot($shift));
+
+        if ($oldValues !== [] || $newValues !== []) {
+            $this->auditLogService->log(
+                action: 'shift.updated',
+                entityType: Shift::class,
+                entityId: $shift->id,
+                description: 'Jornada atualizada.',
+                oldValues: $oldValues,
+                newValues: $newValues,
+                companyId: $shift->company_id,
+            );
+        }
+
         return $shift;
     }
 
     public function destroy(Request $request, Shift $shift)
     {
         $this->authorizeCompany($request, $shift);
+        $snapshot = $this->shiftSnapshot($shift->load([
+            'shiftDays' => fn ($query) => $query->orderBy('weekday'),
+            'shiftDays.events' => fn ($query) => $query->orderBy('sort_order'),
+        ]));
 
         $shift->delete();
+
+        $this->auditLogService->log(
+            action: 'shift.deleted',
+            entityType: Shift::class,
+            entityId: $shift->id,
+            description: 'Jornada removida.',
+            oldValues: $snapshot,
+            companyId: $shift->company_id,
+        );
 
         return response()->json(['message' => 'Deletado']);
     }
@@ -251,5 +293,37 @@ class ShiftController extends Controller
         if (! $shift->is_default) {
             $shift->update(['is_default' => true]);
         }
+    }
+
+    protected function shiftSnapshot(Shift $shift): array
+    {
+        $shift->loadMissing([
+            'shiftDays' => fn ($query) => $query->orderBy('weekday'),
+            'shiftDays.events' => fn ($query) => $query->orderBy('sort_order'),
+        ]);
+
+        return $this->auditLogService->snapshot([
+            'name' => $shift->name,
+            'is_default' => (bool) $shift->is_default,
+            'is_flexible' => (bool) $shift->is_flexible,
+            'start_time' => $shift->start_time,
+            'end_time' => $shift->end_time,
+            'days' => $shift->shiftDays->map(fn (ShiftDay $day) => [
+                'weekday' => $day->weekday,
+                'is_working_day' => (bool) $day->is_working_day,
+                'start_time' => $day->start_time,
+                'end_time' => $day->end_time,
+                'break_start_time' => $day->break_start_time,
+                'break_end_time' => $day->break_end_time,
+                'break_minutes' => $day->break_minutes,
+                'events' => $day->events->map(fn ($event) => [
+                    'kind' => $event->kind,
+                    'label' => $event->label,
+                    'expected_type' => $event->expected_type,
+                    'expected_at' => $event->expected_at,
+                    'sort_order' => $event->sort_order,
+                ])->values()->all(),
+            ])->values()->all(),
+        ]);
     }
 }

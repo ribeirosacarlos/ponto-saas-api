@@ -9,6 +9,7 @@ use App\Http\Requests\EmployeeTimeEntryHistoryRequest;
 use App\Http\Requests\TimeEntryStoreRequest;
 use App\Models\TimeEntry;
 use App\Models\VacationDay;
+use App\Services\AuditLogService;
 use App\Services\ExtraEmployeeChargeService;
 use App\Services\TimeEntry\OvertimeCalculatorService;
 use App\Services\UserShiftResolver;
@@ -20,6 +21,11 @@ use Illuminate\Http\Request;
 class TimeEntryController extends Controller
 {
     use AuthorizesRequests;
+
+    public function __construct(
+        protected AuditLogService $auditLogService
+    ) {
+    }
 
     public function clock(
         TimeEntryStoreRequest $request,
@@ -105,6 +111,22 @@ class TimeEntryController extends Controller
             'longitude' => $validated['longitude'] ?? null,
             'source' => $validated['source'] ?? 'web',
         ]);
+
+        $this->auditLogService->log(
+            action: 'time_entry.created',
+            entityType: TimeEntry::class,
+            entityId: $entry->id,
+            description: 'Registro de ponto criado.',
+            newValues: $this->auditLogService->snapshot([
+                'user_id' => $entry->user_id,
+                'clocked_at' => optional($entry->clocked_at)->toIso8601String(),
+                'type' => $entry->type,
+                'event_kind' => $entry->event_kind,
+                'source' => $entry->source,
+                'user_shift_id' => $entry->user_shift_id,
+            ]),
+            companyId: $entry->company_id,
+        );
 
         $nextResolved = $resolveNextExpectedClock->handle($user, $now);
 

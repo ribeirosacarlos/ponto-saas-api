@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuditLogService;
 use App\Services\UserVisibilityService;
 use Illuminate\Http\Request;
 use App\Models\TimeEntry;
@@ -11,7 +12,8 @@ use App\Support\CompanyTime;
 class ReportController extends Controller
 {
     public function __construct(
-        protected UserVisibilityService $userVisibilityService
+        protected UserVisibilityService $userVisibilityService,
+        protected AuditLogService $auditLogService
     ) {
     }
 
@@ -31,7 +33,20 @@ class ReportController extends Controller
             ->orderBy('clocked_at');
 
         $this->userVisibilityService->applyToUserOwnedQuery($query, $request->user());
+        $entries = $query->get();
 
-        return response()->json($query->get());
+        $this->auditLogService->log(
+            action: 'report.time_exported',
+            entityType: 'time_report',
+            description: 'Relatório crítico de ponto exportado.',
+            metadata: [
+                'start' => $request->start,
+                'end' => $request->end,
+                'entry_count' => $entries->count(),
+            ],
+            companyId: $request->user()->company_id,
+        );
+
+        return response()->json($entries);
     }
 }
