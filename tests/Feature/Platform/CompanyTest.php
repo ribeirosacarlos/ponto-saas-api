@@ -35,7 +35,7 @@ class CompanyTest extends TestCase
         $user = $this->createSuperAdmin();
         Sanctum::actingAs($user, ['*']);
 
-        $response = $this->getJson('/api/v1/platform/companies');
+        $response = $this->getJson('/v1/platform/companies');
 
         $response->assertOk()
             ->assertJsonCount(3, 'data')
@@ -50,17 +50,17 @@ class CompanyTest extends TestCase
 
         Sanctum::actingAs($user, ['*']);
 
-        $this->getJson('/api/v1/platform/companies')->assertStatus(403);
+        $this->getJson('/v1/platform/companies')->assertStatus(403);
     }
 
-    public function test_super_admin_can_block_and_unblock_company()
+    public function test_super_admin_can_block_company()
     {
         $user = $this->createSuperAdmin();
         Sanctum::actingAs($user, ['*']);
 
         $company = Company::factory()->create();
 
-        $blockResponse = $this->postJson("/api/v1/platform/companies/{$company->id}/block", [
+        $blockResponse = $this->postJson("/v1/platform/companies/{$company->id}/block", [
             'reason' => 'Non compliant',
         ]);
 
@@ -74,7 +74,20 @@ class CompanyTest extends TestCase
             'blocked_reason' => 'Non compliant',
         ]);
 
-        $unblockResponse = $this->postJson("/api/v1/platform/companies/{$company->id}/unblock");
+    }
+
+    public function test_super_admin_can_unblock_company()
+    {
+        $user = $this->createSuperAdmin();
+        Sanctum::actingAs($user, ['*']);
+
+        $company = Company::factory()->create([
+            'is_blocked' => true,
+            'blocked_at' => now(),
+            'blocked_reason' => 'Non compliant',
+        ]);
+
+        $unblockResponse = $this->postJson("/v1/platform/companies/{$company->id}/unblock", []);
 
         $unblockResponse->assertOk()
             ->assertJsonPath('data.is_blocked', false)

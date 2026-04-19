@@ -30,6 +30,7 @@ class AuditLogApiTest extends TestCase
     {
         $company = Company::factory()->create([
             'subscription_status' => SubscriptionStatus::ACTIVE->value,
+            'audit_logs_enabled' => true,
         ]);
         $otherCompany = Company::factory()->create([
             'subscription_status' => SubscriptionStatus::ACTIVE->value,
@@ -86,6 +87,7 @@ class AuditLogApiTest extends TestCase
     {
         $company = Company::factory()->create([
             'subscription_status' => SubscriptionStatus::ACTIVE->value,
+            'audit_logs_enabled' => true,
         ]);
         $otherCompany = Company::factory()->create([
             'subscription_status' => SubscriptionStatus::ACTIVE->value,
@@ -170,5 +172,24 @@ class AuditLogApiTest extends TestCase
         $this->actingAs($admin)
             ->getJson('/v1/platform/audit-logs')
             ->assertForbidden();
+    }
+
+    public function test_admin_cannot_access_company_audit_logs_when_feature_is_disabled(): void
+    {
+        $company = Company::factory()->create([
+            'subscription_status' => SubscriptionStatus::ACTIVE->value,
+            'audit_logs_enabled' => false,
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->syncRoles(['admin']);
+
+        $this->actingAs($admin)
+            ->getJson('/v1/admin/audit-logs')
+            ->assertForbidden()
+            ->assertJsonPath(
+                'message',
+                'A visualização de auditoria não está habilitada para esta empresa.'
+            );
     }
 }

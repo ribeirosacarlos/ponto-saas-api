@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'subscription.access' => \App\Http\Middleware\EnsureCompanyHasAccess::class,
                 'plan.feature' => \App\Http\Middleware\EnsurePlanFeature::class,
                 'company.timezone' => SetCompanyTimezone::class,
+                'company.audit_logs_enabled' => \App\Http\Middleware\EnsureCompanyAuditLogsEnabled::class,
             ]);
             $middleware->prepend(HandleCors::class);
         })
