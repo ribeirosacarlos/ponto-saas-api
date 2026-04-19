@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\Billing\PlanController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\Platform\CompanyController;
 use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
+use App\Http\Controllers\Api\Platform\CompanySettingsController;
 use App\Http\Controllers\Api\SuperAdmin\CompanyMetricsController as SuperAdminCompanyMetricsController;
 use App\Http\Controllers\Api\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,9 @@ Route::prefix('platform')->group(function () {
 
         Route::post('/companies/register', [CompanyRegistrationController::class, 'store']);
 
+        Route::get('/companies/{company}/settings', [CompanySettingsController::class, 'show']);
+        Route::put('/companies/{company}/settings', [CompanySettingsController::class, 'update']);
+        Route::patch('/companies/{company}/settings', [CompanySettingsController::class, 'update']);
         Route::apiResource('companies', CompanyController::class);
         Route::post('/companies/{company}/restore', [CompanyController::class, 'restore']);
         Route::post('/companies/{company}/block', [CompanyController::class, 'block']);

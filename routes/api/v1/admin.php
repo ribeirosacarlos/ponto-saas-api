@@ -32,8 +32,10 @@ Route::prefix('admin')->group(function () {
         Route::patch('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);
         Route::post('/billing/extra-employees/checkout-session', [ExtraEmployeeCheckoutSessionController::class, 'store']);
-        Route::get('/audit-logs', [AuditLogController::class, 'companyIndex']);
-        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'companyShow']);
+        Route::get('/audit-logs', [AuditLogController::class, 'companyIndex'])
+            ->middleware('company.audit_logs_enabled');
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'companyShow'])
+            ->middleware('company.audit_logs_enabled');
     });
 
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
