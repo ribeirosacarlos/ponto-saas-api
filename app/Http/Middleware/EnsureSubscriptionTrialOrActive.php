@@ -3,8 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Enums\SubscriptionStatus;
-use App\Models\Company;
 use App\Services\BillingService;
+use App\Services\CompanySubscriptionService;
 use App\Services\SubscriptionService;
 use Closure;
 use Illuminate\Http\Request;
@@ -13,7 +13,8 @@ class EnsureSubscriptionTrialOrActive
 {
     public function __construct(
         protected BillingService $billingService,
-        protected SubscriptionService $subscriptionService
+        protected SubscriptionService $subscriptionService,
+        protected CompanySubscriptionService $companySubscriptionService
     ) {
     }
 
@@ -44,7 +45,7 @@ class EnsureSubscriptionTrialOrActive
                 $subscription = $this->billingService->markPastDue($subscription, now());
 
                 if ($this->billingService->isBlocked($company)) {
-                    $this->blockCompany($company, 'Trial expirado.');
+                    $this->companySubscriptionService->blockExpiredTrial($company);
                 }
 
                 return response()->json(['message' => 'Trial expirado.'], 402);
@@ -55,7 +56,7 @@ class EnsureSubscriptionTrialOrActive
             }
 
             if ($subscription->status === SubscriptionStatus::PAST_DUE && $this->billingService->isBlocked($company)) {
-                $this->blockCompany($company, 'Pagamento em atraso.');
+                $this->companySubscriptionService->blockPastDue($company);
 
                 return response()->json(['message' => 'Assinatura em atraso.'], 402);
             }
@@ -70,18 +71,5 @@ class EnsureSubscriptionTrialOrActive
         
             return response()->json(['message' => 'Erro ao validar assinatura.'], 500);
         }
-    }
-
-    protected function blockCompany(Company $company, string $reason): void
-    {
-        if ($company->is_blocked) {
-            return;
-        }
-
-        $company->update([
-            'is_blocked' => true,
-            'blocked_at' => now(),
-            'blocked_reason' => $reason,
-        ]);
     }
 }

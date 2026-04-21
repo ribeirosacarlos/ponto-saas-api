@@ -24,6 +24,10 @@ class EnsureCompanyHasAccess
             return response()->json(['message' => 'Usuário sem empresa associada.'], 403);
         }
 
+        if ($this->companySubscriptionService->isAccessExpired($company)) {
+            $this->companySubscriptionService->expireAccess($company);
+        }
+
         if (! $this->companySubscriptionService->canAccessSystem($company)) {
             return response()->json([
                 'message' => 'Acesso negado: assinatura ativa é necessária para continuar usando o sistema.',

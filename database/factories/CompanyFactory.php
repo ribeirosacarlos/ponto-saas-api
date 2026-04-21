@@ -27,6 +27,7 @@ class CompanyFactory extends Factory
             'is_blocked' => false,
             'blocked_at' => null,
             'blocked_reason' => null,
+            'access_expires_at' => null,
             'timezone' => 'Europe/Madrid',
             'audit_logs_enabled' => false,
         ];

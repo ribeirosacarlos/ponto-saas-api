@@ -17,7 +17,13 @@ namespace App\Swagger\Settings;
  *     @OA\Property(property="billing_days_remaining", type="integer", nullable=true),
  *     @OA\Property(property="subscription_ends_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="cancel_at_period_end", type="boolean", nullable=true),
- *     @OA\Property(property="canceled_at", type="string", format="date-time", nullable=true)
+ *     @OA\Property(property="canceled_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="access_expires_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="blocked_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="blocked_reason", type="string", nullable=true),
+ *     @OA\Property(property="is_blocked", type="boolean"),
+ *     @OA\Property(property="is_plan_active", type="boolean"),
+ *     @OA\Property(property="can_cancel", type="boolean")
  * )
  */
 class SettingsBillingSubscription {}

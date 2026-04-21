@@ -20,6 +20,7 @@ class StripeBillingService
 {
     public function __construct(
         protected BillingService $billingService,
+        protected CompanySubscriptionService $companySubscriptionService,
         protected StripeClient $stripe
     ) {
     }
@@ -62,6 +63,21 @@ class StripeBillingService
             'customer' => $company->stripe_customer_id,
             'return_url' => $this->buildFrontendUrl('/billing/portal'),
         ]);
+    }
+
+    public function scheduleCancellationAtPeriodEnd(Company $company): Subscription
+    {
+        $subscription = $company->subscription;
+
+        if (! $subscription?->stripe_subscription_id) {
+            throw new \LogicException('Assinatura Stripe não encontrada para esta empresa.');
+        }
+
+        $stripeSubscription = $this->stripe->subscriptions->update($subscription->stripe_subscription_id, [
+            'cancel_at_period_end' => true,
+        ]);
+
+        return $this->syncStripeSubscription($company->fresh(['subscription.plan']), $stripeSubscription);
     }
 
     public function createExtraEmployeeCheckoutSession(
@@ -275,16 +291,23 @@ class StripeBillingService
     {
         $plan = $this->resolvePlan($stripeSubscription);
         $status = $this->mapStripeStatus($stripeSubscription->status ?? '');
+        $currentPeriodStart = $this->toCarbon($stripeSubscription->current_period_start ?? null);
+        $currentPeriodEnd = $this->toCarbon($stripeSubscription->current_period_end ?? null);
+        $cancelAtPeriodEnd = (bool) $stripeSubscription->cancel_at_period_end;
+        $existingAccessExpiresAt = $company->access_expires_at;
+        $accessExpiresAt = $cancelAtPeriodEnd
+            ? $currentPeriodEnd
+            : ($status === SubscriptionStatus::CANCELED ? ($currentPeriodEnd ?? $existingAccessExpiresAt) : null);
         $subscription = Subscription::firstOrNew(['company_id' => $company->id]);
 
         $subscription->fill([
-            'plan_id' => $plan?->id,
+            'plan_id' => $plan?->id ?? $subscription->plan_id ?? $company->current_plan_id,
             'status' => $status,
             'trial_ends_at' => $this->toCarbon($stripeSubscription->trial_end ?? null),
-            'current_period_start' => $this->toCarbon($stripeSubscription->current_period_start ?? null),
-            'current_period_end' => $this->toCarbon($stripeSubscription->current_period_end ?? null),
+            'current_period_start' => $currentPeriodStart,
+            'current_period_end' => $currentPeriodEnd,
             'canceled_at' => $this->toCarbon($stripeSubscription->canceled_at ?? null),
-            'cancel_at_period_end' => (bool) $stripeSubscription->cancel_at_period_end,
+            'cancel_at_period_end' => $cancelAtPeriodEnd,
             'stripe_subscription_id' => $stripeSubscription->id,
             'stripe_customer_id' => $stripeSubscription->customer,
             'stripe_price_id' => $this->resolvePriceId($stripeSubscription),
@@ -299,7 +322,19 @@ class StripeBillingService
             'stripe_customer_id' => $stripeSubscription->customer,
             'subscription_status' => $status->value,
             'current_plan_id' => $plan?->id ?? $company->current_plan_id,
+            'access_expires_at' => $accessExpiresAt,
         ]);
+
+        $company->refresh();
+
+        if ($status === SubscriptionStatus::CANCELED && $this->companySubscriptionService->isAccessExpired($company)) {
+            $this->companySubscriptionService->expireAccess($company);
+        } elseif (
+            in_array($status, [SubscriptionStatus::ACTIVE, SubscriptionStatus::TRIALING], true)
+            || $this->companySubscriptionService->hasAccessUntil($company)
+        ) {
+            $this->companySubscriptionService->restoreAccess($company);
+        }
 
         return $subscription->refresh();
     }
@@ -507,7 +542,7 @@ class StripeBillingService
             return null;
         }
 
-        return Carbon::createFromTimestamp($timestamp);
+        return Carbon::createFromTimestampUTC($timestamp);
     }
 
     protected function buildFrontendUrl(string $path = ''): string

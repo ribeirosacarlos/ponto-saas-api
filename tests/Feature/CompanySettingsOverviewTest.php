@@ -7,6 +7,7 @@ use App\Models\ExtraEmployeeCharge;
 use App\Models\Plan;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\PlansSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,6 +23,7 @@ class CompanySettingsOverviewTest extends TestCase
 
         Role::updateOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
         Role::updateOrCreate(['name' => 'employee'], ['display_name' => 'Employee']);
+        (new PlansSeeder())->run();
     }
 
     public function test_usage_counts_employees_and_non_employees_with_time_entries(): void
@@ -68,6 +70,7 @@ class CompanySettingsOverviewTest extends TestCase
             ->assertJsonPath('data.usage.employees.current', 3)
             ->assertJsonPath('data.usage.employees.limit', 2)
             ->assertJsonPath('data.usage.employees.over_limit', true)
+            ->assertJsonPath('data.billing.subscription.is_plan_active', false)
             ->assertJsonPath('data.usage.extra_employees.paid_allowance', 0)
             ->assertJsonPath('data.usage.extra_employees.has_pending_payment', false);
     }
@@ -217,5 +220,37 @@ class CompanySettingsOverviewTest extends TestCase
             ->assertJsonPath('data.usage.employees.over_limit', false)
             ->assertJsonPath('data.usage.extra_employees.has_pending_payment', false)
             ->assertJsonPath('data.usage.extra_employees.pending_quantity', 0);
+    }
+
+    public function test_overview_exposes_access_expiration_and_cancellation_state(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $subscription = $admin->company->fresh('subscription')->subscription;
+        $subscription->update([
+            'status' => 'active',
+            'cancel_at_period_end' => true,
+            'current_period_end' => now()->addDays(12),
+        ]);
+
+        $admin->company()->update([
+            'subscription_status' => 'active',
+            'access_expires_at' => $subscription->current_period_end,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/v1/settings/overview');
+
+        $response->assertOk()
+            ->assertJsonPath('data.billing.subscription.cancel_at_period_end', true)
+            ->assertJsonPath('data.billing.subscription.is_plan_active', true)
+            ->assertJsonPath(
+                'data.billing.subscription.access_expires_at',
+                $subscription->current_period_end->toIso8601String()
+            )
+            ->assertJsonPath(
+                'data.billing.subscription.subscription_ends_at',
+                $subscription->current_period_end->toIso8601String()
+            );
     }
 }

@@ -21,14 +21,13 @@ class CompanySettingsController extends Controller
     public function __construct(
         protected CompanySubscriptionService $subscriptionService,
         protected ExtraEmployeeChargeService $extraEmployeeChargeService
-    )
-    {
+    ) {
     }
 
     public function overview(Request $request)
     {
         $user = $request->user();
-        $company = $user?->company;
+        $company = $user?->company?->fresh();
 
         if (! $company) {
             if ($user?->hasRole('super_admin')) {
@@ -163,27 +162,7 @@ class CompanySettingsController extends Controller
 
     private function buildSubscriptionPayload(Company $company, ?Subscription $subscription, ?string $subscriptionStatus): array
     {
-        $trialEndsAt = $this->toCarbon($subscription?->trial_ends_at ?? $company->trial_ends_at);
-        $currentPeriodEnd = $this->toCarbon($subscription?->current_period_end);
-        $subscriptionEndsAt = $subscription && $subscription->cancel_at_period_end && $currentPeriodEnd
-            ? $currentPeriodEnd
-            : null;
-
-        return [
-            'status' => $subscriptionStatus,
-            'status_label' => $this->statusLabel($subscriptionStatus),
-            'next_action' => $this->nextAction($subscriptionStatus),
-            'stripe_customer_id' => $company->stripe_customer_id,
-            'stripe_subscription_id' => $subscription?->stripe_subscription_id,
-            'subscription_status' => $subscriptionStatus,
-            'trial_ends_at' => $trialEndsAt?->toIso8601String(),
-            'trial_days_remaining' => $this->calculateDaysRemaining($trialEndsAt),
-            'current_period_end' => $currentPeriodEnd?->toIso8601String(),
-            'billing_days_remaining' => $this->calculateDaysRemaining($currentPeriodEnd),
-            'subscription_ends_at' => $subscriptionEndsAt?->toIso8601String(),
-            'cancel_at_period_end' => $subscription?->cancel_at_period_end,
-            'canceled_at' => $subscription?->canceled_at?->toIso8601String(),
-        ];
+        return $this->subscriptionService->buildSubscriptionPayload($company, $subscription, $subscriptionStatus);
     }
 
     private function buildLinks(array $flags): array
