@@ -101,6 +101,18 @@ class TimeEntryPolicy
 
     public function delete(User $user, TimeEntry $entry): bool
     {
-        return false;
+        if ((string) $user->company_id !== (string) $entry->company_id) {
+            return false;
+        }
+
+        if ($user->hasRole(['admin', 'super_admin'])) {
+            return true;
+        }
+
+        if (! $user->hasRole(['manager', 'area_manager'])) {
+            return false;
+        }
+
+        return app(UserVisibilityService::class)->canManageUserId($user, $entry->user_id);
     }
 }

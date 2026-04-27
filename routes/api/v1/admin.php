@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
 use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\ShiftController;
+use App\Http\Controllers\Api\Admin\TimeEntryController as AdminTimeEntryController;
 use App\Http\Controllers\Api\Admin\TimeEntryAdjustmentController as AdminTimeEntryAdjustmentController;
 use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
@@ -62,6 +63,7 @@ Route::prefix('admin')->group(function () {
 
         Route::post('/time-entries/{timeEntry}/adjustment/approve', [AdminTimeEntryAdjustmentController::class, 'approve']);
         Route::post('/time-entries/{timeEntry}/adjustment/reject', [AdminTimeEntryAdjustmentController::class, 'reject']);
+        Route::delete('/time-entries/{timeEntry}', [AdminTimeEntryController::class, 'destroy']);
 
         Route::get('/areas', [AreaController::class, 'index']);
         Route::get('/areas/{area}', [AreaController::class, 'show']);

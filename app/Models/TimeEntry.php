@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TimeEntry extends Model
 {
-    use HasFactory, HasUuids, CompanyScoped;
+    use HasFactory, HasUuids, CompanyScoped, SoftDeletes;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -45,6 +46,7 @@ class TimeEntry extends Model
         'proposed_clocked_at' => 'datetime',
         'adjustment_requested_at' => 'datetime',
         'adjustment_reviewed_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function scopeExcludeRejected(Builder $query): Builder
