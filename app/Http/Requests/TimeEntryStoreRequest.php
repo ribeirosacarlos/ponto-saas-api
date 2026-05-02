@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Plan;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TimeEntryStoreRequest extends FormRequest
@@ -14,17 +13,15 @@ class TimeEntryStoreRequest extends FormRequest
 
     public function rules(): array
     {
-        $geolocationRequired = $this->isGeolocationRequired();
-
         return [
             'latitude' => [
-                $geolocationRequired ? 'required' : 'nullable',
+                'nullable',
                 'numeric',
                 'between:-90,90',
                 'required_with:longitude',
             ],
             'longitude' => [
-                $geolocationRequired ? 'required' : 'nullable',
+                'nullable',
                 'numeric',
                 'between:-180,180',
                 'required_with:latitude',
@@ -85,25 +82,5 @@ class TimeEntryStoreRequest extends FormRequest
             'latitude.between' => 'A latitude deve estar entre -90 e 90.',
             'longitude.between' => 'A longitude deve estar entre -180 e 180.',
         ];
-    }
-
-    private function isGeolocationRequired(): bool
-    {
-        $company = $this->user()?->company;
-
-        if (! $company) {
-            return false;
-        }
-
-        $company->loadMissing(['currentPlan', 'subscription.plan']);
-
-        /** @var Plan|null $plan */
-        $plan = $company->currentPlan ?? $company->subscription?->plan;
-
-        if (! (bool) ($plan?->hasFeature('geolocation') ?? false)) {
-            return false;
-        }
-
-        return (bool) $company->geolocation_required;
     }
 }
