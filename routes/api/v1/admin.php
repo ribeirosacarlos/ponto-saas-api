@@ -56,6 +56,7 @@ Route::prefix('admin')->group(function () {
             ->name('admin.documents.upload_for_employee');
 
         Route::apiResource('employees', EmployeeController::class);
+        Route::post('/employees/{employee}/resend-invite', [EmployeeController::class, 'resendInvite']);
         Route::get('/employees/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
 
         Route::get('/reports/time', [ReportController::class, 'timeReport'])

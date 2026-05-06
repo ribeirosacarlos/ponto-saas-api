@@ -8,6 +8,7 @@ use App\Models\Area;
 use App\Models\Shift;
 use App\Models\User;
 use App\Actions\Employees\InviteEmployeeAction;
+use App\Actions\Employees\ResendEmployeeInviteAction;
 use App\Services\AuditLogService;
 use App\Services\ExtraEmployeeChargeService;
 use App\Services\UserVisibilityService;
@@ -154,6 +155,16 @@ class EmployeeController extends Controller
         );
 
         return response()->json(['message' => 'Deletado']);
+    }
+
+    public function resendInvite(Request $request, $id, ResendEmployeeInviteAction $action)
+    {
+        $employee = User::where('company_id', $request->user()->company_id)->findOrFail($id);
+        $this->authorize('update', $employee);
+
+        $action->execute($request->user(), $employee);
+
+        return response()->json(['message' => 'Convite reenviado com sucesso.']);
     }
 
     public function assignShift(Request $request, User $employee)
