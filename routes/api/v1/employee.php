@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnounce
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
 use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\AbsenceController as EmployeeAbsenceController;
+use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
 use App\Http\Controllers\Api\Employee\TimeEntryAdjustmentController as EmployeeTimeEntryAdjustmentController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
 use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
@@ -23,6 +24,9 @@ Route::prefix('employee')
         Route::get('/time-entries/open-status', [EmployeeTimeEntryController::class, 'openStatus']);
         Route::get('/shift', [EmployeeTimeEntryController::class, 'shift']);
         Route::get('/worked-today', [EmployeeWorkedTodayController::class, 'show']);
+
+        // Ajustes do próprio usuário
+        Route::get('/adjustments', [EmployeeAdjustmentController::class, 'index']);
 
         // Solicitar ajuste
         Route::post('/time-entries/{timeEntry}/adjustment', [EmployeeTimeEntryAdjustmentController::class, 'store'])
