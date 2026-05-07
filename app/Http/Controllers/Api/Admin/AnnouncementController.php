@@ -47,7 +47,7 @@ class AnnouncementController extends Controller
         $announcements = $query
             ->orderByDesc('sent_at')
             ->orderByDesc('created_at')
-            ->paginate(20);
+            ->paginate($request->integer('per_page', 20));
 
         return AnnouncementResource::collection($announcements);
     }

@@ -36,6 +36,6 @@ class AbsenceController extends Controller
             });
         }
 
-        return response()->json($query->paginate(20));
+        return response()->json($query->paginate($request->integer('per_page', 20)));
     }
 }

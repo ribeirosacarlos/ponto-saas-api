@@ -42,7 +42,7 @@ class AdjustmentController extends Controller
         }
 
         return response()->json(
-            $query->paginate(15)
+            $query->paginate($request->integer('per_page', 15))
         );
     }
 }

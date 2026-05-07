@@ -14,7 +14,7 @@ class LeavePolicyController extends Controller
     {
         $policies = LeavePolicy::where('company_id', $request->user()->company_id)
             ->orderBy('name')
-            ->paginate(20);
+            ->paginate($request->integer('per_page', 20));
 
         return response()->json($policies);
     }

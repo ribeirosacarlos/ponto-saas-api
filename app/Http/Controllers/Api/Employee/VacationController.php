@@ -26,7 +26,7 @@ class VacationController extends Controller
         $requests = VacationRequest::where('company_id', $user->company_id)
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate($request->integer('per_page', 20));
 
         return response()->json($requests);
     }

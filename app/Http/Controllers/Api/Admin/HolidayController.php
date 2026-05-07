@@ -32,7 +32,7 @@ class HolidayController extends Controller
             $query->where('scope', $request->input('scope'));
         }
 
-        return $query->orderBy('date')->paginate(50);
+        return $query->orderBy('date')->paginate($request->integer('per_page', 50));
     }
 
     public function store(StoreHolidayRequest $request)

@@ -142,7 +142,7 @@ class TimeEntryController extends Controller
             ->timeEntries()
             ->excludeRejected()
             ->orderBy('clocked_at', 'desc')
-            ->paginate(20);
+            ->paginate($request->integer('per_page', 20));
 
         foreach ($entries as $entry) {
             $this->authorize('view', $entry);

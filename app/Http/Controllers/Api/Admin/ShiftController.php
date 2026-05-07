@@ -36,7 +36,7 @@ class ShiftController extends Controller
         ])
             ->where('company_id', $request->user()->company_id)
             ->orderBy('name')
-            ->paginate(20);
+            ->paginate($request->integer('per_page', 20));
     }
 
     public function store(StoreShiftRequest $request)

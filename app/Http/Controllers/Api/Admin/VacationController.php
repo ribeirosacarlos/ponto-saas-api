@@ -53,7 +53,7 @@ class VacationController extends Controller
             $query->whereDate('end_date', '<=', $request->end);
         }
 
-        return response()->json($query->paginate(20));
+        return response()->json($query->paginate($request->integer('per_page', 20)));
     }
 
     public function store(StoreVacationRequestAdminRequest $request)
