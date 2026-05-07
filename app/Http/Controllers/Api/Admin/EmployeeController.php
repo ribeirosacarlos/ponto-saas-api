@@ -35,7 +35,7 @@ class EmployeeController extends Controller
         return $this->userVisibilityService
             ->visibleUsersQuery($request->user())
             ->with(['roles', 'area', 'managedAreas'])
-            ->paginate(20);
+            ->paginate($request->integer('per_page', 20));
     }
 
     public function store(EmployeeStoreRequest $request, InviteEmployeeAction $inviteEmployeeAction)
