@@ -28,7 +28,6 @@ Route::prefix('admin')->group(function () {
         Route::put('/company/timezone', [CompanyTimezoneController::class, 'update']);
         Route::get('/company/geolocation', [CompanyGeolocationController::class, 'show']);
         Route::put('/company/geolocation', [CompanyGeolocationController::class, 'update']);
-        Route::get('/settings/location', [CompanyLocationSettingsController::class, 'show']);
         Route::put('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::patch('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);
@@ -37,6 +36,10 @@ Route::prefix('admin')->group(function () {
             ->middleware('company.audit_logs_enabled');
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'companyShow'])
             ->middleware('company.audit_logs_enabled');
+    });
+
+    Route::middleware(['role:admin|super_admin|area_manager|manager', 'subscription.access'])->group(function () {
+        Route::get('/settings/location', [CompanyLocationSettingsController::class, 'show']);
     });
 
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
