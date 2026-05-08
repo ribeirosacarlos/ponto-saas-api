@@ -62,9 +62,17 @@ jobs:
                       aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
                         docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-                      # Pull e restart
+                      # Pull imagem
                       docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+                      # Sobe containers
                       docker compose -f docker-compose.prod.yml up -d --pull always --force-recreate
 
-                      # (Opcional) limpar imagens antigas
+                      # Aguarda container iniciar
+                      sleep 10
+
+                      # Rodar migrations
+                      docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+
+                      # Limpar imagens antigas
                       docker image prune -f
