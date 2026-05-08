@@ -36,6 +36,11 @@ class AuditLogService
             $userId ??= $actor?->id;
             $performedByRole ??= $this->resolveRole($actor);
 
+            $enrichedMetadata = array_merge(
+                $metadata ?? [],
+                ['device_type' => $this->detectDeviceType($request?->userAgent())]
+            );
+
             return AuditLog::create([
                 'company_id' => $companyId,
                 'target_company_id' => $targetCompanyId,
@@ -47,7 +52,7 @@ class AuditLogService
                 'description' => $description,
                 'old_values' => $this->sanitizePayload($oldValues),
                 'new_values' => $this->sanitizePayload($newValues),
-                'metadata' => $this->sanitizePayload($metadata),
+                'metadata' => $this->sanitizePayload($enrichedMetadata),
                 'ip_address' => $request?->ip(),
                 'user_agent' => $request?->userAgent(),
                 'method' => $request?->method(),
@@ -103,6 +108,17 @@ class AuditLogService
     private function request(): ?Request
     {
         return app()->bound('request') ? request() : null;
+    }
+
+    private function detectDeviceType(?string $userAgent): string
+    {
+        if (! $userAgent) {
+            return 'unknown';
+        }
+
+        $mobilePattern = '/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone/i';
+
+        return preg_match($mobilePattern, $userAgent) ? 'mobile' : 'desktop';
     }
 
     private function sanitizePayload(?array $payload): ?array
