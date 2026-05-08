@@ -24,8 +24,7 @@ class TimeEntryController extends Controller
 
     public function __construct(
         protected AuditLogService $auditLogService
-    ) {
-    }
+    ) {}
 
     public function clock(
         TimeEntryStoreRequest $request,
@@ -67,9 +66,13 @@ class TimeEntryController extends Controller
         $nextEvent = $resolved['next_event'];
 
         if ($resolved['is_outside_shift'] || ! $resolved['is_working_day'] || ! $resolved['shift_day']) {
+            $reason = $resolved['is_holiday']
+                ? "Feriado: {$resolved['holiday_name']}. Registro fora da jornada prevista."
+                : 'Fora do turno/jornada (dia não trabalhado ou sem jornada).';
+
             $adjustment = $createAdjustment->handle($user, $user, [
                 'clocked_at' => $now,
-                'reason' => 'Fora do turno/jornada (dia nao trabalhado ou sem jornada).',
+                'reason' => $reason,
                 'source' => $validated['source'] ?? 'web',
                 'device_type' => $deviceType,
                 'latitude' => $validated['latitude'] ?? null,
@@ -286,6 +289,8 @@ class TimeEntryController extends Controller
             'assignment_id' => $status['assignment']?->id,
             'next_event' => $this->serializeEvent($status['next_event']),
             'is_outside_shift' => $status['is_outside_shift'],
+            'is_holiday' => $status['is_holiday'],
+            'holiday_name' => $status['holiday_name'],
         ]);
     }
 
@@ -362,5 +367,4 @@ class TimeEntryController extends Controller
     {
         return $user->company?->timezone ?: config('app.timezone', 'UTC');
     }
-
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\TimeEntry;
 
+use App\Models\Holiday;
 use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\User;
@@ -17,8 +18,7 @@ class OvertimeCalculatorService
 
     public function __construct(
         protected UserShiftResolver $shiftResolver
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{employee_id: string, from: string, to: string, timezone: string, totals: array, days?: array}
@@ -34,6 +34,7 @@ class OvertimeCalculatorService
         $groupedEntries = $this->groupEntriesByDate($entries, $timezone);
         $shift = $this->shiftResolver->resolve($employee)['shift'];
         $days = $this->iterateDays($fromLocal, $toLocal);
+        $holidays = $this->fetchHolidays($employee->company_id, $fromLocal, $toLocal);
 
         $totalWorked = 0;
         $totalExpected = 0;
@@ -43,7 +44,8 @@ class OvertimeCalculatorService
 
         foreach ($days as $day) {
             $date = $day->toDateString();
-            $expectedMinutes = $this->expectedMinutesForDate($shift, $day);
+            $isHoliday = isset($holidays[$date]);
+            $expectedMinutes = $isHoliday ? 0 : $this->expectedMinutesForDate($shift, $day);
             $entriesForDay = $groupedEntries[$date] ?? [];
             $pairResult = $entriesForDay
                 ? $this->pairAndSumMinutes($entriesForDay)
@@ -85,6 +87,8 @@ class OvertimeCalculatorService
                     'status' => $this->determineStatus($ignored ? 0 : $dailyBalance),
                     'ignored' => $ignored,
                     'reason' => $reason,
+                    'is_holiday' => $isHoliday,
+                    'holiday_name' => $isHoliday ? $holidays[$date] : null,
                 ];
             }
         }
@@ -112,6 +116,18 @@ class OvertimeCalculatorService
             'totals' => $totals,
             'days' => $includeDays ? $dailyDetails : null,
         ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * @return array<string, string> date => name
+     */
+    protected function fetchHolidays(string $companyId, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        return Holiday::where('company_id', $companyId)
+            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+            ->get()
+            ->mapWithKeys(fn (Holiday $h) => [$h->date->toDateString() => $h->name])
+            ->all();
     }
 
     /**
@@ -190,6 +206,7 @@ class OvertimeCalculatorService
     protected function resolveTimezone(User $employee): string
     {
         $company = $employee->company ?? $employee->loadMissing('company')->company;
+
         return $company?->timezone ?? config('app.timezone', 'UTC');
     }
 
