@@ -26,6 +26,7 @@ class CreateTimeEntryAdjustmentAction
      *   latitude?: mixed,
      *   longitude?: mixed,
      *   source?: ?string,
+     *   device_type?: ?string,
      *   resolved_type?: ?string,
      *   event_kind?: ?string,
      *   user_shift_id?: ?string
@@ -46,6 +47,7 @@ class CreateTimeEntryAdjustmentAction
             'latitude' => $data['latitude'] ?? null,
             'longitude' => $data['longitude'] ?? null,
             'source' => $data['source'] ?? 'adjustment',
+            'device_type' => $data['device_type'] ?? null,
             'adjustment_status' => 'pending',
             'adjustment_reason' => $data['reason'],
             'adjustment_requested_by' => $requestedBy->id,

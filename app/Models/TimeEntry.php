@@ -27,6 +27,7 @@ class TimeEntry extends Model
         'latitude',
         'longitude',
         'source',
+        'device_type',
         'adjustment_status',
         'adjustment_reason',
         'adjustment_requested_by',

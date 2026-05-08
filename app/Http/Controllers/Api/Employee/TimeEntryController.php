@@ -60,6 +60,9 @@ class TimeEntryController extends Controller
             return response()->json(['message' => 'Aguarde 1 minuto entre os registros.'], 422);
         }
 
+        $mobilePattern = '/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone/i';
+        $deviceType = preg_match($mobilePattern, $request->userAgent() ?? '') ? 'mobile' : 'desktop';
+
         $resolved = $resolveNextExpectedClock->handle($user, $now);
         $nextEvent = $resolved['next_event'];
 
@@ -68,6 +71,7 @@ class TimeEntryController extends Controller
                 'clocked_at' => $now,
                 'reason' => 'Fora do turno/jornada (dia nao trabalhado ou sem jornada).',
                 'source' => $validated['source'] ?? 'web',
+                'device_type' => $deviceType,
                 'latitude' => $validated['latitude'] ?? null,
                 'longitude' => $validated['longitude'] ?? null,
                 'resolved_type' => $nextEvent['expected_type'] ?? null,
@@ -87,6 +91,7 @@ class TimeEntryController extends Controller
                 'clocked_at' => $now,
                 'reason' => 'Dia ja completo; batida extra requer ajuste.',
                 'source' => $validated['source'] ?? 'web',
+                'device_type' => $deviceType,
                 'latitude' => $validated['latitude'] ?? null,
                 'longitude' => $validated['longitude'] ?? null,
                 'event_kind' => 'free',
@@ -110,6 +115,7 @@ class TimeEntryController extends Controller
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
             'source' => $validated['source'] ?? 'web',
+            'device_type' => $deviceType,
         ]);
 
         $this->auditLogService->log(
