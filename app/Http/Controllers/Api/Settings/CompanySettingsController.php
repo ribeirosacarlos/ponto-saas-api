@@ -209,6 +209,7 @@ class CompanySettingsController extends Controller
                         'is_working_day' => $day->is_working_day,
                         'start_time' => $day->start_time,
                         'end_time' => $day->end_time,
+                        'scheduled_minutes' => $day->scheduled_minutes,
                         'break_expected' => filled($day->break_start_time) && filled($day->break_end_time),
                     ];
                 })->values()->all(),

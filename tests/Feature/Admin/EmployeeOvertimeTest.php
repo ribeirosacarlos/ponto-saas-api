@@ -48,14 +48,14 @@ class EmployeeOvertimeTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonPath('employee_id', (string) $employee->id);
-        $response->assertJsonPath('totals.worked_minutes', 540);
+        $response->assertJsonPath('totals.worked_minutes', 600);
         $response->assertJsonPath('totals.extra_minutes', 60);
         $response->assertJsonPath('days.0.date', '2025-12-15');
         $response->assertJsonPath('days.0.status', 'extra');
         $response->assertJsonPath('days.0.ignored', false);
     }
 
-    public function test_missing_from_parameter_returns_validation_error(): void
+    public function test_missing_from_parameter_uses_first_entry_or_requested_end_date(): void
     {
         $company = Company::factory()->create([
             'subscription_status' => SubscriptionStatus::ACTIVE->value,
@@ -67,11 +67,16 @@ class EmployeeOvertimeTest extends TestCase
         $employee = User::factory()->create(['company_id' => $company->id]);
         $employee->assignRole('employee');
 
+        $date = CarbonImmutable::parse('2025-12-15', 'UTC');
+        $this->assignShift($employee, $date);
+        $this->createTimeEntry($employee, 'in', $date->setTime(8, 0));
+        $this->createTimeEntry($employee, 'out', $date->setTime(17, 0));
+
         $response = $this->actingAs($admin)->getJson("/v1/admin/employees/{$employee->id}/overtime?to=2025-12-15");
 
-        $response->assertStatus(422);
-        $response->assertJsonStructure(['message', 'errors']);
-        $this->assertArrayHasKey('from', $response->json('errors'));
+        $response->assertStatus(200);
+        $response->assertJsonPath('from', '2025-12-15');
+        $response->assertJsonPath('to', '2025-12-15');
     }
 
     private function assignShift(User $user, CarbonImmutable $date): void
@@ -91,6 +96,7 @@ class EmployeeOvertimeTest extends TestCase
             'is_working_day' => true,
             'start_time' => $shift->start_time,
             'end_time' => $shift->end_time,
+            'scheduled_minutes' => 540,
             'break_minutes' => 60,
             'break_start_time' => '12:00',
             'break_end_time' => '13:00',

@@ -229,6 +229,7 @@ class ShiftController extends Controller
                     'is_working_day'   => $isWorkingDay ? 'true' : 'false',
                     'start_time'       => $isWorkingDay ? $day['start_time'] : null,
                     'end_time'         => $isWorkingDay ? $day['end_time'] : null,
+                    'scheduled_minutes' => $isWorkingDay ? $this->resolveScheduledMinutes($day) : null,
                     'break_start_time' => $isWorkingDay ? ($day['break_start_time'] ?? null) : null,
                     'break_end_time'   => $isWorkingDay ? ($day['break_end_time'] ?? null) : null,
                     'break_minutes'    => $isWorkingDay ? ($day['break_minutes'] ?? null) : null,
@@ -313,6 +314,7 @@ class ShiftController extends Controller
                 'is_working_day' => (bool) $day->is_working_day,
                 'start_time' => $day->start_time,
                 'end_time' => $day->end_time,
+                'scheduled_minutes' => $day->scheduled_minutes,
                 'break_start_time' => $day->break_start_time,
                 'break_end_time' => $day->break_end_time,
                 'break_minutes' => $day->break_minutes,
@@ -325,5 +327,25 @@ class ShiftController extends Controller
                 ])->values()->all(),
             ])->values()->all(),
         ]);
+    }
+
+    protected function resolveScheduledMinutes(array $day): ?int
+    {
+        if (isset($day['scheduled_minutes']) && $day['scheduled_minutes'] !== null) {
+            return (int) $day['scheduled_minutes'];
+        }
+
+        if (empty($day['start_time']) || empty($day['end_time'])) {
+            return null;
+        }
+
+        return $this->timeToMinutes($day['end_time']) - $this->timeToMinutes($day['start_time']);
+    }
+
+    protected function timeToMinutes(string $time): int
+    {
+        [$hours, $minutes] = array_map('intval', explode(':', $time));
+
+        return ($hours * 60) + $minutes;
     }
 }

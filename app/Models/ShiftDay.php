@@ -19,6 +19,7 @@ class ShiftDay extends Model
         'is_working_day',
         'start_time',
         'end_time',
+        'scheduled_minutes',
         'break_start_time',
         'break_end_time',
         'break_minutes',

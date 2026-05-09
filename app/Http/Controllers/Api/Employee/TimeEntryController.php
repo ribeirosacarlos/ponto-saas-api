@@ -316,6 +316,7 @@ class TimeEntryController extends Controller
                 'is_working_day' => (bool) $day->is_working_day,
                 'start_time' => $day->start_time,
                 'end_time' => $day->end_time,
+                'scheduled_minutes' => $day->scheduled_minutes,
                 'break_start_time' => $day->break_start_time,
                 'break_end_time' => $day->break_end_time,
                 'break_minutes' => $day->break_minutes,

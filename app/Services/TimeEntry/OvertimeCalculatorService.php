@@ -49,10 +49,11 @@ class OvertimeCalculatorService
             $date = $day->toDateString();
             $isHoliday = isset($holidays[$date]);
             $shift = $isHoliday ? null : $this->resolveShiftForDate($day, $shiftAssignments, $defaultShift);
-            $expectedMinutes = $shift ? $this->expectedMinutesForDate($shift, $day) : 0;
+            $shiftDay = $shift ? $this->resolveShiftDayForDate($shift, $day) : null;
+            $expectedMinutes = $this->expectedMinutesForShiftDay($shiftDay);
             $entriesForDay = $groupedEntries[$date] ?? [];
             $pairResult = $entriesForDay
-                ? $this->pairAndSumMinutes($entriesForDay)
+                ? $this->pairAndSumMinutes($entriesForDay, $shiftDay)
                 : ['worked_minutes' => 0, 'ignored' => false, 'reason' => 'no_entries'];
             $workingMinutes = $pairResult['worked_minutes'] ?? 0;
             $ignored = $pairResult['ignored'] ?? false;
@@ -89,6 +90,14 @@ class OvertimeCalculatorService
                     'expected_hhmm' => $this->minutesToHHMM($expectedMinutes),
                     'balance_hhmm' => $this->minutesToSignedHHMM($ignored ? 0 : $dailyBalance),
                     'status' => $this->determineStatus($ignored ? 0 : $dailyBalance),
+                    'scheduled_minutes' => $expectedMinutes,
+                    'scheduled_hhmm' => $this->minutesToHHMM($expectedMinutes),
+                    'actual_worked_minutes' => $ignored ? 0 : ($pairResult['actual_worked_minutes'] ?? 0),
+                    'actual_worked_hhmm' => $this->minutesToHHMM($ignored ? 0 : ($pairResult['actual_worked_minutes'] ?? 0)),
+                    'actual_break_minutes' => $ignored ? 0 : ($pairResult['actual_break_minutes'] ?? 0),
+                    'actual_break_hhmm' => $this->minutesToHHMM($ignored ? 0 : ($pairResult['actual_break_minutes'] ?? 0)),
+                    'counted_break_minutes' => $ignored ? 0 : ($pairResult['counted_break_minutes'] ?? 0),
+                    'counted_break_hhmm' => $this->minutesToHHMM($ignored ? 0 : ($pairResult['counted_break_minutes'] ?? 0)),
                     'ignored' => $ignored,
                     'reason' => $reason,
                     'is_holiday' => $isHoliday,
@@ -237,9 +246,9 @@ class OvertimeCalculatorService
     }
 
     /**
-     * @return array{worked_minutes?: int, ignored: bool, reason?: string}
+     * @return array{worked_minutes?: int, actual_worked_minutes?: int, actual_break_minutes?: int, counted_break_minutes?: int, ignored: bool, reason?: string}
      */
-    protected function pairAndSumMinutes(array $entries): array
+    protected function pairAndSumMinutes(array $entries, ?ShiftDay $definition = null): array
     {
         $count = count($entries);
 
@@ -252,6 +261,7 @@ class OvertimeCalculatorService
         }
 
         $workedMinutes = 0;
+        $breakMinutes = 0;
 
         for ($i = 0; $i < $count; $i += 2) {
             $in = $entries[$i];
@@ -261,10 +271,29 @@ class OvertimeCalculatorService
                 return ['ignored' => true, 'reason' => 'invalid_pairs'];
             }
 
-            $workedMinutes += $out->diffInMinutes($in, true);
+            $workedMinutes += (int) $out->diffInMinutes($in, true);
+
+            if ($i + 2 < $count) {
+                $nextIn = $entries[$i + 2];
+
+                if ($nextIn->lessThan($out)) {
+                    return ['ignored' => true, 'reason' => 'invalid_pairs'];
+                }
+
+                $breakMinutes += (int) $nextIn->diffInMinutes($out, true);
+            }
         }
 
-        return ['ignored' => false, 'worked_minutes' => $workedMinutes];
+        $allowedBreakMinutes = $definition ? $this->resolveBreakMinutes($definition) : 0;
+        $countedBreakMinutes = (int) min($breakMinutes, $allowedBreakMinutes);
+
+        return [
+            'ignored' => false,
+            'worked_minutes' => $workedMinutes + $countedBreakMinutes,
+            'actual_worked_minutes' => $workedMinutes,
+            'actual_break_minutes' => $breakMinutes,
+            'counted_break_minutes' => $countedBreakMinutes,
+        ];
     }
 
     protected function resolveTimezone(User $employee): string
@@ -310,17 +339,30 @@ class OvertimeCalculatorService
         return CarbonImmutable::parse($first)->setTimezone($timezone)->startOfDay();
     }
 
-    protected function expectedMinutesForDate(?Shift $shift, CarbonImmutable $date): int
+    protected function resolveShiftDayForDate(?Shift $shift, CarbonImmutable $date): ?ShiftDay
     {
         if (! $shift) {
-            return 0;
+            return null;
         }
 
         $weekday = $date->isoWeekday();
         $definition = $shift->shiftDays->firstWhere('weekday', $weekday);
 
         if (! $definition || ! $definition->is_working_day) {
+            return null;
+        }
+
+        return $definition;
+    }
+
+    protected function expectedMinutesForShiftDay(?ShiftDay $definition): int
+    {
+        if (! $definition) {
             return 0;
+        }
+
+        if ($definition->scheduled_minutes !== null) {
+            return max(0, (int) $definition->scheduled_minutes);
         }
 
         $start = $this->parseShiftTime($definition->start_time);
@@ -330,10 +372,7 @@ class OvertimeCalculatorService
             return 0;
         }
 
-        $duration = max(0, $end->diffInMinutes($start, true));
-        $breakMinutes = $this->resolveBreakMinutes($definition);
-
-        return max(0, $duration - $breakMinutes);
+        return max(0, $end->diffInMinutes($start, true));
     }
 
     protected function resolveBreakMinutes(ShiftDay $definition): int

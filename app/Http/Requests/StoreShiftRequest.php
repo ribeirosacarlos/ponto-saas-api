@@ -23,6 +23,7 @@ class StoreShiftRequest extends FormRequest
             'days.*.is_working_day' => 'required|boolean',
             'days.*.start_time' => 'nullable|date_format:H:i',
             'days.*.end_time' => 'nullable|date_format:H:i',
+            'days.*.scheduled_minutes' => 'nullable|integer|min:0',
             'days.*.break_start_time' => 'nullable|date_format:H:i',
             'days.*.break_end_time' => 'nullable|date_format:H:i',
             'days.*.break_minutes' => 'nullable|integer|min:0',
@@ -44,6 +45,7 @@ class StoreShiftRequest extends FormRequest
 
                 $start = $day['start_time'] ?? null;
                 $end = $day['end_time'] ?? null;
+                $scheduledMinutes = isset($day['scheduled_minutes']) ? (int) $day['scheduled_minutes'] : null;
                 $breakStart = $day['break_start_time'] ?? null;
                 $breakEnd = $day['break_end_time'] ?? null;
 
@@ -55,6 +57,16 @@ class StoreShiftRequest extends FormRequest
 
                     if ($start >= $end) {
                         $validator->errors()->add("$path.start_time", 'O horário inicial deve ser menor que o final.');
+                    }
+
+                    if ($scheduledMinutes !== null) {
+                        $duration = $this->timeToMinutes($end) - $this->timeToMinutes($start);
+
+                        if ($duration < 0) {
+                            $validator->errors()->add("$path.scheduled_minutes", 'A carga horária deve ser compatível com a jornada.');
+                        } elseif ($scheduledMinutes > $duration) {
+                            $validator->errors()->add("$path.scheduled_minutes", 'A carga horária não pode ser maior que a duração da jornada.');
+                        }
                     }
                 }
 
@@ -79,5 +91,12 @@ class StoreShiftRequest extends FormRequest
                 }
             }
         });
+    }
+
+    private function timeToMinutes(string $time): int
+    {
+        [$hours, $minutes] = array_map('intval', explode(':', $time));
+
+        return ($hours * 60) + $minutes;
     }
 }
