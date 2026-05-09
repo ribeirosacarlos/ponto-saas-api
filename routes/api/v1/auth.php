@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Billing\CheckoutSessionController;
 use App\Http\Controllers\Api\Billing\PortalController;
@@ -17,3 +18,6 @@ Route::prefix('billing')->group(function () {
     Route::post('checkout-session', [CheckoutSessionController::class, 'store']);
     Route::post('portal', [PortalController::class, 'store']);
 });
+
+Route::get('/holidays', [HolidayController::class, 'index']);
+Route::get('/holidays/{holiday}', [HolidayController::class, 'show']);

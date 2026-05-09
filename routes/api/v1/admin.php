@@ -79,7 +79,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/users/{user}/shifts', [ShiftController::class, 'byUser']);
         Route::post('/employees/{employee}/shift', [EmployeeController::class, 'assignShift']);
 
-        Route::apiResource('holidays', HolidayController::class)->except(['create', 'edit']);
+        Route::apiResource('holidays', HolidayController::class)->except(['create', 'edit', 'index', 'show']);
 
         Route::get('/vacations', [AdminVacationController::class, 'index']);
         Route::post('/vacations', [AdminVacationController::class, 'store']);

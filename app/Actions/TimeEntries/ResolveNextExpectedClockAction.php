@@ -2,6 +2,7 @@
 
 namespace App\Actions\TimeEntries;
 
+use App\Models\Holiday;
 use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\TimeEntry;
@@ -15,12 +16,12 @@ use Illuminate\Support\Collection;
 class ResolveNextExpectedClockAction
 {
     private const OPERATIONAL_MARGIN_HOURS = 4;
+
     private const OPEN_WINDOW_MINUTES = 30;
 
     public function __construct(
         private readonly UserShiftResolver $shiftResolver
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{
@@ -34,6 +35,8 @@ class ResolveNextExpectedClockAction
      *   next_event: ?array{kind: string, expected_at: CarbonImmutable, expected_type: string, day_offset: int},
      *   is_working_day: bool,
      *   is_outside_shift: bool,
+     *   is_holiday: bool,
+     *   holiday_name: ?string,
      *   open_status: array{open: bool, open_reason: ?string, open_since_expected_at: ?CarbonImmutable, expected_next_out_at: ?CarbonImmutable, last_in_at: ?CarbonImmutable}
      * }
      */
@@ -47,6 +50,14 @@ class ResolveNextExpectedClockAction
         $shift = $resolved['shift'];
         /** @var UserShift|null $assignment */
         $assignment = $resolved['assignment'];
+
+        $holiday = Holiday::where('company_id', $user->company_id)
+            ->whereDate('date', $nowLocal->toDateString())
+            ->first();
+
+        if ($holiday) {
+            return $this->basePayload($timezone, $nowLocal, $shift, $assignment, null, [], [], null, false, true, true, $holiday->name);
+        }
 
         if (! $shift) {
             return $this->basePayload($timezone, $nowLocal, $shift, $assignment, null, [], [], null, false, true);
@@ -313,6 +324,8 @@ class ResolveNextExpectedClockAction
      *   next_event: ?array{kind: string, expected_at: CarbonImmutable, expected_type: string, day_offset: int},
      *   is_working_day: bool,
      *   is_outside_shift: bool,
+     *   is_holiday: bool,
+     *   holiday_name: ?string,
      *   open_status: array{open: bool, open_reason: ?string, open_since_expected_at: ?CarbonImmutable, expected_next_out_at: ?CarbonImmutable, last_in_at: ?CarbonImmutable}
      * }
      */
@@ -326,7 +339,9 @@ class ResolveNextExpectedClockAction
         array $completed,
         ?array $nextEvent,
         bool $isWorkingDay,
-        bool $isOutsideShift
+        bool $isOutsideShift,
+        bool $isHoliday = false,
+        ?string $holidayName = null
     ): array {
         return [
             'timezone' => $timezone,
@@ -339,6 +354,8 @@ class ResolveNextExpectedClockAction
             'next_event' => $nextEvent,
             'is_working_day' => $isWorkingDay,
             'is_outside_shift' => $isOutsideShift,
+            'is_holiday' => $isHoliday,
+            'holiday_name' => $holidayName,
             'open_status' => $this->buildOpenStatus($now, $completed, $nextEvent),
         ];
     }
