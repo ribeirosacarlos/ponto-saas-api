@@ -24,11 +24,12 @@ class OvertimeCalculatorService
         $timezone = $this->resolveTimezone($employee);
         $toLocal = $this->normalizeToLocalEnd($to, $timezone);
 
+        $firstEntryDate = $this->resolveFirstEntryDate($employee, $timezone);
+
         if ($from) {
             $fromLocal = $this->normalizeToLocalStart($from, $timezone);
         } else {
-            $firstEntry = $this->resolveFirstEntryDate($employee, $timezone);
-            $fromLocal = $firstEntry ?? $toLocal->startOfDay();
+            $fromLocal = $firstEntryDate ?? $toLocal->startOfDay();
         }
 
         $entries = $this->fetchEntries($employee, $fromLocal, $toLocal);
@@ -115,6 +116,7 @@ class OvertimeCalculatorService
             'employee_id' => $employee->id,
             'from' => $fromLocal->toDateString(),
             'to' => $toLocal->toDateString(),
+            'counting_since' => $firstEntryDate?->toDateString(),
             'timezone' => $timezone,
             'totals' => $totals,
             'days' => $includeDays ? $dailyDetails : null,
