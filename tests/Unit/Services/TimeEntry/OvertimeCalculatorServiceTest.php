@@ -133,29 +133,27 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertEquals('-04:00', $result['days'][0]['balance_hhmm']);
     }
 
-    public function test_from_is_clamped_to_activation_date(): void
+    public function test_from_defaults_to_first_entry_date_when_null(): void
     {
-        $requestedFrom = CarbonImmutable::parse('2025-12-19', 'UTC');
-        $activatedOn = CarbonImmutable::parse('2025-12-20', 'UTC');
+        $firstDay = CarbonImmutable::parse('2025-12-17', 'UTC');
+        $secondDay = CarbonImmutable::parse('2025-12-20', 'UTC');
 
-        $user = User::factory()->create([
-            'password_set_at' => $activatedOn->toDateTimeString(),
-        ]);
-        $this->assignShift($user, $activatedOn->isoWeekday());
+        $user = User::factory()->create();
+        $this->assignShift($user, $firstDay->isoWeekday());
 
-        $this->createTimeEntry($user, 'in', $requestedFrom->setTime(8, 0));
-        $this->createTimeEntry($user, 'out', $requestedFrom->setTime(17, 0));
+        // first entry is on firstDay
+        $this->createTimeEntry($user, 'in', $firstDay->setTime(8, 0));
+        $this->createTimeEntry($user, 'out', $firstDay->setTime(17, 0));
 
-        $this->createTimeEntry($user, 'in', $activatedOn->setTime(8, 0));
-        $this->createTimeEntry($user, 'out', $activatedOn->setTime(17, 0));
+        $this->createTimeEntry($user, 'in', $secondDay->setTime(8, 0));
+        $this->createTimeEntry($user, 'out', $secondDay->setTime(17, 0));
 
         $service = app(OvertimeCalculatorService::class);
-        $result = $service->calculateForEmployee($user, $requestedFrom, $activatedOn, true);
+        $result = $service->calculateForEmployee($user, null, $secondDay, true);
 
-        $this->assertEquals('2025-12-20', $result['from']);
-        $this->assertCount(1, $result['days']);
-        $this->assertEquals('2025-12-20', $result['days'][0]['date']);
-        $this->assertEquals(540, $result['totals']['worked_minutes']);
+        $this->assertEquals('2025-12-17', $result['from']);
+        $this->assertCount(4, $result['days']); // 17, 18, 19, 20
+        $this->assertEquals('2025-12-17', $result['days'][0]['date']);
     }
 
     public function test_company_timezone_affects_grouping(): void

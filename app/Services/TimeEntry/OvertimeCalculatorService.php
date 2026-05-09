@@ -24,15 +24,11 @@ class OvertimeCalculatorService
         $timezone = $this->resolveTimezone($employee);
         $toLocal = $this->normalizeToLocalEnd($to, $timezone);
 
-        $activationStart = $this->resolveActivationStart($employee, $timezone);
-
         if ($from) {
             $fromLocal = $this->normalizeToLocalStart($from, $timezone);
-            if ($activationStart && $activationStart->greaterThan($fromLocal)) {
-                $fromLocal = $activationStart;
-            }
         } else {
-            $fromLocal = $activationStart ?? $toLocal->startOfDay();
+            $firstEntry = $this->resolveFirstEntryDate($employee, $timezone);
+            $fromLocal = $firstEntry ?? $toLocal->startOfDay();
         }
 
         $entries = $this->fetchEntries($employee, $fromLocal, $toLocal);
@@ -298,23 +294,18 @@ class OvertimeCalculatorService
         return $local->endOfDay();
     }
 
-    protected function resolveActivationStart(User $employee, string $timezone): ?CarbonImmutable
+    protected function resolveFirstEntryDate(User $employee, string $timezone): ?CarbonImmutable
     {
-        $activation = $employee->password_set_at;
+        $first = $employee->timeEntries()
+            ->whereIn('type', self::WORK_ENTRY_TYPES)
+            ->orderBy('clocked_at')
+            ->value('clocked_at');
 
-        if (! $activation) {
+        if (! $first) {
             return null;
         }
 
-        try {
-            $date = $activation instanceof \DateTimeInterface
-                ? CarbonImmutable::instance($activation)
-                : CarbonImmutable::parse($activation);
-
-            return $date->setTimezone($timezone)->startOfDay();
-        } catch (InvalidFormatException) {
-            return null;
-        }
+        return CarbonImmutable::parse($first)->setTimezone($timezone)->startOfDay();
     }
 
     protected function expectedMinutesForDate(?Shift $shift, CarbonImmutable $date): int
