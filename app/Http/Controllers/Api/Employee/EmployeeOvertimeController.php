@@ -22,8 +22,15 @@ class EmployeeOvertimeController extends Controller
         $validated = $request->validated();
 
         $timezone = $employee->company?->timezone ?? config('app.timezone', 'UTC');
-        $from = CarbonImmutable::parse($validated['from'], $timezone);
-        $to = CarbonImmutable::parse($validated['to'], $timezone);
+
+        $from = isset($validated['from'])
+            ? CarbonImmutable::parse($validated['from'], $timezone)
+            : null;
+
+        $to = isset($validated['to'])
+            ? CarbonImmutable::parse($validated['to'], $timezone)
+            : CarbonImmutable::now($timezone);
+
         $includeDays = $request->boolean('include_days');
 
         $payload = $this->overtimeCalculator->calculateForEmployee($employee, $from, $to, $includeDays);
