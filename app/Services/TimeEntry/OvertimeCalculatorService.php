@@ -6,7 +6,7 @@ use App\Models\Holiday;
 use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\User;
-use App\Services\UserShiftResolver;
+use App\Models\UserShift;
 use Carbon\CarbonImmutable;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Support\Collection;
@@ -16,23 +16,29 @@ class OvertimeCalculatorService
 {
     private const WORK_ENTRY_TYPES = ['in', 'out'];
 
-    public function __construct(
-        protected UserShiftResolver $shiftResolver
-    ) {}
-
     /**
      * @return array{employee_id: string, from: string, to: string, timezone: string, totals: array, days?: array}
      */
-    public function calculateForEmployee(User $employee, CarbonImmutable $from, CarbonImmutable $to, bool $includeDays): array
+    public function calculateForEmployee(User $employee, ?CarbonImmutable $from, CarbonImmutable $to, bool $includeDays): array
     {
         $timezone = $this->resolveTimezone($employee);
-        $fromLocal = $this->normalizeToLocalStart($from, $timezone);
-        $fromLocal = $this->clampStartByActivation($employee, $fromLocal, $timezone);
         $toLocal = $this->normalizeToLocalEnd($to, $timezone);
+
+        $activationStart = $this->resolveActivationStart($employee, $timezone);
+
+        if ($from) {
+            $fromLocal = $this->normalizeToLocalStart($from, $timezone);
+            if ($activationStart && $activationStart->greaterThan($fromLocal)) {
+                $fromLocal = $activationStart;
+            }
+        } else {
+            $fromLocal = $activationStart ?? $toLocal->startOfDay();
+        }
 
         $entries = $this->fetchEntries($employee, $fromLocal, $toLocal);
         $groupedEntries = $this->groupEntriesByDate($entries, $timezone);
-        $shift = $this->shiftResolver->resolve($employee)['shift'];
+        $shiftAssignments = $this->fetchShiftAssignments($employee);
+        $defaultShift = $this->fetchDefaultShift($employee);
         $days = $this->iterateDays($fromLocal, $toLocal);
         $holidays = $this->fetchHolidays($employee->company_id, $fromLocal, $toLocal);
 
@@ -45,7 +51,8 @@ class OvertimeCalculatorService
         foreach ($days as $day) {
             $date = $day->toDateString();
             $isHoliday = isset($holidays[$date]);
-            $expectedMinutes = $isHoliday ? 0 : $this->expectedMinutesForDate($shift, $day);
+            $shift = $isHoliday ? null : $this->resolveShiftForDate($day, $shiftAssignments, $defaultShift);
+            $expectedMinutes = $shift ? $this->expectedMinutesForDate($shift, $day) : 0;
             $entriesForDay = $groupedEntries[$date] ?? [];
             $pairResult = $entriesForDay
                 ? $this->pairAndSumMinutes($entriesForDay)
@@ -116,6 +123,65 @@ class OvertimeCalculatorService
             'totals' => $totals,
             'days' => $includeDays ? $dailyDetails : null,
         ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * Loads all historical shift assignments for the employee, ordered by start_date.
+     *
+     * @return Collection<int, UserShift>
+     */
+    protected function fetchShiftAssignments(User $employee): Collection
+    {
+        return $employee->userShifts()
+            ->with([
+                'shift.shiftDays' => fn ($q) => $q->orderBy('weekday'),
+                'shift.shiftDays.events' => fn ($q) => $q->orderBy('sort_order'),
+            ])
+            ->orderBy('start_date')
+            ->get();
+    }
+
+    protected function fetchDefaultShift(User $employee): ?Shift
+    {
+        if (! $employee->company_id) {
+            return null;
+        }
+
+        return Shift::where('company_id', $employee->company_id)
+            ->where('is_default', true)
+            ->with([
+                'shiftDays' => fn ($q) => $q->orderBy('weekday'),
+                'shiftDays.events' => fn ($q) => $q->orderBy('sort_order'),
+            ])
+            ->first();
+    }
+
+    /**
+     * Resolves which shift was active for a given date based on historical assignments.
+     * Falls back to the company default shift when no assignment covers the date.
+     *
+     * @param  Collection<int, UserShift>  $assignments
+     */
+    protected function resolveShiftForDate(CarbonImmutable $date, Collection $assignments, ?Shift $default): ?Shift
+    {
+        $dateStr = $date->toDateString();
+
+        foreach ($assignments as $assignment) {
+            $start = $assignment->start_date?->toDateString();
+            $end = $assignment->end_date?->toDateString();
+
+            if ($start && $start > $dateStr) {
+                continue;
+            }
+
+            if ($end && $end < $dateStr) {
+                continue;
+            }
+
+            return $assignment->shift;
+        }
+
+        return $default;
     }
 
     /**
@@ -232,20 +298,7 @@ class OvertimeCalculatorService
         return $local->endOfDay();
     }
 
-    protected function clampStartByActivation(User $employee, CarbonImmutable $from, string $timezone): CarbonImmutable
-    {
-        $activation = $this->resolveActivationDate($employee);
-
-        if (! $activation) {
-            return $from;
-        }
-
-        $activationStart = $activation->setTimezone($timezone)->startOfDay();
-
-        return $activationStart->greaterThan($from) ? $activationStart : $from;
-    }
-
-    protected function resolveActivationDate(User $employee): ?CarbonImmutable
+    protected function resolveActivationStart(User $employee, string $timezone): ?CarbonImmutable
     {
         $activation = $employee->password_set_at;
 
@@ -253,12 +306,12 @@ class OvertimeCalculatorService
             return null;
         }
 
-        if ($activation instanceof \DateTimeInterface) {
-            return CarbonImmutable::instance($activation);
-        }
-
         try {
-            return CarbonImmutable::parse($activation);
+            $date = $activation instanceof \DateTimeInterface
+                ? CarbonImmutable::instance($activation)
+                : CarbonImmutable::parse($activation);
+
+            return $date->setTimezone($timezone)->startOfDay();
         } catch (InvalidFormatException) {
             return null;
         }
