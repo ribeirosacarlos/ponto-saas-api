@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\DocumentFileValidator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DocumentResendRequest extends FormRequest
@@ -19,10 +20,17 @@ class DocumentResendRequest extends FormRequest
             'file' => [
                 'required',
                 'file',
-                'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx',
                 function ($attribute, $value, $fail) {
                     if ($value && $value->getSize() > 5 * 1024 * 1024) {
                         $fail(sprintf('Arquivo muito grande (máx. 5MB): %s', $value->getClientOriginalName()));
+                    }
+
+                    if ($value) {
+                        $validationError = DocumentFileValidator::validate($value);
+
+                        if ($validationError !== null) {
+                            $fail($validationError);
+                        }
                     }
                 },
             ],
@@ -33,7 +41,6 @@ class DocumentResendRequest extends FormRequest
     {
         return [
             'file.required' => 'É obrigatório enviar um arquivo.',
-            'file.mimes' => 'As extensões permitidas são: pdf, jpg, jpeg, png, doc, docx, xls e xlsx.',
         ];
     }
 }

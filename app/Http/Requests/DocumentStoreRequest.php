@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Document;
+use App\Support\DocumentFileValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -23,10 +24,17 @@ class DocumentStoreRequest extends FormRequest
             'files.*' => [
                 'required',
                 'file',
-                'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx',
                 function ($attribute, $value, $fail) {
                     if ($value && $value->getSize() > 5 * 1024 * 1024) {
                         $fail(sprintf('Arquivo muito grande (máx. 5MB): %s', $value->getClientOriginalName()));
+                    }
+
+                    if ($value) {
+                        $validationError = DocumentFileValidator::validate($value);
+
+                        if ($validationError !== null) {
+                            $fail($validationError);
+                        }
                     }
                 },
             ],
@@ -40,7 +48,6 @@ class DocumentStoreRequest extends FormRequest
             'files.array' => 'O campo files precisa ser um array de arquivos.',
             'files.*.required' => 'Cada item enviado precisa ser um arquivo válido.',
             'files.*.file' => 'O arquivo enviado não é válido.',
-            'files.*.mimes' => 'As extensões permitidas são: pdf, jpg, jpeg, png, doc, docx, xls e xlsx.',
         ];
     }
 }

@@ -58,7 +58,10 @@ class AppServiceProvider extends ServiceProvider
             $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'auth-login';
             $email = Str::lower((string) $request->input('email'));
 
-            return Limit::perMinute(5)->by($email !== '' ? $email.'|'.$ip : $ip);
+            return [
+                Limit::perMinute(5)->by($email !== '' ? $email.'|'.$ip : $ip),
+                Limit::perMinute(20)->by($ip),
+            ];
         });
 
         if (app()->environment('production')) {

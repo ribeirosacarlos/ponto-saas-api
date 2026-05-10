@@ -79,7 +79,7 @@ class PasswordResetController extends Controller
         
         if (! $user) {
             return response()->json([
-                'message' => 'Usuário não encontrado.',
+                'message' => 'Token inválido ou expirado.',
             ], 422);
         }
 
