@@ -147,17 +147,30 @@ class TimeEntryController extends Controller
 
     public function myEntries(Request $request)
     {
-        $entries = $request->user()
+        $query = $request->user()
             ->timeEntries()
             ->excludeRejected()
-            ->orderBy('clocked_at', 'desc')
-            ->paginate($request->integer('per_page', 20));
+            ->orderBy('clocked_at', 'desc');
+
+        if ($request->filled('per_page')) {
+            $entries = $query->paginate(max(1, $request->integer('per_page')));
+
+            foreach ($entries as $entry) {
+                $this->authorize('view', $entry);
+            }
+
+            return response()->json($entries);
+        }
+
+        $entries = $query->get();
 
         foreach ($entries as $entry) {
             $this->authorize('view', $entry);
         }
 
-        return response()->json($entries);
+        return response()->json([
+            'data' => $entries,
+        ]);
     }
 
     public function history(
