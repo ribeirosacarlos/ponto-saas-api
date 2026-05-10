@@ -65,11 +65,6 @@ class Handler extends ExceptionHandler
 
         return response()->json([
             'message' => 'Não autorizado para essa ação.',
-            'details' => [
-                'method' => $context['method'],
-                'path' => $context['path'],
-                'route_name' => $context['route_name'],
-            ],
         ], 403);
     }
 
