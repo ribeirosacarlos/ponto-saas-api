@@ -68,7 +68,6 @@ class Handler extends ExceptionHandler
             'details' => [
                 'method' => $context['method'],
                 'path' => $context['path'],
-                'route_action' => $context['route_action'],
                 'route_name' => $context['route_name'],
             ],
         ], 403);

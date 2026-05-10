@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Web\SuperAdminPageController;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -10,33 +9,15 @@ Route::get('/', function () {
 
 Route::get('/health', function () {
     return response()->json([
-        'status' => 'OK',
-        'app' => config('app.name'),
-        'version' => config('app.version', '1.0.0'),
+        'status' => 'ok',
         'timestamp' => now()->toISOString(),
     ]);
 });
 
-Route::get('/debug/datetime', function () {
-    // Hora do servidor (PHP)
-    $serverNow = now();
-
-    // Hora vinda do banco
-    $dbNow = DB::selectOne('SELECT NOW() as now');
-
-    // Timezone do banco (Postgres / MySQL)
-    $dbTimezone = DB::selectOne('SHOW TIMEZONE') ?? null;
-
+Route::get('/debug/health', function () {
     return response()->json([
-        'server' => [
-            'datetime' => $serverNow->toDateTimeString(),
-            'timezone' => config('app.timezone'),
-            'iso' => $serverNow->toISOString(),
-        ],
-        'database' => [
-            'datetime' => $dbNow->now ?? null,
-            'timezone' => $dbTimezone->TimeZone ?? null,
-        ],
+        'status' => 'ok',
+        'timestamp' => now()->toISOString(),
     ]);
 });
 

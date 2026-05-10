@@ -8,6 +8,7 @@ use App\Observers\CompanyObserver;
 use App\Observers\UserObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Stripe\StripeClient;
@@ -51,6 +52,13 @@ class AppServiceProvider extends ServiceProvider
             $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'public-billing-checkout-session';
 
             return Limit::perMinute(10)->by($ip);
+        });
+
+        RateLimiter::for('auth-login', function (Request $request) {
+            $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'auth-login';
+            $email = Str::lower((string) $request->input('email'));
+
+            return Limit::perMinute(5)->by($email !== '' ? $email.'|'.$ip : $ip);
         });
 
         if (app()->environment('production')) {

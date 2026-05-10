@@ -20,7 +20,8 @@ Route::post('/public/billing/checkout-session', [PublicCheckoutSessionController
     ->middleware(['throttle:public-billing-checkout-session']);
 
 Route::post('/invites/accept', [InviteController::class, 'accept']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/login', [AuthController::class, 'login'])
+    ->middleware(['throttle:auth-login']);
 
 Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])
     ->middleware('throttle:5,1');
