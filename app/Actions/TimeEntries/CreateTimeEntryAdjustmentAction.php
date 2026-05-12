@@ -5,13 +5,15 @@ namespace App\Actions\TimeEntries;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\AuditLogService;
+use App\Services\TimeEntry\TimeEntryDayNormalizer;
 use Carbon\CarbonImmutable;
 
 class CreateTimeEntryAdjustmentAction
 {
     public function __construct(
         protected AuditLogService $auditLogService,
-        protected DispatchTimeEntryDayNormalizationAction $dispatchTimeEntryDayNormalization
+        protected DispatchTimeEntryDayNormalizationAction $dispatchTimeEntryDayNormalization,
+        protected TimeEntryDayNormalizer $timeEntryDayNormalizer
     ) {
     }
 
@@ -36,15 +38,21 @@ class CreateTimeEntryAdjustmentAction
     public function handle(User $targetUser, User $requestedBy, array $data): TimeEntry
     {
         $clockedAt = $data['clocked_at'];
-        $resolvedType = $this->resolveType($targetUser, $clockedAt, $data['resolved_type'] ?? null, $data['proposed_type'] ?? null);
+        $resolved = $this->resolveAttributes(
+            $targetUser,
+            $clockedAt,
+            $data['resolved_type'] ?? null,
+            $data['proposed_type'] ?? null,
+            $data['event_kind'] ?? null
+        );
 
         $timeEntry = TimeEntry::create([
             'company_id' => $targetUser->company_id,
             'user_id' => $targetUser->id,
             'user_shift_id' => $data['user_shift_id'] ?? null,
             'clocked_at' => $clockedAt,
-            'type' => $resolvedType,
-            'event_kind' => $data['event_kind'] ?? null,
+            'type' => $resolved['type'],
+            'event_kind' => $resolved['event_kind'],
             'latitude' => $data['latitude'] ?? null,
             'longitude' => $data['longitude'] ?? null,
             'source' => $data['source'] ?? 'adjustment',
@@ -90,30 +98,37 @@ class CreateTimeEntryAdjustmentAction
         return $timeEntry;
     }
 
-    private function resolveType(User $user, CarbonImmutable $clockedAt, ?string $resolvedType, ?string $proposedType): string
+    /**
+     * @return array{type: string, event_kind: ?string}
+     */
+    private function resolveAttributes(
+        User $user,
+        CarbonImmutable $clockedAt,
+        ?string $resolvedType,
+        ?string $proposedType,
+        ?string $eventKind
+    ): array
     {
         if (in_array($resolvedType, ['in', 'out'], true)) {
-            return $resolvedType;
+            return [
+                'type' => $resolvedType,
+                'event_kind' => $eventKind,
+            ];
         }
 
         if (in_array($proposedType, ['in', 'out'], true)) {
-            return $proposedType;
+            return [
+                'type' => $proposedType,
+                'event_kind' => $eventKind,
+            ];
         }
 
-        $lastEntry = TimeEntry::query()
-            ->excludeRejected()
-            ->where('company_id', $user->company_id)
-            ->where('user_id', $user->id)
-            ->whereDate('clocked_at', $clockedAt->toDateString())
-            ->where('clocked_at', '<=', $clockedAt->toDateTimeString())
-            ->whereIn('type', ['in', 'out'])
-            ->orderByDesc('clocked_at')
-            ->first();
+        $resolved = $this->timeEntryDayNormalizer->resolveAttributesForNewEntry($user, $clockedAt);
 
-        if (! $lastEntry) {
-            return 'in';
+        if ($eventKind !== null) {
+            $resolved['event_kind'] = $eventKind;
         }
 
-        return $lastEntry->type === 'in' ? 'out' : 'in';
+        return $resolved;
     }
 }
