@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Actions\TimeEntries\DispatchTimeEntryDayNormalizationAction;
 use App\Http\Controllers\Controller;
 use App\Models\TimeEntry;
 use App\Services\AuditLogService;
@@ -10,7 +11,8 @@ use Illuminate\Http\JsonResponse;
 class TimeEntryController extends Controller
 {
     public function __construct(
-        protected AuditLogService $auditLogService
+        protected AuditLogService $auditLogService,
+        protected DispatchTimeEntryDayNormalizationAction $dispatchTimeEntryDayNormalization
     ) {
     }
 
@@ -41,6 +43,11 @@ class TimeEntryController extends Controller
                 'technical_reason' => 'exclusão manual por admin/gestor',
             ],
             companyId: $entry->company_id,
+        );
+
+        $this->dispatchTimeEntryDayNormalization->handle(
+            $entry->user,
+            $entry->clocked_at->toImmutable()
         );
 
         return response()->json([

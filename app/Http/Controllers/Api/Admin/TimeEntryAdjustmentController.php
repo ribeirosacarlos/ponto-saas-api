@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Actions\TimeEntries\DispatchTimeEntryDayNormalizationAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimeEntryAdjustmentReviewRequest;
 use App\Models\TimeEntry;
@@ -12,7 +13,8 @@ use Illuminate\Support\Facades\DB;
 class TimeEntryAdjustmentController extends Controller
 {
     public function __construct(
-        protected AuditLogService $auditLogService
+        protected AuditLogService $auditLogService,
+        protected DispatchTimeEntryDayNormalizationAction $dispatchTimeEntryDayNormalization
     ) {
     }
 
@@ -51,6 +53,11 @@ class TimeEntryAdjustmentController extends Controller
             companyId: $timeEntry->company_id,
         );
 
+        $this->dispatchTimeEntryDayNormalization->handle(
+            $timeEntry->user,
+            $timeEntry->clocked_at->toImmutable()
+        );
+
         return response()->json($timeEntry);
     }
 
@@ -83,6 +90,11 @@ class TimeEntryAdjustmentController extends Controller
             oldValues: $before,
             newValues: $this->timeEntrySnapshot($timeEntry),
             companyId: $timeEntry->company_id,
+        );
+
+        $this->dispatchTimeEntryDayNormalization->handle(
+            $timeEntry->user,
+            $timeEntry->clocked_at->toImmutable()
         );
 
         return response()->json($timeEntry);

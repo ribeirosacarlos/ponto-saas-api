@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Enums\SubscriptionStatus;
 use App\Http\Middleware\EnsurePlanFeature;
+use App\Jobs\NormalizeTimeEntriesForOperationalDayJob;
 use App\Models\Company;
 use App\Models\Role;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -109,6 +111,34 @@ class TimeEntryAdjustmentTest extends TestCase
 
         $response->assertStatus(201);
         $response->assertJsonFragment(['type' => 'in']);
+    }
+
+    public function test_adjustment_dispatches_async_day_normalization(): void
+    {
+        Bus::fake();
+
+        $this->seedRoles();
+        $company = $this->createSubscribedCompany();
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $entry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->startOfDay()->addHours(18),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $this->actingAs($employee)
+            ->postJson("/v1/employee/time-entries/{$entry->id}/adjustment", [
+                'proposed_clocked_at' => Carbon::now()->startOfDay()->addHours(8)->toDateTimeString(),
+                'reason' => 'Corrigir entrada',
+            ])
+            ->assertStatus(201);
+
+        Bus::assertDispatched(NormalizeTimeEntriesForOperationalDayJob::class);
     }
 
     public function test_employee_entries_exclude_rejected_adjustments(): void

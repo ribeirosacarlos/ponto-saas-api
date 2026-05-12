@@ -13,10 +13,12 @@ class UserShiftResolver
      * @param  User  $user
      * @return array{shift: ?Shift, assignment: ?UserShift}
      */
-    public function resolve(User $user): array
+    public function resolve(User $user, ?CarbonImmutable $reference = null): array
     {
         $timezone = $user->company?->timezone ?: config('app.timezone', 'UTC');
-        $today = CarbonImmutable::now($timezone)->toDateString();
+        $today = ($reference ?? CarbonImmutable::now($timezone))
+            ->setTimezone($timezone)
+            ->toDateString();
 
         $assignment = $user->userShifts()
             ->whereDate('start_date', '<=', $today)

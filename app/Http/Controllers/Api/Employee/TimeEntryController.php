@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Employee;
 
 use App\Actions\TimeEntries\CreateTimeEntryAdjustmentAction;
+use App\Actions\TimeEntries\DispatchTimeEntryDayNormalizationAction;
 use App\Actions\TimeEntries\ResolveNextExpectedClockAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmployeeTimeEntryHistoryRequest;
@@ -30,6 +31,7 @@ class TimeEntryController extends Controller
         TimeEntryStoreRequest $request,
         ResolveNextExpectedClockAction $resolveNextExpectedClock,
         CreateTimeEntryAdjustmentAction $createAdjustment,
+        DispatchTimeEntryDayNormalizationAction $dispatchTimeEntryDayNormalization,
         ExtraEmployeeChargeService $extraEmployeeChargeService
     ) {
         $this->authorize('create', TimeEntry::class);
@@ -136,6 +138,8 @@ class TimeEntryController extends Controller
             ]),
             companyId: $entry->company_id,
         );
+
+        $dispatchTimeEntryDayNormalization->handle($user, $now);
 
         $nextResolved = $resolveNextExpectedClock->handle($user, $now);
 

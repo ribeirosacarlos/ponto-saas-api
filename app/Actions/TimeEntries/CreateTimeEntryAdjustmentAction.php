@@ -10,7 +10,8 @@ use Carbon\CarbonImmutable;
 class CreateTimeEntryAdjustmentAction
 {
     public function __construct(
-        protected AuditLogService $auditLogService
+        protected AuditLogService $auditLogService,
+        protected DispatchTimeEntryDayNormalizationAction $dispatchTimeEntryDayNormalization
     ) {
     }
 
@@ -83,6 +84,8 @@ class CreateTimeEntryAdjustmentAction
             ],
             companyId: $targetUser->company_id,
         );
+
+        $this->dispatchTimeEntryDayNormalization->handle($targetUser, $clockedAt);
 
         return $timeEntry;
     }
