@@ -6,13 +6,13 @@ use App\Models\User;
 use App\Services\TimeEntry\TimeEntryDayNormalizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
-class NormalizeTimeEntriesForOperationalDayJob implements ShouldBeUnique, ShouldQueue
+class NormalizeTimeEntriesForOperationalDayJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -26,9 +26,12 @@ class NormalizeTimeEntriesForOperationalDayJob implements ShouldBeUnique, Should
         public string $operationalDate
     ) {}
 
-    public function uniqueId(): string
+    public function middleware(): array
     {
-        return "{$this->userId}:{$this->operationalDate}";
+        return [
+            (new WithoutOverlapping("normalize-time-entries:{$this->userId}:{$this->operationalDate}"))
+                ->releaseAfter(2),
+        ];
     }
 
     public function handle(TimeEntryDayNormalizer $normalizer): void
