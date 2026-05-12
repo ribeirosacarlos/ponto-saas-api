@@ -141,6 +141,54 @@ class TimeEntryAdjustmentTest extends TestCase
         Bus::assertDispatched(NormalizeTimeEntriesForOperationalDayJob::class);
     }
 
+    public function test_adjustment_is_created_with_provisional_type_based_on_chronological_position(): void
+    {
+        Bus::fake();
+
+        $this->seedRoles();
+        $company = $this->createSubscribedCompany();
+
+        $employee = User::factory()->create([
+            'company_id' => $company->id,
+        ]);
+        $employee->assignRole('employee');
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->startOfDay()->addHours(8)->addMinutes(47),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $entry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->startOfDay()->addHours(19)->addMinutes(54),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->startOfDay()->addHours(12)->addMinutes(49),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $response = $this->actingAs($employee)
+            ->postJson("/v1/employee/time-entries/{$entry->id}/adjustment", [
+                'proposed_clocked_at' => Carbon::now()->startOfDay()->addHours(11)->addMinutes(49)->toDateTimeString(),
+                'reason' => 'Corrigir saída do almoço',
+            ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonFragment([
+            'type' => 'out',
+        ]);
+    }
+
     public function test_employee_entries_exclude_rejected_adjustments(): void
     {
         $this->seedRoles();

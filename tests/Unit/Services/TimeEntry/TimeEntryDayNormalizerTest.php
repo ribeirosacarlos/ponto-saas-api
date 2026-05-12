@@ -170,6 +170,57 @@ class TimeEntryDayNormalizerTest extends TestCase
         ], $ordered);
     }
 
+    public function test_inserting_missing_lunch_out_rebalances_following_entries(): void
+    {
+        $user = $this->createEmployee();
+        $assignment = $this->createShiftDayWithEvents($user, 1, [
+            ['kind' => 'work_start', 'time' => '08:00:00', 'day_offset' => 0, 'expected_type' => 'in'],
+            ['kind' => 'break_start', 'time' => '12:00:00', 'day_offset' => 0, 'expected_type' => 'out'],
+            ['kind' => 'break_end', 'time' => '13:00:00', 'day_offset' => 0, 'expected_type' => 'in'],
+            ['kind' => 'work_end', 'time' => '18:00:00', 'day_offset' => 0, 'expected_type' => 'out'],
+        ]);
+
+        foreach ([
+            ['08:47:00', 'in', 'work_start'],
+            ['12:39:00', 'in', 'break_start'],
+            ['13:39:00', 'in', 'break_end'],
+            ['18:00:00', 'out', 'work_end'],
+        ] as [$clockedAt, $type, $eventKind]) {
+            TimeEntry::create([
+                'company_id' => $user->company_id,
+                'user_id' => $user->id,
+                'user_shift_id' => $assignment->id,
+                'clocked_at' => CarbonImmutable::parse("2026-02-16 {$clockedAt}", 'Europe/Madrid'),
+                'type' => $type,
+                'event_kind' => $eventKind,
+                'source' => 'web',
+            ]);
+        }
+
+        app(TimeEntryDayNormalizer::class)->normalizeForReference(
+            $user,
+            CarbonImmutable::parse('2026-02-16 12:39:00', 'Europe/Madrid')
+        );
+
+        $ordered = TimeEntry::query()
+            ->where('user_id', $user->id)
+            ->orderBy('clocked_at')
+            ->get(['clocked_at', 'type', 'event_kind'])
+            ->map(fn (TimeEntry $entry) => [
+                'clocked_at' => $entry->clocked_at->format('H:i:s'),
+                'type' => $entry->type,
+                'event_kind' => $entry->event_kind,
+            ])
+            ->all();
+
+        $this->assertSame([
+            ['clocked_at' => '08:47:00', 'type' => 'in', 'event_kind' => 'work_start'],
+            ['clocked_at' => '12:39:00', 'type' => 'out', 'event_kind' => 'break_start'],
+            ['clocked_at' => '13:39:00', 'type' => 'in', 'event_kind' => 'break_end'],
+            ['clocked_at' => '18:00:00', 'type' => 'out', 'event_kind' => 'work_end'],
+        ], $ordered);
+    }
+
     /**
      * @param  array<int, array{kind: string, time: string, day_offset: int, expected_type: string}>  $events
      */

@@ -56,6 +56,21 @@ class TimeEntryDayNormalizer
     }
 
     /**
+     * @return array{type: string, event_kind: string}
+     */
+    public function resolveAttributesForNewEntry(User $user, CarbonImmutable $reference): array
+    {
+        $context = $this->resolveOperationalContext($user, $reference);
+        $entries = $this->fetchEntries($user, $context['window_start'], $context['window_end']);
+
+        $priorCount = $entries
+            ->filter(fn (TimeEntry $entry) => $entry->clocked_at->lessThanOrEqualTo($reference))
+            ->count();
+
+        return $this->normalizedAttributesForIndex($context['expected_events'], $priorCount);
+    }
+
+    /**
      * @return array{
      *   timezone: string,
      *   base_date: CarbonImmutable,
