@@ -189,6 +189,55 @@ class TimeEntryAdjustmentTest extends TestCase
         ]);
     }
 
+    public function test_adjustment_insertion_rebalances_following_entries_for_the_day(): void
+    {
+        $this->seedRoles();
+        $company = $this->createSubscribedCompany();
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $entry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => '2026-04-10 08:00:00',
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => '2026-04-10 18:00:00',
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $this->actingAs($employee)
+            ->postJson("/v1/employee/time-entries/{$entry->id}/adjustment", [
+                'proposed_clocked_at' => '2026-04-10 12:00:00',
+                'reason' => 'Inserir saída intermediária',
+            ])
+            ->assertStatus(201);
+
+        $sequence = TimeEntry::query()
+            ->where('user_id', $employee->id)
+            ->excludeRejected()
+            ->orderBy('clocked_at')
+            ->get(['clocked_at', 'type'])
+            ->map(fn (TimeEntry $entry) => [
+                'clocked_at' => $entry->clocked_at->format('Y-m-d H:i:s'),
+                'type' => $entry->type,
+            ])
+            ->all();
+
+        $this->assertSame([
+            ['clocked_at' => '2026-04-10 08:00:00', 'type' => 'in'],
+            ['clocked_at' => '2026-04-10 12:00:00', 'type' => 'out'],
+            ['clocked_at' => '2026-04-10 18:00:00', 'type' => 'in'],
+        ], $sequence);
+    }
+
     public function test_employee_entries_exclude_rejected_adjustments(): void
     {
         $this->seedRoles();
@@ -241,6 +290,70 @@ class TimeEntryAdjustmentTest extends TestCase
                 empty($entry['adjustment_status']) || $entry['adjustment_status'] !== 'rejected'
             );
         }
+    }
+
+    public function test_rejecting_an_adjustment_rebalances_remaining_entries_for_the_day(): void
+    {
+        $this->seedRoles();
+        $company = $this->createSubscribedCompany();
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $adjustment = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => '2026-04-10 12:00:00',
+            'type' => 'out',
+            'source' => 'adjustment',
+            'adjustment_status' => 'pending',
+            'adjustment_reason' => 'Saída intermediária',
+            'adjustment_requested_by' => $employee->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => '2026-04-10 08:00:00',
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $lateEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => '2026-04-10 18:00:00',
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $this->assertSame('in', $lateEntry->fresh()->type);
+
+        $this->actingAs($admin)
+            ->postJson("/v1/admin/time-entries/{$adjustment->id}/adjustment/reject", [
+                'review_reason' => 'Ajuste inválido',
+            ])
+            ->assertOk();
+
+        $sequence = TimeEntry::query()
+            ->where('user_id', $employee->id)
+            ->excludeRejected()
+            ->orderBy('clocked_at')
+            ->get(['clocked_at', 'type'])
+            ->map(fn (TimeEntry $entry) => [
+                'clocked_at' => $entry->clocked_at->format('Y-m-d H:i:s'),
+                'type' => $entry->type,
+            ])
+            ->all();
+
+        $this->assertSame([
+            ['clocked_at' => '2026-04-10 08:00:00', 'type' => 'in'],
+            ['clocked_at' => '2026-04-10 18:00:00', 'type' => 'out'],
+        ], $sequence);
     }
 
     public function test_admin_can_approve_adjustment(): void

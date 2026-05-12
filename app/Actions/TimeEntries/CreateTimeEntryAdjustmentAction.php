@@ -95,6 +95,8 @@ class CreateTimeEntryAdjustmentAction
 
         $this->dispatchTimeEntryDayNormalization->handle($targetUser, $clockedAt);
 
+        $timeEntry = $timeEntry->refresh();
+
         return $timeEntry;
     }
 

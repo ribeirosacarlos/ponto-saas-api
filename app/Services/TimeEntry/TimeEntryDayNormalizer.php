@@ -50,7 +50,7 @@ class TimeEntryDayNormalizer
                     continue;
                 }
 
-                $entry->forceFill($normalized)->save();
+                $entry->forceFill($normalized)->saveQuietly();
             }
         });
     }

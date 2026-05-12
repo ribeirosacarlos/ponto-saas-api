@@ -178,6 +178,39 @@ class TimeEntryDeleteTest extends TestCase
         $this->assertSame([$visibleEntry->id], collect($reportResponse->json())->pluck('id')->all());
     }
 
+    public function test_deletion_rebalances_remaining_entries_for_the_day(): void
+    {
+        $company = Company::factory()->create();
+        $admin = $this->createUser($company, 'admin');
+        $employee = $this->createUser($company, 'employee');
+
+        $firstEntry = $this->createTimeEntry($company, $employee, '2026-04-10 08:00:00', 'in');
+        $deletedEntry = $this->createTimeEntry($company, $employee, '2026-04-10 12:00:00', 'out');
+        $thirdEntry = $this->createTimeEntry($company, $employee, '2026-04-10 13:00:00', 'in');
+        $lastEntry = $this->createTimeEntry($company, $employee, '2026-04-10 18:00:00', 'out');
+
+        $this->actingAs($admin)
+            ->deleteJson("/v1/admin/time-entries/{$deletedEntry->id}")
+            ->assertOk();
+
+        $sequence = TimeEntry::query()
+            ->where('user_id', $employee->id)
+            ->orderBy('clocked_at')
+            ->get(['id', 'clocked_at', 'type'])
+            ->map(fn (TimeEntry $entry) => [
+                'id' => $entry->id,
+                'clocked_at' => $entry->clocked_at->format('Y-m-d H:i:s'),
+                'type' => $entry->type,
+            ])
+            ->all();
+
+        $this->assertSame([
+            ['id' => $firstEntry->id, 'clocked_at' => '2026-04-10 08:00:00', 'type' => 'in'],
+            ['id' => $thirdEntry->id, 'clocked_at' => '2026-04-10 13:00:00', 'type' => 'out'],
+            ['id' => $lastEntry->id, 'clocked_at' => '2026-04-10 18:00:00', 'type' => 'in'],
+        ], $sequence);
+    }
+
     public function test_deletion_creates_audit_log_with_expected_payload(): void
     {
         $company = Company::factory()->create();

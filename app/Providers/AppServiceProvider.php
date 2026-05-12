@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Company;
+use App\Models\TimeEntry;
 use App\Models\User;
 use App\Observers\CompanyObserver;
+use App\Observers\TimeEntryObserver;
 use App\Observers\UserObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -40,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Company::observe(CompanyObserver::class);
+        TimeEntry::observe(TimeEntryObserver::class);
         User::observe(UserObserver::class);
 
         RateLimiter::for('public-company-registration', function (Request $request) {

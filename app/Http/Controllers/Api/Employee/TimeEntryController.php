@@ -123,6 +123,8 @@ class TimeEntryController extends Controller
             'device_type' => $deviceType,
         ]);
 
+        $entry = $entry->refresh();
+
         $this->auditLogService->log(
             action: 'time_entry.created',
             entityType: TimeEntry::class,
