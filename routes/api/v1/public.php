@@ -7,7 +7,14 @@ use App\Http\Controllers\Api\Billing\StripeWebhookController;
 use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\Api\V1\Public\PublicBlogController;
 use Illuminate\Support\Facades\Route;
+
+Route::prefix('public/blog')->name('public.blog.')->group(function () {
+    Route::get('posts',        [PublicBlogController::class, 'index'])->name('posts.index');
+    Route::get('posts/{slug}', [PublicBlogController::class, 'show'])->name('posts.show');
+    Route::get('categories',   [PublicBlogController::class, 'categories'])->name('categories');
+});
 
 Route::post('/billing/stripe/webhook', [StripeWebhookController::class, 'handle']);
 
