@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBlogPostRequest;
 use App\Http\Requests\UpdateBlogPostRequest;
+use App\Http\Resources\BlogPostAdminResource;
 use App\Http\Resources\BlogPostDetailResource;
 use App\Http\Resources\BlogPostListResource;
 use App\Models\BlogPost;
@@ -18,7 +19,6 @@ class AdminBlogPostController extends Controller
     {
         $posts = BlogPost::query()
             ->when($request->status,   fn ($q) => $q->where('status', $request->status))
-            ->when($request->language, fn ($q) => $q->where('language', $request->language))
             ->when($request->category, fn ($q) => $q->where('category', $request->category))
             ->orderByDesc('updated_at')
             ->paginate($request->input('per_page', 20));
@@ -35,27 +35,23 @@ class AdminBlogPostController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $post = BlogPost::with(['tocItems', 'faqItems', 'relatedPosts'])
-            ->findOrFail($id);
+        $post = BlogPost::with(['faqItems', 'relatedPosts'])->findOrFail($id);
 
-        return response()->json([
-            'data' => new BlogPostDetailResource($post),
-        ]);
+        return response()->json(['data' => new BlogPostAdminResource($post)]);
     }
 
     public function store(StoreBlogPostRequest $request): JsonResponse
     {
         $post = DB::transaction(function () use ($request) {
-            $post = BlogPost::create($request->safe()->except(['toc', 'faq', 'related_post_ids']));
+            $post = BlogPost::create($request->safe()->except(['faq', 'related_post_ids']));
 
-            $this->syncToc($post, $request->input('toc', []));
             $this->syncFaq($post, $request->input('faq', []));
             $this->syncRelated($post, $request->input('related_post_ids', []));
 
-            return $post->load(['tocItems', 'faqItems', 'relatedPosts']);
+            return $post->load(['faqItems', 'relatedPosts']);
         });
 
-        return response()->json(['data' => new BlogPostDetailResource($post)], 201);
+        return response()->json(['data' => new BlogPostAdminResource($post)], 201);
     }
 
     public function update(UpdateBlogPostRequest $request, string $id): JsonResponse
@@ -63,11 +59,8 @@ class AdminBlogPostController extends Controller
         $post = BlogPost::findOrFail($id);
 
         DB::transaction(function () use ($post, $request) {
-            $post->update($request->safe()->except(['toc', 'faq', 'related_post_ids']));
+            $post->update($request->safe()->except(['faq', 'related_post_ids']));
 
-            if ($request->has('toc')) {
-                $this->syncToc($post, $request->input('toc', []));
-            }
             if ($request->has('faq')) {
                 $this->syncFaq($post, $request->input('faq', []));
             }
@@ -76,7 +69,7 @@ class AdminBlogPostController extends Controller
             }
         });
 
-        return response()->json(['data' => new BlogPostDetailResource($post->fresh(['tocItems', 'faqItems', 'relatedPosts']))]);
+        return response()->json(['data' => new BlogPostAdminResource($post->fresh(['faqItems', 'relatedPosts']))]);
     }
 
     public function destroy(string $id): JsonResponse
@@ -94,26 +87,14 @@ class AdminBlogPostController extends Controller
             'published_at' => $post->published_at ?? now(),
         ]);
 
-        return response()->json(['data' => new BlogPostDetailResource($post->fresh())]);
+        return response()->json(['data' => new BlogPostAdminResource($post->fresh())]);
     }
 
     public function unpublish(string $id): JsonResponse
     {
         BlogPost::findOrFail($id)->update(['status' => 'draft']);
 
-        return response()->json(['data' => new BlogPostDetailResource(BlogPost::findOrFail($id))]);
-    }
-
-    private function syncToc(BlogPost $post, array $items): void
-    {
-        $post->tocItems()->delete();
-        foreach ($items as $index => $item) {
-            $post->tocItems()->create([
-                'label'       => $item['label'],
-                'href'        => $item['href'],
-                'order_index' => $index,
-            ]);
-        }
+        return response()->json(['data' => new BlogPostAdminResource(BlogPost::findOrFail($id))]);
     }
 
     private function syncFaq(BlogPost $post, array $items): void

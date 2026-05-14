@@ -24,14 +24,17 @@ class PublicBlogController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
         ]);
 
+        $language = $request->input('language', 'pt');
+        app()->setLocale($language);
+
         $query = BlogPost::published()
-            ->when($request->language, fn ($q) => $q->where('language', $request->language))
             ->when($request->category, fn ($q) => $q->where('category', $request->category))
             ->when($request->featured, fn ($q) => $q->where('featured', true))
             ->when($request->search, function ($q, $search) {
                 $q->where(function ($inner) use ($search) {
-                    $inner->whereRaw('LOWER(title) LIKE ?', ['%'.strtolower($search).'%'])
-                          ->orWhereRaw('LOWER(excerpt) LIKE ?', ['%'.strtolower($search).'%']);
+                    $inner->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(title, '$.pt')) LIKE ?", ["%{$search}%"])
+                          ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(title, '$.es')) LIKE ?", ["%{$search}%"])
+                          ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(title, '$.en')) LIKE ?", ["%{$search}%"]);
                 });
             });
 
@@ -54,16 +57,17 @@ class PublicBlogController extends Controller
         ]);
     }
 
-    public function show(string $slug): JsonResponse
+    public function show(Request $request, string $slug): JsonResponse
     {
+        $language = $request->input('language', 'pt');
+        app()->setLocale($language);
+
         $post = BlogPost::published()
-            ->with(['tocItems', 'faqItems', 'relatedPosts'])
+            ->with(['faqItems', 'relatedPosts'])
             ->where('slug', $slug)
             ->firstOrFail();
 
-        return response()->json([
-            'data' => new BlogPostDetailResource($post),
-        ]);
+        return response()->json(['data' => new BlogPostDetailResource($post)]);
     }
 
     public function categories(): JsonResponse

@@ -23,7 +23,6 @@ class BlogPostDetailResource extends JsonResource
             'category'       => $this->category,
             'audience_tag'   => $this->audience_tag,
             'reading_time'   => $this->reading_time,
-            'language'       => $this->language,
             'featured'       => $this->featured,
             'trending_score' => $this->trending_score,
             'published_at'   => $this->published_at?->toIso8601String(),
@@ -36,10 +35,7 @@ class BlogPostDetailResource extends JsonResource
                 'canonical_url' => $this->canonical_url,
             ],
 
-            'toc' => $this->tocItems->map(fn ($item) => [
-                'label' => $item->label,
-                'href'  => $item->href,
-            ]),
+            'toc' => $this->toc ?? [],
 
             'faq' => $this->faqItems->map(fn ($item) => [
                 'question' => $item->question,

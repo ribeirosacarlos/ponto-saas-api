@@ -7,18 +7,31 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Translatable\HasTranslations;
 
 class BlogPost extends Model
 {
-    use HasUuids;
+    use HasUuids, HasTranslations;
 
     protected $table = 'blog_posts';
+
+    public array $translatable = [
+        'title',
+        'excerpt',
+        'content_html',
+        'hero_image_alt',
+        'hero_caption',
+        'seo_title',
+        'seo_description',
+        'toc',
+    ];
 
     protected $fillable = [
         'slug',
         'title',
         'excerpt',
         'content_html',
+        'toc',
         'cover_url',
         'hero_image_url',
         'hero_image_alt',
@@ -27,7 +40,6 @@ class BlogPost extends Model
         'category',
         'audience_tag',
         'reading_time',
-        'language',
         'trending_score',
         'featured',
         'status',
@@ -42,6 +54,7 @@ class BlogPost extends Model
         'featured'       => 'boolean',
         'published_at'   => 'datetime',
         'trending_score' => 'integer',
+        'toc'            => 'array',
     ];
 
     public function scopePublished(Builder $query): Builder
@@ -49,26 +62,14 @@ class BlogPost extends Model
         return $query->where('status', 'published');
     }
 
-    public function scopeForLanguage(Builder $query, string $language): Builder
-    {
-        return $query->where('language', $language);
-    }
-
     public function scopeFeatured(Builder $query): Builder
     {
         return $query->where('featured', true);
     }
 
-    public function tocItems(): HasMany
-    {
-        return $this->hasMany(BlogTocItem::class, 'post_id')
-                    ->orderBy('order_index');
-    }
-
     public function faqItems(): HasMany
     {
-        return $this->hasMany(BlogFaqItem::class, 'post_id')
-                    ->orderBy('order_index');
+        return $this->hasMany(BlogFaqItem::class, 'post_id')->orderBy('order_index');
     }
 
     public function relatedPosts(): BelongsToMany

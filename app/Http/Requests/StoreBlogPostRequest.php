@@ -13,20 +13,29 @@ class StoreBlogPostRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'title'              => ['required', 'string', 'max:255'],
+        $langs = ['pt', 'es', 'en'];
+
+        $translatable = [];
+        foreach ($langs as $lang) {
+            $translatable["title.$lang"]           = ['required', 'string', 'max:255'];
+            $translatable["excerpt.$lang"]         = ['required', 'string', 'max:500'];
+            $translatable["content_html.$lang"]    = ['nullable', 'string'];
+            $translatable["hero_image_alt.$lang"]  = ['nullable', 'string', 'max:255'];
+            $translatable["hero_caption.$lang"]    = ['nullable', 'string', 'max:500'];
+            $translatable["seo_title.$lang"]       = ['nullable', 'string', 'max:255'];
+            $translatable["seo_description.$lang"] = ['nullable', 'string', 'max:500'];
+            $translatable["toc.$lang"]             = ['nullable', 'array'];
+            $translatable["toc.$lang.*.label"]     = ['required_with:toc.'.$lang, 'string', 'max:255'];
+            $translatable["toc.$lang.*.href"]      = ['required_with:toc.'.$lang, 'string', 'max:255'];
+        }
+
+        return array_merge($translatable, [
             'slug'               => ['required', 'string', 'max:255', 'unique:blog_posts,slug', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
-            'excerpt'            => ['required', 'string', 'max:500'],
             'author'             => ['required', 'string', 'max:255'],
             'category'           => ['required', 'string', 'max:100'],
-            'language'           => ['required', 'in:pt,es,en'],
             'status'             => ['required', 'in:draft,published,archived'],
-
-            'content_html'       => ['nullable', 'string'],
             'cover_url'          => ['nullable', 'url', 'max:2048'],
             'hero_image_url'     => ['nullable', 'url', 'max:2048'],
-            'hero_image_alt'     => ['nullable', 'string', 'max:255'],
-            'hero_caption'       => ['nullable', 'string', 'max:500'],
             'audience_tag'       => ['nullable', 'string', 'max:100'],
             'reading_time'       => ['nullable', 'string', 'max:20'],
             'trending_score'     => ['nullable', 'integer', 'min:0', 'max:100'],
@@ -34,20 +43,18 @@ class StoreBlogPostRequest extends FormRequest
             'published_at'       => ['nullable', 'date'],
             'og_image_url'       => ['nullable', 'url', 'max:2048'],
             'canonical_url'      => ['nullable', 'url', 'max:2048'],
-            'seo_title'          => ['nullable', 'string', 'max:255'],
-            'seo_description'    => ['nullable', 'string', 'max:500'],
-
-            'toc'                => ['nullable', 'array'],
-            'toc.*.label'        => ['required_with:toc', 'string', 'max:255'],
-            'toc.*.href'         => ['required_with:toc', 'string', 'max:255'],
-
             'faq'                => ['nullable', 'array'],
-            'faq.*.question'     => ['required_with:faq', 'string'],
-            'faq.*.answer'       => ['required_with:faq', 'string'],
-
+            'faq.*.question'     => ['required_with:faq', 'array'],
+            'faq.*.answer'       => ['required_with:faq', 'array'],
+            'faq.*.question.pt'  => ['required_with:faq', 'string'],
+            'faq.*.question.es'  => ['required_with:faq', 'string'],
+            'faq.*.question.en'  => ['required_with:faq', 'string'],
+            'faq.*.answer.pt'    => ['required_with:faq', 'string'],
+            'faq.*.answer.es'    => ['required_with:faq', 'string'],
+            'faq.*.answer.en'    => ['required_with:faq', 'string'],
             'related_post_ids'   => ['nullable', 'array'],
             'related_post_ids.*' => ['uuid', 'exists:blog_posts,id'],
-        ];
+        ]);
     }
 
     public function messages(): array
