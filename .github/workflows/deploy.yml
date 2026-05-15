@@ -5,6 +5,10 @@ on:
         branches: ["main"]
     workflow_dispatch: {}
 
+concurrency:
+    group: deploy-main
+    cancel-in-progress: true
+
 jobs:
     build-push-deploy:
         runs-on: ubuntu-latest
@@ -12,6 +16,24 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+
+            - name: Wait for deploy window
+              env:
+                  DEPLOY_TIMEZONE: America/Sao_Paulo
+                  DEPLOY_START_TIME: "20:30"
+              run: |
+                  now_ts=$(TZ="$DEPLOY_TIMEZONE" date +%s)
+                  today=$(TZ="$DEPLOY_TIMEZONE" date +%F)
+                  start_ts=$(TZ="$DEPLOY_TIMEZONE" date -d "$today $DEPLOY_START_TIME" +%s)
+                  current_time=$(TZ="$DEPLOY_TIMEZONE" date +%H:%M)
+
+                  if [ "$now_ts" -lt "$start_ts" ]; then
+                    wait_seconds=$((start_ts - now_ts))
+                    echo "Deploy bloqueado até ${DEPLOY_START_TIME} (${DEPLOY_TIMEZONE}). Aguardando ${wait_seconds}s."
+                    sleep "$wait_seconds"
+                  else
+                    echo "Janela de deploy liberada às ${current_time} (${DEPLOY_TIMEZONE})."
+                  fi
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
