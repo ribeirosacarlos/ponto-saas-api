@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\UserShiftResolver;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,29 @@ class ShiftDay extends Model
     protected $casts = [
         'is_working_day' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        $clearCache = function (self $model) {
+            $shift = $model->shift ?? Shift::find($model->shift_id);
+            if (! $shift) {
+                return;
+            }
+
+            $shift->userShifts()->pluck('user_id')->each(
+                fn ($userId) => UserShiftResolver::forgetUserTodayCache($userId)
+            );
+
+            if ($shift->is_default) {
+                User::where('company_id', $shift->company_id)->pluck('id')->each(
+                    fn ($userId) => UserShiftResolver::forgetUserTodayCache($userId)
+                );
+            }
+        };
+
+        static::saved($clearCache);
+        static::deleted($clearCache);
+    }
 
     public function shift()
     {

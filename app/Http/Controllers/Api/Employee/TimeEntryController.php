@@ -157,11 +157,14 @@ class TimeEntryController extends Controller
 
         $dispatchTimeEntryDayNormalization->handle($user, $now);
 
-        $nextResolved = $resolveNextExpectedClock->handle($user, $now);
+        // The new entry consumed the event at position count(completed), so the next
+        // pending event is one position further — no second DB round-trip needed.
+        $completedCount = count($resolved['completed']);
+        $nextEventAfterCreate = $resolved['expected_events'][$completedCount + 1] ?? null;
 
         return response()->json([
             'entry' => $entry,
-            'next_event' => $this->serializeEvent($nextResolved['next_event']),
+            'next_event' => $this->serializeEvent($nextEventAfterCreate),
         ], 201);
     }
 
