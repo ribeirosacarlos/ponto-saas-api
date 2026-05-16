@@ -20,20 +20,23 @@ jobs:
             - name: Wait for deploy window
               env:
                   DEPLOY_TIMEZONE: America/Sao_Paulo
-                  DEPLOY_START_TIME: "20:30"
+                  DEPLOY_MORNING_END_TIME: "08:00"
+                  DEPLOY_NIGHT_START_TIME: "20:30"
               run: |
-                  now_ts=$(TZ="$DEPLOY_TIMEZONE" date +%s)
-                  today=$(TZ="$DEPLOY_TIMEZONE" date +%F)
-                  start_ts=$(TZ="$DEPLOY_TIMEZONE" date -d "$today $DEPLOY_START_TIME" +%s)
                   current_time=$(TZ="$DEPLOY_TIMEZONE" date +%H:%M)
 
-                  if [ "$now_ts" -lt "$start_ts" ]; then
-                    wait_seconds=$((start_ts - now_ts))
-                    echo "Deploy bloqueado até ${DEPLOY_START_TIME} (${DEPLOY_TIMEZONE}). Aguardando ${wait_seconds}s."
-                    sleep "$wait_seconds"
-                  else
+                  if [ "$current_time" \< "$DEPLOY_MORNING_END_TIME" ] || [ "$current_time" = "$DEPLOY_MORNING_END_TIME" ] || [ "$current_time" \> "$DEPLOY_NIGHT_START_TIME" ] || [ "$current_time" = "$DEPLOY_NIGHT_START_TIME" ]; then
                     echo "Janela de deploy liberada às ${current_time} (${DEPLOY_TIMEZONE})."
+                    exit 0
                   fi
+
+                  now_ts=$(TZ="$DEPLOY_TIMEZONE" date +%s)
+                  today=$(TZ="$DEPLOY_TIMEZONE" date +%F)
+                  start_ts=$(TZ="$DEPLOY_TIMEZONE" date -d "$today $DEPLOY_NIGHT_START_TIME" +%s)
+                  wait_seconds=$((start_ts - now_ts))
+
+                  echo "Deploy bloqueado entre ${DEPLOY_MORNING_END_TIME} e ${DEPLOY_NIGHT_START_TIME} (${DEPLOY_TIMEZONE}). Aguardando ${wait_seconds}s."
+                  sleep "$wait_seconds"
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
