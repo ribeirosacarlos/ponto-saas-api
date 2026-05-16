@@ -41,6 +41,8 @@ class Company extends Model
         'company_longitude',
         'allowed_radius_meters',
         'location_validation_enabled',
+        'allow_mobile_clock',
+        'allow_desktop_clock',
     ];
 
     protected $casts = [
@@ -60,6 +62,8 @@ class Company extends Model
         'company_longitude' => 'decimal:7',
         'allowed_radius_meters' => 'integer',
         'location_validation_enabled' => 'boolean',
+        'allow_mobile_clock'          => 'boolean',
+        'allow_desktop_clock'         => 'boolean',
     ];
 
     public function users()

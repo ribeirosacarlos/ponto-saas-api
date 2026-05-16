@@ -34,4 +34,9 @@ class CompanyPolicy
     {
         return $this->updateTimezone($user, $company);
     }
+
+    public function updateDeviceSettings(User $user, Company $company): bool
+    {
+        return $this->updateTimezone($user, $company);
+    }
 }

@@ -238,6 +238,68 @@ class TimeEntryTest extends TestCase
         ];
     }
 
+    public function test_clock_blocked_for_mobile_when_mobile_is_disabled(): void
+    {
+        $this->freezeNow('2026-02-16 09:00:00'); // Monday
+
+        $user = $this->createEmployee();
+        $user->company()->update(['allow_mobile_clock' => false]);
+        $user->unsetRelation('company');
+        $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+
+        $response = $this->actingAs($user)
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Linux; Android 10) Mobile Safari/537.36'])
+            ->postJson('/v1/employee/clock', []);
+
+        $response->assertForbidden()
+            ->assertJsonPath('message', 'Registro de ponto não permitido neste dispositivo (mobile).');
+    }
+
+    public function test_clock_blocked_for_desktop_when_desktop_is_disabled(): void
+    {
+        $this->freezeNow('2026-02-16 09:00:00'); // Monday
+
+        $user = $this->createEmployee();
+        $user->company()->update(['allow_desktop_clock' => false]);
+        $user->unsetRelation('company');
+        $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+
+        $response = $this->actingAs($user)
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'])
+            ->postJson('/v1/employee/clock', []);
+
+        $response->assertForbidden()
+            ->assertJsonPath('message', 'Registro de ponto não permitido neste dispositivo (desktop).');
+    }
+
+    public function test_clock_allowed_for_mobile_with_default_settings(): void
+    {
+        $this->freezeNow('2026-02-16 09:00:00'); // Monday
+
+        $user = $this->createEmployee();
+        $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+
+        $response = $this->actingAs($user)
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Linux; Android 10) Mobile Safari/537.36'])
+            ->postJson('/v1/employee/clock', []);
+
+        $response->assertCreated();
+    }
+
+    public function test_clock_allowed_for_desktop_with_default_settings(): void
+    {
+        $this->freezeNow('2026-02-16 09:00:00'); // Monday
+
+        $user = $this->createEmployee();
+        $this->createShiftDayWithEvents($user, 1, true, $this->breakDayEvents());
+
+        $response = $this->actingAs($user)
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'])
+            ->postJson('/v1/employee/clock', []);
+
+        $response->assertCreated();
+    }
+
     private function createEmployee(): User
     {
         $user = User::factory()->create();

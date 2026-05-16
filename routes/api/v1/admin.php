@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Api\Admin\AreaController;
 use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeCheckoutSessionController;
+use App\Http\Controllers\Api\Admin\CompanyDeviceSettingsController;
 use App\Http\Controllers\Api\Admin\CompanyGeolocationController;
 use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
@@ -28,6 +29,8 @@ Route::prefix('admin')->group(function () {
         Route::put('/company/timezone', [CompanyTimezoneController::class, 'update']);
         Route::get('/company/geolocation', [CompanyGeolocationController::class, 'show']);
         Route::put('/company/geolocation', [CompanyGeolocationController::class, 'update']);
+        Route::get('/company/device-settings', [CompanyDeviceSettingsController::class, 'show']);
+        Route::put('/company/device-settings', [CompanyDeviceSettingsController::class, 'update']);
         Route::put('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::patch('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);

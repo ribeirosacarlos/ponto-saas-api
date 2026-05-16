@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 use App\Http\Controllers\Api\Platform\CompanySettingsController;
 use App\Http\Controllers\Api\SuperAdmin\CompanyMetricsController as SuperAdminCompanyMetricsController;
 use App\Http\Controllers\Api\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\Api\V1\Admin\AdminBlogPostController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('platform')->group(function () {
@@ -38,6 +39,16 @@ Route::prefix('platform')->group(function () {
 
             Route::get('companies/{company}/subscription', [CompanySubscriptionController::class, 'show']);
             Route::patch('companies/{company}/subscription', [CompanySubscriptionController::class, 'update']);
+        });
+
+        Route::prefix('blog')->name('admin.blog.')->group(function () {
+            Route::get('posts',                [AdminBlogPostController::class, 'index'])->name('posts.index');
+            Route::post('posts',               [AdminBlogPostController::class, 'store'])->name('posts.store');
+            Route::get('posts/{id}',           [AdminBlogPostController::class, 'show'])->name('posts.show');
+            Route::put('posts/{id}',           [AdminBlogPostController::class, 'update'])->name('posts.update');
+            Route::delete('posts/{id}',        [AdminBlogPostController::class, 'destroy'])->name('posts.destroy');
+            Route::patch('posts/{id}/publish',   [AdminBlogPostController::class, 'publish'])->name('posts.publish');
+            Route::patch('posts/{id}/unpublish', [AdminBlogPostController::class, 'unpublish'])->name('posts.unpublish');
         });
     });
 });
