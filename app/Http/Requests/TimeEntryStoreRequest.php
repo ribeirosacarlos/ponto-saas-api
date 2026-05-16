@@ -27,6 +27,7 @@ class TimeEntryStoreRequest extends FormRequest
                 'required_with:latitude',
             ],
             'source' => ['nullable', 'string', 'max:255'],
+            'clocked_at' => ['nullable', 'date', 'before_or_equal:now'],
         ];
     }
 

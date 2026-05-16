@@ -39,7 +39,16 @@ class TimeEntryController extends Controller
         $validated = $request->validated();
         $user = $request->user();
         $timezone = $this->resolveCompanyTimezone($user);
-        $now = CarbonImmutable::now($timezone);
+        $serverNow = CarbonImmutable::now($timezone);
+
+        // Accept client-supplied timestamp (optimistic UI) as long as it's within
+        // 2 minutes of server time. Farther back means something is wrong.
+        if (! empty($validated['clocked_at'])) {
+            $clientTime = CarbonImmutable::parse($validated['clocked_at'])->setTimezone($timezone);
+            $now = $clientTime->diffInSeconds($serverNow) <= 120 ? $clientTime : $serverNow;
+        } else {
+            $now = $serverNow;
+        }
 
         $isOnVacation = VacationDay::where('company_id', $user->company_id)
             ->where('user_id', $user->id)
