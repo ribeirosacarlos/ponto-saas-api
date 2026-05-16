@@ -12,6 +12,7 @@ use App\Services\UserShiftResolver;
 use App\Support\ShiftDayEventNormalizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class ResolveNextExpectedClockAction
 {
@@ -51,9 +52,13 @@ class ResolveNextExpectedClockAction
         /** @var UserShift|null $assignment */
         $assignment = $resolved['assignment'];
 
-        $holiday = Holiday::where('company_id', $user->company_id)
-            ->whereDate('date', $nowLocal->toDateString())
-            ->first();
+        $holiday = Cache::remember(
+            "company_holiday:{$user->company_id}:{$nowLocal->toDateString()}",
+            now()->addDays(30),
+            fn () => Holiday::where('company_id', $user->company_id)
+                ->whereDate('date', $nowLocal->toDateString())
+                ->first()
+        );
 
         if ($holiday) {
             return $this->basePayload($timezone, $nowLocal, $shift, $assignment, null, [], [], null, false, true, true, $holiday->name);

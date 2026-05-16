@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\UserShiftResolver;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -41,6 +42,14 @@ class UserShift extends Model
     public function shift()
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    protected static function booted(): void
+    {
+        $clearCache = fn (self $model) => UserShiftResolver::forgetUserTodayCache($model->user_id);
+
+        static::saved($clearCache);
+        static::deleted($clearCache);
     }
 
     public function scopeActive(Builder $query): Builder
