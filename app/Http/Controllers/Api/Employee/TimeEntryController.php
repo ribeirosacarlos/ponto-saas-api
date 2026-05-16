@@ -64,6 +64,20 @@ class TimeEntryController extends Controller
         $mobilePattern = '/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone/i';
         $deviceType = preg_match($mobilePattern, $request->userAgent() ?? '') ? 'mobile' : 'desktop';
 
+        if ($user->company) {
+            $company = $user->company;
+            if ($deviceType === 'mobile' && ! (bool) $company->allow_mobile_clock) {
+                return response()->json([
+                    'message' => 'Registro de ponto não permitido neste dispositivo (mobile).',
+                ], 403);
+            }
+            if ($deviceType === 'desktop' && ! (bool) $company->allow_desktop_clock) {
+                return response()->json([
+                    'message' => 'Registro de ponto não permitido neste dispositivo (desktop).',
+                ], 403);
+            }
+        }
+
         $resolved = $resolveNextExpectedClock->handle($user, $now);
         $nextEvent = $resolved['next_event'];
 
