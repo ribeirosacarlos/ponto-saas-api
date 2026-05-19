@@ -14,7 +14,7 @@ class EmployeePolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole(['admin', 'super_admin']);
     }
 
     public function update(User $user, User $employee): bool
@@ -24,7 +24,7 @@ class EmployeePolicy
 
     public function delete(User $user, User $employee): bool
     {
-        return $user->hasRole('admin') &&
+        return $user->hasRole(['admin', 'super_admin']) &&
                $user->company_id === $employee->company_id;
     }
 }
