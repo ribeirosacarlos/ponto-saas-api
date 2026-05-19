@@ -2,174 +2,60 @@
 
 namespace App\Services\TimeEntry;
 
-use App\Models\Shift;
-use App\Models\ShiftDay;
 use App\Models\User;
-use App\Services\UserShiftResolver;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 
 class WorkedTodayService
 {
-    public function __construct(
-        protected UserShiftResolver $shiftResolver
-    ) {
+    protected $timesheetCalculationService;
+
+    public function __construct(TimesheetCalculationService $timesheetCalculationService)
+    {
+        $this->timesheetCalculationService = $timesheetCalculationService;
     }
 
     /**
-     * @return array{
-     *   date: string,
-     *   worked_seconds: int,
-     *   worked_minutes: int,
-     *   worked_hours_decimal: float,
-     *   expected_break_minutes: int,
-     *   break_seconds_deducted: int,
-     *   open_session: bool,
-     *   details: array{
-     *     pairs: array<int, array{in: string, out: string, seconds: int}>,
-     *     entries: array<int, array{id: string, clocked_at: string, type: string|null, event_kind: string|null, adjustment_status: string|null, adjustment_reason: string|null, source: string|null}>
-     *   }
-     * }
+     * @return array<string, mixed>
      */
     public function getWorkedToday(User $user, ?CarbonImmutable $overrideNow = null): array
     {
-        $timezone = config('app.timezone') ?? 'UTC';
-        $now = $overrideNow ?? CarbonImmutable::now($timezone);
-        $periodStart = $now->startOfDay();
-        $periodEnd = $now->endOfDay();
+        $timezone = $user->company ? $user->company->timezone : config('app.timezone', 'UTC');
+        $today = ($overrideNow ?? CarbonImmutable::now($timezone))->setTimezone($timezone)->startOfDay();
 
-        $entries = $user->timeEntries()
-            ->whereBetween('clocked_at', [$periodStart->toDateTimeString(), $periodEnd->toDateTimeString()])
-            ->excludeRejected()
-            ->orderBy('clocked_at')
-            ->orderBy('created_at')
-            ->get();
+        $result = $this->timesheetCalculationService->calculateForEmployee(
+            $user,
+            $today,
+            $today,
+            false
+        );
 
-        $shift = $this->shiftResolver->resolve($user)['shift'];
-        $shiftDay = $this->resolveShiftDay($shift, $now);
-
-        [$pairs, $pendingIn] = $this->buildWorkPairs($entries, $timezone);
-        $workedSecondsBruto = (int) array_sum(array_column($pairs, 'seconds'));
-        $expectedBreakMinutes = $this->determineExpectedBreakMinutes($shiftDay);
-        $breakSecondsDeducted = 0;
-        $workedSeconds = $workedSecondsBruto;
-        $detailsPairs = $this->formatPairsForOutput($pairs, $timezone);
-        $openSession = (bool) $pendingIn;
-        $openPair = $this->formatOpenPair($pendingIn, $timezone);
+        $day = $result['days'][0] ?? [
+            'date' => $today->toDateString(),
+            'entries' => [],
+            'summary' => [],
+        ];
+        $summary = $day['summary'];
 
         return [
-            'date' => $now->toDateString(),
-            'worked_seconds' => $workedSeconds,
-            'worked_minutes' => (int) floor($workedSeconds / 60),
-            'worked_hours_decimal' => round($workedSeconds / 3600, 2),
-            'expected_break_minutes' => $expectedBreakMinutes,
-            'break_seconds_deducted' => $breakSecondsDeducted,
-            'open_session' => $openSession,
+            'date' => $day['date'],
+            'worked_seconds' => ((int) ($summary['worked_minutes'] ?? 0)) * 60,
+            'worked_minutes' => (int) ($summary['worked_minutes'] ?? 0),
+            'worked_hours_decimal' => round(((int) ($summary['worked_minutes'] ?? 0)) / 60, 2),
+            'expected_break_minutes' => (int) ($summary['allowed_break_minutes'] ?? 0),
+            'break_seconds_deducted' => ((int) ($summary['exceeded_break_minutes'] ?? 0)) * 60,
+            'open_session' => (bool) ($summary['open_session'] ?? false),
+            'summary' => $summary,
             'details' => [
-                'open_pair' => $openPair,
-                'pairs' => $detailsPairs,
-                'entries' => $this->formatEntriesForOutput($entries, $timezone),
+                'open_pair' => $summary['open_pair'] ?? null,
+                'pairs' => array_map(function (array $pair) {
+                    return [
+                        'in' => $pair['in'],
+                        'out' => $pair['out'],
+                        'seconds' => ((int) $pair['minutes']) * 60,
+                    ];
+                }, $summary['pair_details'] ?? []),
+                'entries' => $day['entries'],
             ],
-        ];
-    }
-
-    private function resolveShiftDay(?Shift $shift, CarbonImmutable $today): ?ShiftDay
-    {
-        if (! $shift) {
-            return null;
-        }
-
-        $weekday = $today->isoWeekday();
-        $definition = $shift->shiftDays->firstWhere('weekday', $weekday);
-
-        if (! $definition || ! $definition->is_working_day) {
-            return null;
-        }
-
-        return $definition;
-    }
-
-    private function buildWorkPairs(Collection $entries, string $timezone): array
-    {
-        $pairs = [];
-        /** @var CarbonImmutable|null $pendingIn */
-        $pendingIn = null;
-
-        foreach ($entries as $entry) {
-            $entryTime = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone);
-
-            if ($entry->type === 'in') {
-                if ($pendingIn) {
-                    $pairs[] = $this->createPair($pendingIn, $entryTime);
-                }
-
-                $pendingIn = $entryTime;
-                continue;
-            }
-
-            if ($entry->type === 'out' && $pendingIn) {
-                $pairs[] = $this->createPair($pendingIn, $entryTime);
-                $pendingIn = null;
-            }
-        }
-
-        return [$pairs, $pendingIn];
-    }
-
-    private function createPair(CarbonImmutable $start, CarbonImmutable $end): array
-    {
-        $seconds = $end->greaterThan($start) ? $end->diffInSeconds($start, true) : 0;
-
-        return [
-            'in' => $start,
-            'out' => $end,
-            'seconds' => $seconds,
-        ];
-    }
-
-    private function determineExpectedBreakMinutes(?ShiftDay $shiftDay): int
-    {
-        if (! $shiftDay) {
-            return 0;
-        }
-
-        return (int) ($shiftDay->break_minutes ?? 0);
-    }
-
-    private function formatPairsForOutput(array $pairs, string $timezone): array
-    {
-        return array_map(function (array $pair) use ($timezone) {
-            return [
-                'in' => $pair['in']->timezone($timezone)->toIso8601String(),
-                'out' => $pair['out']->timezone($timezone)->toIso8601String(),
-                'seconds' => $pair['seconds'],
-            ];
-        }, $pairs);
-    }
-
-    private function formatEntriesForOutput(Collection $entries, string $timezone): array
-    {
-        return $entries->map(function ($entry) use ($timezone) {
-            return [
-                'id' => $entry->id,
-                'clocked_at' => CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)->toIso8601String(),
-                'type' => $entry->type,
-                'event_kind' => $entry->event_kind,
-                'adjustment_status' => $entry->adjustment_status,
-                'adjustment_reason' => $entry->adjustment_reason,
-                'source' => $entry->source,
-            ];
-        })->values()->all();
-    }
-
-    private function formatOpenPair(?CarbonImmutable $pendingIn, string $timezone): ?array
-    {
-        if (! $pendingIn) {
-            return null;
-        }
-
-        return [
-            'in' => $pendingIn->timezone($timezone)->toIso8601String(),
         ];
     }
 }
