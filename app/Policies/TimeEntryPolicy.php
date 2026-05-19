@@ -18,7 +18,7 @@ class TimeEntryPolicy
             return (string) $entry->user_id === (string) $user->id;
         }
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(['admin', 'super_admin'])) {
             return true;
         }
 
@@ -35,7 +35,7 @@ class TimeEntryPolicy
             return false;
         }
 
-        return $user->hasRole(['manager', 'area_manager', 'admin']);
+        return $user->hasRole(['manager', 'area_manager', 'admin', 'super_admin']);
     }
 
     public function requestAdjustment(User $user, TimeEntry $entry): bool
@@ -48,7 +48,7 @@ class TimeEntryPolicy
             return (string) $entry->user_id === (string) $user->id;
         }
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(['admin', 'super_admin'])) {
             return true;
         }
 
@@ -65,11 +65,11 @@ class TimeEntryPolicy
             return false;
         }
 
-        if (! $user->hasRole(['manager', 'area_manager', 'admin'])) {
+        if (! $user->hasRole(['manager', 'area_manager', 'admin', 'super_admin'])) {
             return false;
         }
 
-        if (! $user->hasRole('admin') && ! app(UserVisibilityService::class)->canManageUserId($user, $entry->user_id)) {
+        if (! $user->hasRole(['admin', 'super_admin']) && ! app(UserVisibilityService::class)->canManageUserId($user, $entry->user_id)) {
             return false;
         }
 
@@ -87,7 +87,7 @@ class TimeEntryPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole(['employee', 'manager', 'area_manager', 'admin']);
+        return $user->hasRole(['employee', 'manager', 'area_manager', 'admin', 'super_admin']);
     }
 
 
