@@ -9,7 +9,7 @@ class UserVisibilityService
 {
     private const MANAGERIAL_ROLES = ['manager', 'area_manager'];
 
-    private const ADMINISTRATIVE_ROLES = ['admin', 'manager', 'area_manager'];
+    private const ADMINISTRATIVE_ROLES = ['admin', 'super_admin', 'manager', 'area_manager'];
 
     public function canAccessAdministrativeUsers(User $actor): bool
     {
@@ -22,7 +22,7 @@ class UserVisibilityService
             return false;
         }
 
-        if ($actor->hasRole('admin')) {
+        if ($actor->hasRole(['admin', 'super_admin'])) {
             return true;
         }
 
@@ -70,7 +70,7 @@ class UserVisibilityService
 
         $query->where($companyColumn, $actor->company_id);
 
-        if ($actor->hasRole('admin')) {
+        if ($actor->hasRole(['admin', 'super_admin'])) {
             return $query;
         }
 
@@ -101,7 +101,7 @@ class UserVisibilityService
             $query->where($companyIdColumn, $actor->company_id);
         }
 
-        if ($actor->hasRole('admin')) {
+        if ($actor->hasRole(['admin', 'super_admin'])) {
             return $query;
         }
 
@@ -129,7 +129,7 @@ class UserVisibilityService
 
     public function managedAreaIds(User $actor): array
     {
-        if ($actor->hasRole('admin')) {
+        if ($actor->hasRole(['admin', 'super_admin'])) {
             return [];
         }
 
