@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('area-manager')
-    ->middleware(['role:area_manager|manager|admin', 'subscription.access'])
+    ->middleware(['role:area_manager|manager|admin|super_admin', 'subscription.access'])
     ->group(function () {
 
         Route::get('/adjustments', [AreaManagerAdjustmentController::class, 'index']);
