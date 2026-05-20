@@ -67,4 +67,15 @@ class CompanyTime
 
         return $timezone;
     }
+
+    public static function normalizeDateInput(string $value, string $timezone): string
+    {
+        $trimmed = trim($value);
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $trimmed, $matches) === 1) {
+            return $matches[0];
+        }
+
+        return CarbonImmutable::parse($trimmed, $timezone)->toDateString();
+    }
 }

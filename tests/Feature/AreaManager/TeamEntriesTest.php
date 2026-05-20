@@ -77,6 +77,81 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.1.day_summary.worked_hhmm', '09:00');
     }
 
+    public function test_team_entries_ignores_time_component_in_date_filters(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2025-12-19', 'UTC');
+        $this->assignShift($employee, $date);
+
+        $morningEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(8, 0),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $eveningEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(17, 0),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2025-12-19T12:00:00Z&date_to=2025-12-19T18:00:00Z");
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', $eveningEntry->id)
+            ->assertJsonPath('data.1.id', $morningEntry->id);
+    }
+
+    public function test_team_entries_returns_all_entries_for_a_specific_user_without_paging_cutoff(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2025-12-01', 'UTC');
+        $this->assignShift($employee, $date);
+
+        for ($i = 0; $i < 31; $i++) {
+            TimeEntry::create([
+                'company_id' => $company->id,
+                'user_id' => $employee->id,
+                'clocked_at' => $date->setTime(8, 0)->addMinutes($i),
+                'type' => 'in',
+                'source' => 'web',
+            ]);
+        }
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&page=2");
+
+        $response->assertOk()
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonPath('total', 31)
+            ->assertJsonPath('per_page', 31)
+            ->assertJsonCount(31, 'data');
+    }
+
     private function assignShift(User $user, CarbonImmutable $date): void
     {
         $shift = Shift::create([
