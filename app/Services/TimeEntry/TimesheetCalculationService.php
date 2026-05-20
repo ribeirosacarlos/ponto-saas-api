@@ -257,6 +257,7 @@ class TimesheetCalculationService
         $allowedBreakMinutes = ($isHoliday || $isRegularDayOff || $isLeaveDay)
             ? 0
             : $this->resolveBreakMinutes($shiftDay);
+        $isFinalized = ! $date->isSameDay(CarbonImmutable::now($timezone)->startOfDay());
 
         $workEntries = array_values(array_filter(
             $entries,
@@ -269,9 +270,9 @@ class TimesheetCalculationService
             $pairing['exceeded_break_minutes'],
             $pairing['has_incomplete_entries']
         );
-        $balanceMinutes = $workedMinutes - $expectedMinutes;
-        $extraMinutes = max(0, $balanceMinutes);
-        $debtMinutes = min(0, $balanceMinutes);
+        $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes : 0;
+        $extraMinutes = $isFinalized ? max(0, $balanceMinutes) : 0;
+        $debtMinutes = $isFinalized ? min(0, $balanceMinutes) : 0;
 
         return [
             'date' => $dateKey,
@@ -305,7 +306,8 @@ class TimesheetCalculationService
                 'extra_hhmm' => $this->minutesToHHMM($extraMinutes),
                 'debt_minutes' => $debtMinutes,
                 'debt_hhmm' => $this->minutesToHHMM(abs($debtMinutes)),
-                'status' => $this->determineStatus($balanceMinutes),
+                'status' => $isFinalized ? $this->determineStatus($balanceMinutes) : 'even',
+                'is_finalized' => $isFinalized,
                 'is_holiday' => $isHoliday,
                 'holiday_name' => $holidays[$dateKey] ?? null,
                 'is_day_off' => $isRegularDayOff,

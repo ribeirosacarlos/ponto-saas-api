@@ -16,6 +16,13 @@ class OvertimeCalculatorServiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        CarbonImmutable::setTestNow();
+
+        parent::tearDown();
+    }
+
     private function assignShift(User $user, int $weekday, array $options = []): Shift
     {
         $shift = Shift::create([
@@ -227,5 +234,36 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(25, $result['days'][0]['actual_break_minutes']);
         $this->assertSame(-5, $result['days'][0]['balance_minutes']);
         $this->assertSame('debt', $result['days'][0]['status']);
+    }
+
+    public function test_current_day_is_not_finalized_for_overtime_balance(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2025-12-19 15:00:00', 'UTC'));
+
+        $date = CarbonImmutable::parse('2025-12-19', 'UTC');
+        $user = User::factory()->create();
+        $this->assignShift($user, $date->isoWeekday(), [
+            'start_time' => '08:00',
+            'end_time' => '14:00',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '12:00',
+            'break_end_time' => '12:20',
+        ]);
+
+        $this->createTimeEntry($user, 'in', $date->setTime(8, 0));
+        $this->createTimeEntry($user, 'out', $date->setTime(12, 0));
+        $this->createTimeEntry($user, 'in', $date->setTime(12, 20));
+        $this->createTimeEntry($user, 'out', $date->setTime(14, 0));
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $date, $date, true);
+
+        $this->assertSame(360, $result['days'][0]['worked_minutes']);
+        $this->assertSame(0, $result['days'][0]['balance_minutes']);
+        $this->assertSame(0, $result['days'][0]['extra_minutes']);
+        $this->assertSame(0, $result['days'][0]['debt_minutes']);
+        $this->assertSame('even', $result['days'][0]['status']);
+        $this->assertFalse($result['days'][0]['is_finalized']);
     }
 }
