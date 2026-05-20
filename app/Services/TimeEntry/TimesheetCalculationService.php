@@ -257,7 +257,6 @@ class TimesheetCalculationService
         $allowedBreakMinutes = ($isHoliday || $isRegularDayOff || $isLeaveDay)
             ? 0
             : $this->resolveBreakMinutes($shiftDay);
-        $isFinalized = ! $date->isSameDay(CarbonImmutable::now($timezone)->startOfDay());
 
         $workEntries = array_values(array_filter(
             $entries,
@@ -266,13 +265,15 @@ class TimesheetCalculationService
         ));
         $pairing = $this->pairWorkEntries($workEntries, $timezone, $allowedBreakMinutes);
         $workedMinutes = $this->resolveOfficialWorkedMinutes(
-            $pairing['presence_minutes'],
+            $pairing['raw_worked_minutes'],
+            $expectedMinutes,
             $pairing['exceeded_break_minutes'],
+            $pairing['pair_count'],
             $pairing['has_incomplete_entries']
         );
-        $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes : 0;
-        $extraMinutes = $isFinalized ? max(0, $balanceMinutes) : 0;
-        $debtMinutes = $isFinalized ? min(0, $balanceMinutes) : 0;
+        $balanceMinutes = $workedMinutes - $expectedMinutes;
+        $extraMinutes = max(0, $balanceMinutes);
+        $debtMinutes = min(0, $balanceMinutes);
 
         return [
             'date' => $dateKey,
@@ -286,18 +287,12 @@ class TimesheetCalculationService
                 'worked_hhmm' => $this->minutesToHHMM($workedMinutes),
                 'raw_worked_minutes' => $pairing['raw_worked_minutes'],
                 'raw_worked_hhmm' => $this->minutesToHHMM($pairing['raw_worked_minutes']),
-                'actual_worked_minutes' => $pairing['raw_worked_minutes'],
-                'actual_worked_hhmm' => $this->minutesToHHMM($pairing['raw_worked_minutes']),
                 'expected_minutes' => $expectedMinutes,
                 'expected_hhmm' => $this->minutesToHHMM($expectedMinutes),
                 'real_break_minutes' => $pairing['real_break_minutes'],
                 'real_break_hhmm' => $this->minutesToHHMM($pairing['real_break_minutes']),
-                'actual_break_minutes' => $pairing['real_break_minutes'],
-                'actual_break_hhmm' => $this->minutesToHHMM($pairing['real_break_minutes']),
                 'allowed_break_minutes' => $allowedBreakMinutes,
                 'allowed_break_hhmm' => $this->minutesToHHMM($allowedBreakMinutes),
-                'counted_break_minutes' => $pairing['counted_break_minutes'],
-                'counted_break_hhmm' => $this->minutesToHHMM($pairing['counted_break_minutes']),
                 'exceeded_break_minutes' => $pairing['exceeded_break_minutes'],
                 'exceeded_break_hhmm' => $this->minutesToHHMM($pairing['exceeded_break_minutes']),
                 'balance_minutes' => $balanceMinutes,
@@ -306,8 +301,7 @@ class TimesheetCalculationService
                 'extra_hhmm' => $this->minutesToHHMM($extraMinutes),
                 'debt_minutes' => $debtMinutes,
                 'debt_hhmm' => $this->minutesToHHMM(abs($debtMinutes)),
-                'status' => $isFinalized ? $this->determineStatus($balanceMinutes) : 'even',
-                'is_finalized' => $isFinalized,
+                'status' => $this->determineStatus($balanceMinutes),
                 'is_holiday' => $isHoliday,
                 'holiday_name' => $holidays[$dateKey] ?? null,
                 'is_day_off' => $isRegularDayOff,
@@ -412,9 +406,7 @@ class TimesheetCalculationService
      * @param  array<int, TimeEntry>  $entries
      * @return array{
      *   raw_worked_minutes: int,
-     *   presence_minutes: int,
      *   real_break_minutes: int,
-     *   counted_break_minutes: int,
      *   exceeded_break_minutes: int,
      *   has_incomplete_entries: bool,
      *   open_session: bool,
@@ -427,15 +419,15 @@ class TimesheetCalculationService
     {
         $pendingIn = null;
         $previousOut = null;
-        $firstIn = null;
-        $lastOut = null;
-        $rawWorkedSeconds = 0;
-        $realBreakSeconds = 0;
+        $rawWorkedMinutes = 0;
+        $realBreakMinutes = 0;
         $hasIncompleteEntries = false;
         $pairs = [];
 
         foreach ($entries as $entry) {
-            $clockedAt = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone);
+            $clockedAt = $this->truncateToMinute(
+                CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)
+            );
 
             if ($entry->type === 'in') {
                 if ($pendingIn !== null) {
@@ -443,11 +435,10 @@ class TimesheetCalculationService
                 }
 
                 if ($previousOut !== null && $clockedAt->greaterThan($previousOut)) {
-                    $realBreakSeconds += (int) $clockedAt->diffInSeconds($previousOut, true);
+                    $realBreakMinutes += (int) $clockedAt->diffInMinutes($previousOut, true);
                     $previousOut = null;
                 }
 
-                $firstIn ??= $clockedAt;
                 $pendingIn = $clockedAt;
                 continue;
             }
@@ -464,15 +455,14 @@ class TimesheetCalculationService
                 continue;
             }
 
-            $seconds = (int) $clockedAt->diffInSeconds($pendingIn, true);
-            $rawWorkedSeconds += $seconds;
+            $minutes = (int) $clockedAt->diffInMinutes($pendingIn, true);
+            $rawWorkedMinutes += $minutes;
             $pairs[] = [
-                'in' => $pendingIn->toIso8601String(),
-                'out' => $clockedAt->toIso8601String(),
-                'minutes' => intdiv($seconds, 60),
+                'in' => $this->formatIso8601ToMinute($pendingIn),
+                'out' => $this->formatIso8601ToMinute($clockedAt),
+                'minutes' => $minutes,
             ];
             $previousOut = $clockedAt;
-            $lastOut = $clockedAt;
             $pendingIn = null;
         }
 
@@ -480,37 +470,42 @@ class TimesheetCalculationService
             $hasIncompleteEntries = true;
         }
 
-        $rawWorkedMinutes = intdiv($rawWorkedSeconds, 60);
-        $realBreakMinutes = intdiv($realBreakSeconds, 60);
-        $countedBreakMinutes = min($realBreakMinutes, $allowedBreakMinutes);
-        $presenceMinutes = ($firstIn !== null && $lastOut !== null && $lastOut->greaterThan($firstIn))
-            ? intdiv((int) $lastOut->diffInSeconds($firstIn, true), 60)
-            : 0;
-
         return [
             'raw_worked_minutes' => $rawWorkedMinutes,
-            'presence_minutes' => $presenceMinutes,
             'real_break_minutes' => $realBreakMinutes,
-            'counted_break_minutes' => $countedBreakMinutes,
             'exceeded_break_minutes' => max(0, $realBreakMinutes - $allowedBreakMinutes),
             'has_incomplete_entries' => $hasIncompleteEntries,
             'open_session' => $pendingIn !== null,
             'pair_count' => count($pairs),
             'pairs' => $pairs,
-            'open_pair' => $pendingIn ? ['in' => $pendingIn->toIso8601String()] : null,
+            'open_pair' => $pendingIn ? ['in' => $this->formatIso8601ToMinute($pendingIn)] : null,
         ];
     }
 
     protected function resolveOfficialWorkedMinutes(
-        int $presenceMinutes,
+        int $rawWorkedMinutes,
+        int $expectedMinutes,
         int $exceededBreakMinutes,
+        int $pairCount,
         bool $hasIncompleteEntries
     ): int {
-        if ($hasIncompleteEntries || $presenceMinutes <= 0) {
+        if ($rawWorkedMinutes <= 0) {
             return 0;
         }
 
-        return max(0, $presenceMinutes - $exceededBreakMinutes);
+        if ($expectedMinutes <= 0) {
+            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
+        }
+
+        if ($hasIncompleteEntries || $pairCount < 2) {
+            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
+        }
+
+        if ($rawWorkedMinutes > $expectedMinutes) {
+            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
+        }
+
+        return max(0, $expectedMinutes - $exceededBreakMinutes);
     }
 
     /**
@@ -607,7 +602,7 @@ class TimesheetCalculationService
             }
 
             if ($parsed !== false) {
-                return $parsed;
+                return $this->truncateToMinute($parsed);
             }
         }
 
@@ -619,12 +614,24 @@ class TimesheetCalculationService
         return [
             'id' => $entry->id,
             'type' => $entry->type,
-            'clocked_at' => CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)->toIso8601String(),
+            'clocked_at' => $this->formatIso8601ToMinute(
+                CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)
+            ),
             'event_kind' => $entry->event_kind,
             'adjustment_status' => $entry->adjustment_status,
             'adjustment_reason' => $entry->adjustment_reason,
             'source' => $entry->source,
         ];
+    }
+
+    protected function truncateToMinute(CarbonImmutable $dateTime): CarbonImmutable
+    {
+        return $dateTime->setTime($dateTime->hour, $dateTime->minute, 0, 0);
+    }
+
+    protected function formatIso8601ToMinute(CarbonImmutable $dateTime): string
+    {
+        return $this->truncateToMinute($dateTime)->format('Y-m-d\TH:iP');
     }
 
     protected function minutesToHHMM(int $minutes): string
