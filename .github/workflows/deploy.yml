@@ -21,7 +21,7 @@ jobs:
               env:
                   DEPLOY_TIMEZONE: America/Sao_Paulo
                   DEPLOY_MORNING_END_TIME: "09:00"
-                  DEPLOY_NIGHT_START_TIME: "20:30"
+                  DEPLOY_NIGHT_START_TIME: "20:00"
               run: |
                   current_time=$(TZ="$DEPLOY_TIMEZONE" date +%H:%M)
 
