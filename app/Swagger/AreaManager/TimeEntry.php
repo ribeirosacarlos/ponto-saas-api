@@ -90,6 +90,12 @@ class TimeEntry {}
  *                     @OA\Property(property="latitude", type="string", nullable=true, example="-23.550520"),
  *                     @OA\Property(property="longitude", type="string", nullable=true, example="-46.633308"),
  *                     @OA\Property(property="source", type="string", example="web"),
+ *                     @OA\Property(property="work_date", type="string", format="date", example="2025-12-19"),
+ *                     @OA\Property(
+ *                         property="day_summary",
+ *                         ref="#/components/schemas/TimeEntryDaySummary",
+ *                         nullable=true
+ *                     ),
  *
  *                     @OA\Property(
  *                         property="user",

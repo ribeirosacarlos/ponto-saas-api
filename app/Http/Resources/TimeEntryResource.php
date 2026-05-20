@@ -24,7 +24,7 @@ class TimeEntryResource extends JsonResource
      */
     public function toArray($request): array
     {
-        return [
+        $payload = [
             'id' => $this->id,
             'company_id' => $this->company_id,
             'user_id' => $this->user_id,
@@ -54,5 +54,15 @@ class TimeEntryResource extends JsonResource
                 'email' => $this->user->email,
             ]),
         ];
+
+        if ($this->resource->offsetExists('work_date')) {
+            $payload['work_date'] = $this->resource->getAttribute('work_date');
+        }
+
+        if ($this->resource->offsetExists('day_summary')) {
+            $payload['day_summary'] = $this->resource->getAttribute('day_summary');
+        }
+
+        return $payload;
     }
 }
