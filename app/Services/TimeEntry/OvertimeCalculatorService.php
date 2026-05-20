@@ -35,12 +35,18 @@ class OvertimeCalculatorService
 
         $result['days'] = array_map(function (array $day) {
             $summary = TimeEntryDaySummary::normalize($day['summary'] ?? null);
+            $isIgnored = $summary['has_incomplete_entries'] && $summary['worked_minutes'] === 0;
+            $reason = null;
+
+            if ($isIgnored) {
+                $reason = $summary['open_session'] ? 'open_day_odd_entries' : 'incomplete_entries';
+            }
 
             return array_merge([
                 'date' => $day['date'],
                 'summary' => $summary,
-                'ignored' => $summary['has_incomplete_entries'] && $summary['worked_minutes'] === 0,
-                'reason' => $summary['has_incomplete_entries'] ? 'incomplete_entries' : null,
+                'ignored' => $isIgnored,
+                'reason' => $reason,
             ], TimeEntryDaySummary::rootAliases($summary));
         }, $result['days']);
 

@@ -265,10 +265,8 @@ class TimesheetCalculationService
         ));
         $pairing = $this->pairWorkEntries($workEntries, $timezone, $allowedBreakMinutes);
         $workedMinutes = $this->resolveOfficialWorkedMinutes(
-            $pairing['raw_worked_minutes'],
-            $expectedMinutes,
+            $pairing['presence_minutes'],
             $pairing['exceeded_break_minutes'],
-            $pairing['pair_count'],
             $pairing['has_incomplete_entries']
         );
         $balanceMinutes = $workedMinutes - $expectedMinutes;
@@ -287,12 +285,18 @@ class TimesheetCalculationService
                 'worked_hhmm' => $this->minutesToHHMM($workedMinutes),
                 'raw_worked_minutes' => $pairing['raw_worked_minutes'],
                 'raw_worked_hhmm' => $this->minutesToHHMM($pairing['raw_worked_minutes']),
+                'actual_worked_minutes' => $pairing['raw_worked_minutes'],
+                'actual_worked_hhmm' => $this->minutesToHHMM($pairing['raw_worked_minutes']),
                 'expected_minutes' => $expectedMinutes,
                 'expected_hhmm' => $this->minutesToHHMM($expectedMinutes),
                 'real_break_minutes' => $pairing['real_break_minutes'],
                 'real_break_hhmm' => $this->minutesToHHMM($pairing['real_break_minutes']),
+                'actual_break_minutes' => $pairing['real_break_minutes'],
+                'actual_break_hhmm' => $this->minutesToHHMM($pairing['real_break_minutes']),
                 'allowed_break_minutes' => $allowedBreakMinutes,
                 'allowed_break_hhmm' => $this->minutesToHHMM($allowedBreakMinutes),
+                'counted_break_minutes' => $pairing['counted_break_minutes'],
+                'counted_break_hhmm' => $this->minutesToHHMM($pairing['counted_break_minutes']),
                 'exceeded_break_minutes' => $pairing['exceeded_break_minutes'],
                 'exceeded_break_hhmm' => $this->minutesToHHMM($pairing['exceeded_break_minutes']),
                 'balance_minutes' => $balanceMinutes,
@@ -406,7 +410,9 @@ class TimesheetCalculationService
      * @param  array<int, TimeEntry>  $entries
      * @return array{
      *   raw_worked_minutes: int,
+     *   presence_minutes: int,
      *   real_break_minutes: int,
+     *   counted_break_minutes: int,
      *   exceeded_break_minutes: int,
      *   has_incomplete_entries: bool,
      *   open_session: bool,
@@ -419,8 +425,10 @@ class TimesheetCalculationService
     {
         $pendingIn = null;
         $previousOut = null;
-        $rawWorkedMinutes = 0;
-        $realBreakMinutes = 0;
+        $firstIn = null;
+        $lastOut = null;
+        $rawWorkedSeconds = 0;
+        $realBreakSeconds = 0;
         $hasIncompleteEntries = false;
         $pairs = [];
 
@@ -433,10 +441,11 @@ class TimesheetCalculationService
                 }
 
                 if ($previousOut !== null && $clockedAt->greaterThan($previousOut)) {
-                    $realBreakMinutes += (int) $clockedAt->diffInMinutes($previousOut, true);
+                    $realBreakSeconds += (int) $clockedAt->diffInSeconds($previousOut, true);
                     $previousOut = null;
                 }
 
+                $firstIn ??= $clockedAt;
                 $pendingIn = $clockedAt;
                 continue;
             }
@@ -453,14 +462,15 @@ class TimesheetCalculationService
                 continue;
             }
 
-            $minutes = (int) $clockedAt->diffInMinutes($pendingIn, true);
-            $rawWorkedMinutes += $minutes;
+            $seconds = (int) $clockedAt->diffInSeconds($pendingIn, true);
+            $rawWorkedSeconds += $seconds;
             $pairs[] = [
                 'in' => $pendingIn->toIso8601String(),
                 'out' => $clockedAt->toIso8601String(),
-                'minutes' => $minutes,
+                'minutes' => intdiv($seconds, 60),
             ];
             $previousOut = $clockedAt;
+            $lastOut = $clockedAt;
             $pendingIn = null;
         }
 
@@ -468,9 +478,18 @@ class TimesheetCalculationService
             $hasIncompleteEntries = true;
         }
 
+        $rawWorkedMinutes = intdiv($rawWorkedSeconds, 60);
+        $realBreakMinutes = intdiv($realBreakSeconds, 60);
+        $countedBreakMinutes = min($realBreakMinutes, $allowedBreakMinutes);
+        $presenceMinutes = ($firstIn !== null && $lastOut !== null && $lastOut->greaterThan($firstIn))
+            ? intdiv((int) $lastOut->diffInSeconds($firstIn, true), 60)
+            : 0;
+
         return [
             'raw_worked_minutes' => $rawWorkedMinutes,
+            'presence_minutes' => $presenceMinutes,
             'real_break_minutes' => $realBreakMinutes,
+            'counted_break_minutes' => $countedBreakMinutes,
             'exceeded_break_minutes' => max(0, $realBreakMinutes - $allowedBreakMinutes),
             'has_incomplete_entries' => $hasIncompleteEntries,
             'open_session' => $pendingIn !== null,
@@ -481,29 +500,15 @@ class TimesheetCalculationService
     }
 
     protected function resolveOfficialWorkedMinutes(
-        int $rawWorkedMinutes,
-        int $expectedMinutes,
+        int $presenceMinutes,
         int $exceededBreakMinutes,
-        int $pairCount,
         bool $hasIncompleteEntries
     ): int {
-        if ($rawWorkedMinutes <= 0) {
+        if ($hasIncompleteEntries || $presenceMinutes <= 0) {
             return 0;
         }
 
-        if ($expectedMinutes <= 0) {
-            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
-        }
-
-        if ($hasIncompleteEntries || $pairCount < 2) {
-            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
-        }
-
-        if ($rawWorkedMinutes > $expectedMinutes) {
-            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
-        }
-
-        return max(0, $expectedMinutes - $exceededBreakMinutes);
+        return max(0, $presenceMinutes - $exceededBreakMinutes);
     }
 
     /**

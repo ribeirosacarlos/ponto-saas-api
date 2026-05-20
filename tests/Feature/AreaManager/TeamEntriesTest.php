@@ -152,13 +152,85 @@ class TeamEntriesTest extends TestCase
             ->assertJsonCount(31, 'data');
     }
 
-    private function assignShift(User $user, CarbonImmutable $date): void
+    public function test_team_entries_day_summary_counts_allowed_break_as_paid_time(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'America/Sao_Paulo',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-05-19', 'America/Sao_Paulo');
+        $this->assignShift($employee, $date, [
+            'start_time' => '12:53',
+            'end_time' => '18:55',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '17:08',
+            'break_end_time' => '17:28',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(12, 53, 10)->utc(),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(17, 8, 30)->utc(),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(17, 22, 55)->utc(),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(18, 55, 47)->utc(),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-04-01T00:00:00-03:00&date_to=2026-05-30T23:59:59-03:00");
+
+        $response->assertOk()
+            ->assertJsonCount(4, 'data')
+            ->assertJsonPath('data.0.day_summary.worked_minutes', 362)
+            ->assertJsonPath('data.0.day_summary.worked_hhmm', '06:02')
+            ->assertJsonPath('data.0.day_summary.raw_worked_minutes', 348)
+            ->assertJsonPath('data.0.day_summary.actual_worked_minutes', 348)
+            ->assertJsonPath('data.0.day_summary.real_break_minutes', 14)
+            ->assertJsonPath('data.0.day_summary.actual_break_minutes', 14)
+            ->assertJsonPath('data.0.day_summary.counted_break_minutes', 14)
+            ->assertJsonPath('data.0.day_summary.allowed_break_minutes', 20)
+            ->assertJsonPath('data.0.day_summary.extra_minutes', 2)
+            ->assertJsonPath('data.0.day_summary.balance_minutes', 2)
+            ->assertJsonPath('data.0.day_summary.status', 'extra');
+    }
+
+    private function assignShift(User $user, CarbonImmutable $date, array $options = []): void
     {
         $shift = Shift::create([
             'company_id' => $user->company_id,
             'name' => 'Team Entries Shift',
-            'start_time' => '08:00',
-            'end_time' => '17:00',
+            'start_time' => $options['start_time'] ?? '08:00',
+            'end_time' => $options['end_time'] ?? '17:00',
             'is_flexible' => false,
             'is_default' => true,
         ]);
@@ -167,12 +239,12 @@ class TeamEntriesTest extends TestCase
             'shift_id' => $shift->id,
             'weekday' => $date->isoWeekday(),
             'is_working_day' => true,
-            'start_time' => '08:00',
-            'end_time' => '17:00',
-            'scheduled_minutes' => 540,
-            'break_minutes' => 60,
-            'break_start_time' => '12:00',
-            'break_end_time' => '13:00',
+            'start_time' => $options['start_time'] ?? '08:00',
+            'end_time' => $options['end_time'] ?? '17:00',
+            'scheduled_minutes' => $options['scheduled_minutes'] ?? 540,
+            'break_minutes' => $options['break_minutes'] ?? 60,
+            'break_start_time' => $options['break_start_time'] ?? '12:00',
+            'break_end_time' => $options['break_end_time'] ?? '13:00',
         ]);
 
         UserShift::create([
