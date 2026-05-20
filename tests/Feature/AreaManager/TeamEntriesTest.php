@@ -31,6 +31,13 @@ class TeamEntriesTest extends TestCase
         }
     }
 
+    protected function tearDown(): void
+    {
+        CarbonImmutable::setTestNow();
+
+        parent::tearDown();
+    }
+
     public function test_team_entries_returns_day_summary_for_each_entry(): void
     {
         $company = Company::factory()->create([
@@ -222,6 +229,74 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.day_summary.extra_minutes', 2)
             ->assertJsonPath('data.0.day_summary.balance_minutes', 2)
             ->assertJsonPath('data.0.day_summary.status', 'extra');
+    }
+
+    public function test_team_entries_does_not_close_overtime_for_current_day(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-19 19:30:00', 'America/Sao_Paulo'));
+
+        $company = Company::factory()->create([
+            'timezone' => 'America/Sao_Paulo',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-05-19', 'America/Sao_Paulo');
+        $this->assignShift($employee, $date, [
+            'start_time' => '12:53',
+            'end_time' => '18:55',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '17:08',
+            'break_end_time' => '17:28',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(12, 53, 10)->utc(),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(17, 8, 30)->utc(),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(17, 22, 55)->utc(),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(18, 55, 47)->utc(),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-05-19&date_to=2026-05-19");
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.day_summary.worked_minutes', 362)
+            ->assertJsonPath('data.0.day_summary.extra_minutes', 0)
+            ->assertJsonPath('data.0.day_summary.balance_minutes', 0)
+            ->assertJsonPath('data.0.day_summary.debt_minutes', 0)
+            ->assertJsonPath('data.0.day_summary.status', 'even')
+            ->assertJsonPath('data.0.day_summary.is_finalized', false);
     }
 
     private function assignShift(User $user, CarbonImmutable $date, array $options = []): void
