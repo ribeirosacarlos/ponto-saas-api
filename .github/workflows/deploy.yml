@@ -20,7 +20,7 @@ jobs:
             - name: Wait for deploy window
               env:
                   DEPLOY_TIMEZONE: America/Sao_Paulo
-                  DEPLOY_MORNING_END_TIME: "08:00"
+                  DEPLOY_MORNING_END_TIME: "09:00"
                   DEPLOY_NIGHT_START_TIME: "20:30"
               run: |
                   current_time=$(TZ="$DEPLOY_TIMEZONE" date +%H:%M)
