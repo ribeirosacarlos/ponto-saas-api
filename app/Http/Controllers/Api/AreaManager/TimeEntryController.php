@@ -4,9 +4,15 @@ namespace App\Http\Controllers\Api\AreaManager;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AreaManagerTeamEntriesRequest;
+use App\Http\Resources\TimeEntryResource;
 use App\Models\TimeEntry;
+use App\Models\User;
+use App\Services\TimeEntry\OvertimeCalculatorService;
 use App\Services\UserVisibilityService;
 use App\Support\CompanyTime;
+use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class TimeEntryController extends Controller
 {
@@ -15,12 +21,15 @@ class TimeEntryController extends Controller
     ) {
     }
 
-    public function teamEntries(AreaManagerTeamEntriesRequest $request)
+    public function teamEntries(
+        AreaManagerTeamEntriesRequest $request,
+        OvertimeCalculatorService $overtimeCalculator
+    )
     {
         $user = $request->user();
 
         $query = TimeEntry::query()
-            ->with(['user:id,name,email'])
+            ->with(['user:id,name,email,company_id'])
             ->orderByDesc('clocked_at');
         $this->userVisibilityService->applyToUserOwnedQuery($query, $user);
 
@@ -55,7 +64,67 @@ class TimeEntryController extends Controller
         $perPage = max(1, min($perPage, 200));
 
         $entries = $query->paginate($perPage);
+        $this->attachDaySummaries($entries, CompanyTime::companyTz($request), $overtimeCalculator);
+        $entries->setCollection(collect(TimeEntryResource::collectionArray($entries->getCollection())));
 
         return response()->json($entries);
+    }
+
+    private function attachDaySummaries(
+        LengthAwarePaginator $entries,
+        string $timezone,
+        OvertimeCalculatorService $overtimeCalculator
+    ): void {
+        /** @var Collection<int, TimeEntry> $collection */
+        $collection = $entries->getCollection();
+
+        if ($collection->isEmpty()) {
+            return;
+        }
+
+        $summariesByUser = [];
+
+        /** @var Collection<string, Collection<int, TimeEntry>> $entriesByUser */
+        $entriesByUser = $collection->groupBy('user_id');
+
+        foreach ($entriesByUser as $userEntries) {
+            /** @var TimeEntry $firstEntry */
+            $firstEntry = $userEntries->first();
+            /** @var User|null $employee */
+            $employee = $firstEntry->user;
+
+            if (! $employee) {
+                continue;
+            }
+
+            $dates = $userEntries
+                ->map(fn (TimeEntry $entry) => CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)->toDateString())
+                ->unique()
+                ->sort()
+                ->values();
+
+            if ($dates->isEmpty()) {
+                continue;
+            }
+
+            $from = CarbonImmutable::parse($dates->first(), $timezone)->startOfDay();
+            $to = CarbonImmutable::parse($dates->last(), $timezone)->endOfDay();
+
+            $overtime = $overtimeCalculator->calculateForEmployee($employee, $from, $to, true);
+
+            $summariesByUser[$employee->id] = collect($overtime['days'] ?? [])
+                ->keyBy('date')
+                ->map(fn (array $day) => $day['summary'] ?? null)
+                ->all();
+        }
+
+        $collection->transform(function (TimeEntry $entry) use ($summariesByUser, $timezone) {
+            $workDate = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)->toDateString();
+
+            $entry->setAttribute('work_date', $workDate);
+            $entry->setAttribute('day_summary', $summariesByUser[$entry->user_id][$workDate] ?? null);
+
+            return $entry;
+        });
     }
 }

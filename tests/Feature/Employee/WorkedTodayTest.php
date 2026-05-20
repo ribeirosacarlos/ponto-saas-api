@@ -54,10 +54,13 @@ class WorkedTodayTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.worked_seconds', 0)
             ->assertJsonPath('data.worked_minutes', 0)
+            ->assertJsonPath('data.worked_hhmm', '00:00')
             ->assertJsonPath('data.worked_hours_decimal', 0)
             ->assertJsonPath('data.expected_break_minutes', 60)
             ->assertJsonPath('data.break_seconds_deducted', 0)
-            ->assertJsonPath('data.open_session', false);
+            ->assertJsonPath('data.open_session', false)
+            ->assertJsonPath('data.summary.worked_minutes', 0)
+            ->assertJsonPath('data.summary.worked_hhmm', '00:00');
 
         $response->assertJsonCount(0, 'data.details.pairs');
     }
@@ -116,11 +119,12 @@ class WorkedTodayTest extends TestCase
             ->assertJsonPath('data.details.pairs.0.seconds', 32400)
             ->assertJson([
                 'data' => [
-                    'worked_seconds' => 28800,
-                    'worked_minutes' => 480,
-                    'worked_hours_decimal' => 8.0,
+                    'worked_seconds' => 32400,
+                    'worked_minutes' => 540,
+                    'worked_hhmm' => '09:00',
+                    'worked_hours_decimal' => 9.0,
                     'expected_break_minutes' => 60,
-                    'break_seconds_deducted' => 3600,
+                    'break_seconds_deducted' => 0,
                     'open_session' => false,
                 ],
             ]);
@@ -148,11 +152,12 @@ class WorkedTodayTest extends TestCase
             ->assertJsonPath('data.details.pairs.0.seconds', 32400)
             ->assertJson([
                 'data' => [
-                    'worked_seconds' => 28800,
-                    'worked_minutes' => 480,
-                    'worked_hours_decimal' => 8.0,
+                    'worked_seconds' => 32400,
+                    'worked_minutes' => 540,
+                    'worked_hhmm' => '09:00',
+                    'worked_hours_decimal' => 9.0,
                     'expected_break_minutes' => 60,
-                    'break_seconds_deducted' => 3600,
+                    'break_seconds_deducted' => 0,
                     'open_session' => false,
                 ],
             ]);
@@ -178,11 +183,11 @@ class WorkedTodayTest extends TestCase
             ->assertJsonPath('data.details.pairs.0.seconds', 14400)
             ->assertJson([
                 'data' => [
-                    'worked_seconds' => 10800,
-                    'worked_minutes' => 180,
-                    'worked_hours_decimal' => 3.0,
+                    'worked_seconds' => 14400,
+                    'worked_minutes' => 240,
+                    'worked_hours_decimal' => 4.0,
                     'expected_break_minutes' => 60,
-                    'break_seconds_deducted' => 3600,
+                    'break_seconds_deducted' => 0,
                     'open_session' => false,
                 ],
             ]);

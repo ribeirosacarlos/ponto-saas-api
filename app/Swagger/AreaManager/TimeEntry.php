@@ -19,7 +19,7 @@ class TimeEntry {}
  * @OA\Get(
  *     path="/v1/area-manager/team/entries",
  *     summary="Lista as batidas de ponto da equipe",
- *     description="Retorna entradas de ponto da empresa do gestor/admin. Por padrão lista tudo (in e out). Suporta filtros e paginação.",
+ *     description="Retorna batidas brutas da equipe supervisionada. Este endpoint nao retorna agregacao diaria nem campo days/summary; para resumo por dia use /v1/area-manager/team/{employee}/overtime?include_days=1.",
  *     tags={"Area Manager - Time Entries"},
  *     security={{"bearerAuth":{}}},
  *
@@ -90,6 +90,12 @@ class TimeEntry {}
  *                     @OA\Property(property="latitude", type="string", nullable=true, example="-23.550520"),
  *                     @OA\Property(property="longitude", type="string", nullable=true, example="-46.633308"),
  *                     @OA\Property(property="source", type="string", example="web"),
+ *                     @OA\Property(property="work_date", type="string", format="date", example="2025-12-19"),
+ *                     @OA\Property(
+ *                         property="day_summary",
+ *                         ref="#/components/schemas/TimeEntryDaySummary",
+ *                         nullable=true
+ *                     ),
  *
  *                     @OA\Property(
  *                         property="user",

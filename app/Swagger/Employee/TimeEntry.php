@@ -290,14 +290,40 @@ class EmployeeShiftAssignmentSchema {}
 
 /**
  * @OA\Schema(
+ *     schema="TimeEntryDaySummary",
+ *     @OA\Property(property="worked_minutes", type="integer", example=490),
+ *     @OA\Property(property="worked_hhmm", type="string", example="08:10"),
+ *     @OA\Property(property="expected_minutes", type="integer", example=480),
+ *     @OA\Property(property="expected_hhmm", type="string", example="08:00"),
+ *     @OA\Property(property="balance_minutes", type="integer", example=10),
+ *     @OA\Property(property="balance_hhmm", type="string", example="+00:10"),
+ *     @OA\Property(property="extra_minutes", type="integer", example=10),
+ *     @OA\Property(property="extra_hhmm", type="string", example="00:10"),
+ *     @OA\Property(property="debt_minutes", type="integer", example=0),
+ *     @OA\Property(property="debt_hhmm", type="string", example="00:00"),
+ *     @OA\Property(property="status", type="string", enum={"extra","debt","even"}, example="extra"),
+ *     @OA\Property(property="allowed_break_minutes", type="integer", example=60),
+ *     @OA\Property(property="exceeded_break_minutes", type="integer", example=0),
+ *     @OA\Property(property="has_incomplete_entries", type="boolean", example=false),
+ *     @OA\Property(property="open_session", type="boolean", example=false)
+ * )
+ */
+class TimeEntryDaySummarySchema {}
+
+/**
+ * @OA\Schema(
  *     schema="EmployeeTimeEntryHistoryDay",
  *     @OA\Property(property="date", type="string", format="date", example="2026-02-08"),
  *     @OA\Property(property="first_in", type="string", format="date-time", nullable=true, example="2026-02-08T08:05:00-03:00"),
  *     @OA\Property(property="last_out", type="string", format="date-time", nullable=true, example="2026-02-08T17:45:00-03:00"),
+ *     @OA\Property(property="worked_minutes", type="integer", example=490),
  *     @OA\Property(property="worked_hhmm", type="string", example="08:10"),
+ *     @OA\Property(property="expected_minutes", type="integer", example=480),
  *     @OA\Property(property="expected_hhmm", type="string", example="08:00"),
+ *     @OA\Property(property="balance_minutes", type="integer", example=10),
  *     @OA\Property(property="balance_hhmm", type="string", example="+00:10"),
  *     @OA\Property(property="status", type="string", enum={"extra","debt","even"}, example="extra"),
+ *     @OA\Property(property="summary", ref="#/components/schemas/TimeEntryDaySummary"),
  *     @OA\Property(property="open_day", type="boolean", example=false)
  * )
  */
@@ -351,10 +377,17 @@ class EmployeeWorkedToday {}
  *     @OA\Property(property="date", type="string", format="date", example="2025-12-19"),
  *     @OA\Property(property="worked_seconds", type="integer", example=28800),
  *     @OA\Property(property="worked_minutes", type="integer", example=480),
+ *     @OA\Property(property="worked_hhmm", type="string", example="08:00"),
  *     @OA\Property(property="worked_hours_decimal", type="number", format="float", example=8.0),
  *     @OA\Property(property="expected_break_minutes", type="integer", example=60),
  *     @OA\Property(property="break_seconds_deducted", type="integer", example=3600),
  *     @OA\Property(property="open_session", type="boolean", example=false),
+ *     @OA\Property(property="expected_minutes", type="integer", example=480),
+ *     @OA\Property(property="expected_hhmm", type="string", example="08:00"),
+ *     @OA\Property(property="balance_minutes", type="integer", example=0),
+ *     @OA\Property(property="balance_hhmm", type="string", example="00:00"),
+ *     @OA\Property(property="status", type="string", enum={"extra","debt","even"}, example="even"),
+ *     @OA\Property(property="summary", ref="#/components/schemas/TimeEntryDaySummary"),
  *     @OA\Property(
  *         property="details",
  *         type="object",
