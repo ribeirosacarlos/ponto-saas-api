@@ -51,19 +51,32 @@ class TimeEntryController extends Controller
         $timezone = CompanyTime::companyTz($request);
 
         if ($request->filled('date_from')) {
-            [$fromUtc] = CompanyTime::dayRangeToUtc($request->date_from, $timezone);
+            [$fromUtc] = CompanyTime::dayRangeToUtc(
+                CompanyTime::normalizeDateInput($request->date_from, $timezone),
+                $timezone
+            );
             $query->where('clocked_at', '>=', $fromUtc->toDateTimeString());
         }
 
         if ($request->filled('date_to')) {
-            [, $toUtc] = CompanyTime::dayRangeToUtc($request->date_to, $timezone);
+            [, $toUtc] = CompanyTime::dayRangeToUtc(
+                CompanyTime::normalizeDateInput($request->date_to, $timezone),
+                $timezone
+            );
             $query->where('clocked_at', '<=', $toUtc->toDateTimeString());
         }
 
-        $perPage = (int) $request->get('per_page', 30);
-        $perPage = max(1, min($perPage, 200));
+        $paginateAllForUser = $request->filled('user_id');
+        $perPage = $paginateAllForUser
+            ? max($query->count(), 1)
+            : max(1, min((int) $request->get('per_page', 30), 200));
 
-        $entries = $query->paginate($perPage);
+        $entries = $query->paginate(
+            $perPage,
+            ['*'],
+            'page',
+            $paginateAllForUser ? 1 : null
+        );
         $this->attachDaySummaries($entries, CompanyTime::companyTz($request), $overtimeCalculator);
         $entries->setCollection(collect(TimeEntryResource::collectionArray($entries->getCollection())));
 

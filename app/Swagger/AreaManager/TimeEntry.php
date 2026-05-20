@@ -19,7 +19,7 @@ class TimeEntry {}
  * @OA\Get(
  *     path="/v1/area-manager/team/entries",
  *     summary="Lista as batidas de ponto da equipe",
- *     description="Retorna batidas brutas da equipe supervisionada. Este endpoint nao retorna agregacao diaria nem campo days/summary; para resumo por dia use /v1/area-manager/team/{employee}/overtime?include_days=1.",
+ *     description="Retorna batidas brutas da equipe supervisionada. Este endpoint nao retorna agregacao diaria nem campo days/summary; para resumo por dia use /v1/area-manager/team/{employee}/overtime?include_days=1. Quando user_id for informado, a rota retorna todas as batidas desse usuario em uma unica pagina.",
  *     tags={"Area Manager - Time Entries"},
  *     security={{"bearerAuth":{}}},
  *
@@ -43,7 +43,7 @@ class TimeEntry {}
  *         name="date_from",
  *         in="query",
  *         required=false,
- *         description="Data inicial (inclusive). Aceita qualquer formato parseável pelo Laravel, preferível ISO.",
+ *         description="Data inicial (inclusive). Apenas o dia e considerado: se vier com hora/offset, essa parte e ignorada.",
  *         @OA\Schema(type="string", format="date-time", example="2026-01-01T00:00:00Z")
  *     ),
  *
@@ -51,7 +51,7 @@ class TimeEntry {}
  *         name="date_to",
  *         in="query",
  *         required=false,
- *         description="Data final (inclusive).",
+ *         description="Data final (inclusive). Apenas o dia e considerado: se vier com hora/offset, essa parte e ignorada.",
  *         @OA\Schema(type="string", format="date-time", example="2026-01-31T23:59:59Z")
  *     ),
  *
@@ -59,7 +59,7 @@ class TimeEntry {}
  *         name="page",
  *         in="query",
  *         required=false,
- *         description="Número da página para paginação",
+ *         description="Número da página para paginação. Ignorado quando user_id for informado.",
  *         @OA\Schema(type="integer", example=1)
  *     ),
  *
@@ -67,7 +67,7 @@ class TimeEntry {}
  *         name="per_page",
  *         in="query",
  *         required=false,
- *         description="Quantidade de itens por página (máx 200). Default 30.",
+ *         description="Quantidade de itens por página (máx 200). Default 30. Ignorado quando user_id for informado.",
  *         @OA\Schema(type="integer", example=30)
  *     ),
  *
