@@ -208,6 +208,33 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame('even', $result['days'][0]['status']);
     }
 
+    public function test_break_time_below_allowed_counts_only_real_break(): void
+    {
+        $date = CarbonImmutable::parse('2025-12-20', 'UTC');
+        $user = User::factory()->create();
+        $this->assignShift($user, $date->isoWeekday(), [
+            'start_time' => '08:00',
+            'end_time' => '14:00',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '12:00',
+            'break_end_time' => '12:20',
+        ]);
+
+        $this->createTimeEntry($user, 'in', $date->setTime(8, 0));
+        $this->createTimeEntry($user, 'out', $date->setTime(12, 0));
+        $this->createTimeEntry($user, 'in', $date->setTime(12, 15));
+        $this->createTimeEntry($user, 'out', $date->setTime(14, 0));
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $date, $date, true);
+
+        $this->assertSame(345, $result['days'][0]['raw_worked_minutes']);
+        $this->assertSame(15, $result['days'][0]['real_break_minutes']);
+        $this->assertSame(15, $result['days'][0]['counted_break_minutes']);
+        $this->assertSame(360, $result['days'][0]['worked_minutes']);
+    }
+
     public function test_break_time_above_allowed_reduces_credit(): void
     {
         $date = CarbonImmutable::parse('2025-12-22', 'UTC');
@@ -230,10 +257,134 @@ class OvertimeCalculatorServiceTest extends TestCase
         $result = $service->calculateForEmployee($user, $date, $date, true);
 
         $this->assertSame(355, $result['days'][0]['worked_minutes']);
+        $this->assertSame(335, $result['days'][0]['raw_worked_minutes']);
         $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
         $this->assertSame(25, $result['days'][0]['actual_break_minutes']);
         $this->assertSame(-5, $result['days'][0]['balance_minutes']);
         $this->assertSame('debt', $result['days'][0]['status']);
+    }
+
+    public function test_no_break_does_not_add_allowed_break_minutes(): void
+    {
+        $date = CarbonImmutable::parse('2025-12-23', 'UTC');
+        $user = User::factory()->create();
+        $this->assignShift($user, $date->isoWeekday(), [
+            'start_time' => '08:00',
+            'end_time' => '14:00',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '12:00',
+            'break_end_time' => '12:20',
+        ]);
+
+        $this->createTimeEntry($user, 'in', $date->setTime(8, 0));
+        $this->createTimeEntry($user, 'out', $date->setTime(14, 0));
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $date, $date, true);
+
+        $this->assertSame(360, $result['days'][0]['raw_worked_minutes']);
+        $this->assertSame(0, $result['days'][0]['real_break_minutes']);
+        $this->assertSame(0, $result['days'][0]['counted_break_minutes']);
+        $this->assertSame(360, $result['days'][0]['worked_minutes']);
+    }
+
+    public function test_multiple_breaks_share_daily_allowed_break_limit(): void
+    {
+        $date = CarbonImmutable::parse('2025-12-24', 'UTC');
+        $user = User::factory()->create();
+        $this->assignShift($user, $date->isoWeekday(), [
+            'start_time' => '08:00',
+            'end_time' => '14:00',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '12:00',
+            'break_end_time' => '12:20',
+        ]);
+
+        $this->createTimeEntry($user, 'in', $date->setTime(8, 0));
+        $this->createTimeEntry($user, 'out', $date->setTime(10, 0));
+        $this->createTimeEntry($user, 'in', $date->setTime(10, 15));
+        $this->createTimeEntry($user, 'out', $date->setTime(12, 0));
+        $this->createTimeEntry($user, 'in', $date->setTime(12, 15));
+        $this->createTimeEntry($user, 'out', $date->setTime(14, 0));
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $date, $date, true);
+
+        $this->assertSame(330, $result['days'][0]['raw_worked_minutes']);
+        $this->assertSame(30, $result['days'][0]['real_break_minutes']);
+        $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
+        $this->assertSame(350, $result['days'][0]['worked_minutes']);
+        $this->assertSame(-10, $result['days'][0]['balance_minutes']);
+    }
+
+    public function test_reported_day_summary_case_counts_allowed_break_as_paid_time(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-20 09:00:00', 'America/Sao_Paulo'));
+
+        $date = CarbonImmutable::parse('2026-05-19', 'America/Sao_Paulo');
+        $user = User::factory()->create();
+        $user->company->update(['timezone' => 'America/Sao_Paulo']);
+        $this->assignShift($user, $date->isoWeekday(), [
+            'start_time' => '10:52',
+            'end_time' => '16:52',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '16:05',
+            'break_end_time' => '16:25',
+            'start_date' => $date->startOfMonth(),
+        ]);
+
+        $this->createTimeEntry($user, 'in', $date->setTime(10, 52)->utc());
+        $this->createTimeEntry($user, 'out', $date->setTime(16, 5)->utc());
+        $this->createTimeEntry($user, 'in', $date->setTime(16, 28)->utc());
+        $this->createTimeEntry($user, 'out', $date->setTime(18, 38)->utc());
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $date, $date, true);
+
+        $this->assertSame(443, $result['days'][0]['raw_worked_minutes']);
+        $this->assertSame('07:23', $result['days'][0]['raw_worked_hhmm']);
+        $this->assertSame(443, $result['days'][0]['actual_worked_minutes']);
+        $this->assertSame(23, $result['days'][0]['real_break_minutes']);
+        $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
+        $this->assertSame(3, $result['days'][0]['exceeded_break_minutes']);
+        $this->assertSame(463, $result['days'][0]['worked_minutes']);
+        $this->assertSame('07:43', $result['days'][0]['worked_hhmm']);
+        $this->assertSame(103, $result['days'][0]['balance_minutes']);
+        $this->assertSame('+01:43', $result['days'][0]['balance_hhmm']);
+        $this->assertSame(103, $result['days'][0]['extra_minutes']);
+        $this->assertSame('01:43', $result['days'][0]['extra_hhmm']);
+        $this->assertSame(0, $result['days'][0]['debt_minutes']);
+        $this->assertSame('00:00', $result['days'][0]['debt_hhmm']);
+    }
+
+    public function test_seconds_are_ignored_in_work_and_break_calculation(): void
+    {
+        $date = CarbonImmutable::parse('2025-12-26', 'UTC');
+        $user = User::factory()->create();
+        $this->assignShift($user, $date->isoWeekday(), [
+            'start_time' => '08:00',
+            'end_time' => '14:00',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '12:00',
+            'break_end_time' => '12:20',
+        ]);
+
+        $this->createTimeEntry($user, 'in', $date->setTime(8, 0, 59));
+        $this->createTimeEntry($user, 'out', $date->setTime(12, 0, 1));
+        $this->createTimeEntry($user, 'in', $date->setTime(12, 20, 59));
+        $this->createTimeEntry($user, 'out', $date->setTime(14, 0, 1));
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $date, $date, true);
+
+        $this->assertSame(340, $result['days'][0]['raw_worked_minutes']);
+        $this->assertSame(20, $result['days'][0]['real_break_minutes']);
+        $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
+        $this->assertSame(360, $result['days'][0]['worked_minutes']);
     }
 
     public function test_current_day_is_not_finalized_for_overtime_balance(): void

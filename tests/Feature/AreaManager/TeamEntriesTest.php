@@ -38,7 +38,7 @@ class TeamEntriesTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_team_entries_returns_day_summary_for_each_entry(): void
+    public function test_team_entries_groups_entries_by_day_for_specific_user(): void
     {
         $company = Company::factory()->create([
             'timezone' => 'UTC',
@@ -73,15 +73,20 @@ class TeamEntriesTest extends TestCase
             ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}");
 
         $response->assertOk()
-            ->assertJsonPath('data.0.work_date', '2025-12-19')
+            ->assertJsonPath('total_days', 1)
+            ->assertJsonPath('total_entries', 2)
+            ->assertJsonPath('data.0.date', '2025-12-19')
+            ->assertJsonPath('data.0.employee_id', (string) $employee->id)
+            ->assertJsonPath('data.0.user.id', (string) $employee->id)
             ->assertJsonPath('data.0.day_summary.worked_minutes', 540)
             ->assertJsonPath('data.0.day_summary.worked_hhmm', '09:00')
             ->assertJsonPath('data.0.day_summary.expected_minutes', 540)
             ->assertJsonPath('data.0.day_summary.balance_minutes', 0)
             ->assertJsonPath('data.0.day_summary.status', 'even')
-            ->assertJsonPath('data.1.work_date', '2025-12-19')
-            ->assertJsonPath('data.1.day_summary.worked_minutes', 540)
-            ->assertJsonPath('data.1.day_summary.worked_hhmm', '09:00');
+            ->assertJsonCount(2, 'data.0.entries')
+            ->assertJsonPath('data.0.entries.0.id', $employee->timeEntries()->orderByDesc('clocked_at')->first()->id)
+            ->assertJsonPath('data.0.entries.0.work_date', '2025-12-19')
+            ->assertJsonMissingPath('data.0.entries.0.day_summary');
     }
 
     public function test_team_entries_ignores_time_component_in_date_filters(): void
@@ -119,9 +124,10 @@ class TeamEntriesTest extends TestCase
             ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2025-12-19T12:00:00Z&date_to=2025-12-19T18:00:00Z");
 
         $response->assertOk()
-            ->assertJsonCount(2, 'data')
-            ->assertJsonPath('data.0.id', $eveningEntry->id)
-            ->assertJsonPath('data.1.id', $morningEntry->id);
+            ->assertJsonCount(1, 'data')
+            ->assertJsonCount(2, 'data.0.entries')
+            ->assertJsonPath('data.0.entries.0.id', $eveningEntry->id)
+            ->assertJsonPath('data.0.entries.1.id', $morningEntry->id);
     }
 
     public function test_team_entries_returns_all_entries_for_a_specific_user_without_paging_cutoff(): void
@@ -153,10 +159,10 @@ class TeamEntriesTest extends TestCase
             ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&page=2");
 
         $response->assertOk()
-            ->assertJsonPath('current_page', 1)
-            ->assertJsonPath('total', 31)
-            ->assertJsonPath('per_page', 31)
-            ->assertJsonCount(31, 'data');
+            ->assertJsonPath('total_days', 1)
+            ->assertJsonPath('total_entries', 31)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonCount(31, 'data.0.entries');
     }
 
     public function test_team_entries_day_summary_counts_allowed_break_as_paid_time(): void
@@ -217,7 +223,8 @@ class TeamEntriesTest extends TestCase
             ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-04-01T00:00:00-03:00&date_to=2026-05-30T23:59:59-03:00");
 
         $response->assertOk()
-            ->assertJsonCount(4, 'data')
+            ->assertJsonCount(1, 'data')
+            ->assertJsonCount(4, 'data.0.entries')
             ->assertJsonPath('data.0.day_summary.worked_minutes', 362)
             ->assertJsonPath('data.0.day_summary.worked_hhmm', '06:02')
             ->assertJsonPath('data.0.day_summary.raw_worked_minutes', 348)
@@ -291,6 +298,8 @@ class TeamEntriesTest extends TestCase
             ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-05-19&date_to=2026-05-19");
 
         $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonCount(4, 'data.0.entries')
             ->assertJsonPath('data.0.day_summary.worked_minutes', 362)
             ->assertJsonPath('data.0.day_summary.extra_minutes', 0)
             ->assertJsonPath('data.0.day_summary.balance_minutes', 0)

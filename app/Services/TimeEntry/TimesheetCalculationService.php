@@ -266,8 +266,8 @@ class TimesheetCalculationService
         ));
         $pairing = $this->pairWorkEntries($workEntries, $timezone, $allowedBreakMinutes);
         $workedMinutes = $this->resolveOfficialWorkedMinutes(
-            $pairing['presence_minutes'],
-            $pairing['exceeded_break_minutes'],
+            $pairing['raw_worked_minutes'],
+            $pairing['counted_break_minutes'],
             $pairing['has_incomplete_entries']
         );
         $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes : 0;
@@ -412,7 +412,6 @@ class TimesheetCalculationService
      * @param  array<int, TimeEntry>  $entries
      * @return array{
      *   raw_worked_minutes: int,
-     *   presence_minutes: int,
      *   real_break_minutes: int,
      *   counted_break_minutes: int,
      *   exceeded_break_minutes: int,
@@ -427,15 +426,15 @@ class TimesheetCalculationService
     {
         $pendingIn = null;
         $previousOut = null;
-        $firstIn = null;
-        $lastOut = null;
-        $rawWorkedSeconds = 0;
-        $realBreakSeconds = 0;
+        $rawWorkedMinutes = 0;
+        $realBreakMinutes = 0;
         $hasIncompleteEntries = false;
         $pairs = [];
 
         foreach ($entries as $entry) {
-            $clockedAt = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone);
+            $clockedAt = $this->truncateToMinute(
+                CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)
+            );
 
             if ($entry->type === 'in') {
                 if ($pendingIn !== null) {
@@ -443,11 +442,10 @@ class TimesheetCalculationService
                 }
 
                 if ($previousOut !== null && $clockedAt->greaterThan($previousOut)) {
-                    $realBreakSeconds += (int) $clockedAt->diffInSeconds($previousOut, true);
+                    $realBreakMinutes += (int) $clockedAt->diffInMinutes($previousOut, true);
                     $previousOut = null;
                 }
 
-                $firstIn ??= $clockedAt;
                 $pendingIn = $clockedAt;
                 continue;
             }
@@ -464,15 +462,14 @@ class TimesheetCalculationService
                 continue;
             }
 
-            $seconds = (int) $clockedAt->diffInSeconds($pendingIn, true);
-            $rawWorkedSeconds += $seconds;
+            $minutes = (int) $clockedAt->diffInMinutes($pendingIn, true);
+            $rawWorkedMinutes += $minutes;
             $pairs[] = [
                 'in' => $pendingIn->toIso8601String(),
                 'out' => $clockedAt->toIso8601String(),
-                'minutes' => intdiv($seconds, 60),
+                'minutes' => $minutes,
             ];
             $previousOut = $clockedAt;
-            $lastOut = $clockedAt;
             $pendingIn = null;
         }
 
@@ -480,16 +477,10 @@ class TimesheetCalculationService
             $hasIncompleteEntries = true;
         }
 
-        $rawWorkedMinutes = intdiv($rawWorkedSeconds, 60);
-        $realBreakMinutes = intdiv($realBreakSeconds, 60);
         $countedBreakMinutes = min($realBreakMinutes, $allowedBreakMinutes);
-        $presenceMinutes = ($firstIn !== null && $lastOut !== null && $lastOut->greaterThan($firstIn))
-            ? intdiv((int) $lastOut->diffInSeconds($firstIn, true), 60)
-            : 0;
 
         return [
             'raw_worked_minutes' => $rawWorkedMinutes,
-            'presence_minutes' => $presenceMinutes,
             'real_break_minutes' => $realBreakMinutes,
             'counted_break_minutes' => $countedBreakMinutes,
             'exceeded_break_minutes' => max(0, $realBreakMinutes - $allowedBreakMinutes),
@@ -502,15 +493,20 @@ class TimesheetCalculationService
     }
 
     protected function resolveOfficialWorkedMinutes(
-        int $presenceMinutes,
-        int $exceededBreakMinutes,
+        int $rawWorkedMinutes,
+        int $countedBreakMinutes,
         bool $hasIncompleteEntries
     ): int {
-        if ($hasIncompleteEntries || $presenceMinutes <= 0) {
+        if ($hasIncompleteEntries || $rawWorkedMinutes <= 0) {
             return 0;
         }
 
-        return max(0, $presenceMinutes - $exceededBreakMinutes);
+        return $rawWorkedMinutes + $countedBreakMinutes;
+    }
+
+    protected function truncateToMinute(CarbonImmutable $date): CarbonImmutable
+    {
+        return $date->setTime($date->hour, $date->minute, 0, 0);
     }
 
     /**

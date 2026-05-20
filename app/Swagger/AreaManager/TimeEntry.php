@@ -19,7 +19,7 @@ class TimeEntry {}
  * @OA\Get(
  *     path="/v1/area-manager/team/entries",
  *     summary="Lista as batidas de ponto da equipe",
- *     description="Retorna batidas brutas da equipe supervisionada. Este endpoint nao retorna agregacao diaria nem campo days/summary; para resumo por dia use /v1/area-manager/team/{employee}/overtime?include_days=1. Quando user_id for informado, a rota retorna todas as batidas desse usuario em uma unica pagina.",
+ *     description="Sem user_id, retorna batidas brutas paginadas da equipe supervisionada. Com user_id, retorna os dias agrupados desse usuario, com day_summary uma vez por dia e batidas em entries[].",
  *     tags={"Area Manager - Time Entries"},
  *     security={{"bearerAuth":{}}},
  *
@@ -73,37 +73,48 @@ class TimeEntry {}
  *
  *     @OA\Response(
  *         response=200,
- *         description="Lista paginada das batidas da equipe",
+ *         description="Lista das batidas da equipe. Sem user_id, data contem batidas paginadas. Com user_id, data contem dias agrupados.",
  *         @OA\JsonContent(
- *             @OA\Property(property="current_page", type="integer", example=1),
- *             @OA\Property(property="per_page", type="integer", example=30),
- *             @OA\Property(property="total", type="integer", example=120),
+ *             @OA\Property(property="current_page", type="integer", nullable=true, example=1),
+ *             @OA\Property(property="per_page", type="integer", nullable=true, example=30),
+ *             @OA\Property(property="total", type="integer", nullable=true, example=120),
+ *             @OA\Property(property="total_days", type="integer", nullable=true, example=1),
+ *             @OA\Property(property="total_entries", type="integer", nullable=true, example=4),
  *             @OA\Property(
  *                 property="data",
  *                 type="array",
  *                 @OA\Items(
- *                     @OA\Property(property="id", type="string", format="uuid", example="019b9600-77ae-71dd-b912-4f26d4f2f354"),
- *                     @OA\Property(property="user_id", type="string", format="uuid", example="c16ad58b-99c1-431d-bbd7-c8c71eca33e7"),
- *                     @OA\Property(property="company_id", type="string", format="uuid", example="78f4ab91-296c-4fdb-a70c-c91415be1532"),
- *                     @OA\Property(property="clocked_at", type="string", example="2026-01-06T13:03:00Z"),
- *                     @OA\Property(property="type", type="string", example="in"),
- *                     @OA\Property(property="latitude", type="string", nullable=true, example="-23.550520"),
- *                     @OA\Property(property="longitude", type="string", nullable=true, example="-46.633308"),
- *                     @OA\Property(property="source", type="string", example="web"),
- *                     @OA\Property(property="work_date", type="string", format="date", example="2025-12-19"),
+ *                     @OA\Property(property="date", type="string", format="date", nullable=true, example="2025-12-19"),
+ *                     @OA\Property(property="employee_id", type="string", format="uuid", nullable=true, example="c16ad58b-99c1-431d-bbd7-c8c71eca33e7"),
  *                     @OA\Property(
  *                         property="day_summary",
  *                         ref="#/components/schemas/TimeEntryDaySummary",
  *                         nullable=true
  *                     ),
- *
  *                     @OA\Property(
  *                         property="user",
  *                         type="object",
+ *                         nullable=true,
  *                         description="Informações do funcionário",
  *                         @OA\Property(property="id", type="string", format="uuid", example="c16ad58b-99c1-431d-bbd7-c8c71eca33e7"),
  *                         @OA\Property(property="name", type="string", example="João da Silva"),
  *                         @OA\Property(property="email", type="string", example="joao@empresa.com")
+ *                     ),
+ *                     @OA\Property(
+ *                         property="entries",
+ *                         type="array",
+ *                         nullable=true,
+ *                         @OA\Items(
+ *                             @OA\Property(property="id", type="string", format="uuid", example="019b9600-77ae-71dd-b912-4f26d4f2f354"),
+ *                             @OA\Property(property="user_id", type="string", format="uuid", example="c16ad58b-99c1-431d-bbd7-c8c71eca33e7"),
+ *                             @OA\Property(property="company_id", type="string", format="uuid", example="78f4ab91-296c-4fdb-a70c-c91415be1532"),
+ *                             @OA\Property(property="clocked_at", type="string", example="2026-01-06T13:03:00Z"),
+ *                             @OA\Property(property="type", type="string", example="in"),
+ *                             @OA\Property(property="latitude", type="string", nullable=true, example="-23.550520"),
+ *                             @OA\Property(property="longitude", type="string", nullable=true, example="-46.633308"),
+ *                             @OA\Property(property="source", type="string", example="web"),
+ *                             @OA\Property(property="work_date", type="string", format="date", example="2025-12-19")
+ *                         )
  *                     )
  *                 )
  *             )
