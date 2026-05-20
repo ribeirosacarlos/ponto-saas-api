@@ -14,6 +14,7 @@ namespace App\Swagger\Admin\Employees;
  *     @OA\Property(property="expected_hhmm", type="string", example="8:00"),
  *     @OA\Property(property="balance_hhmm", type="string", example="00:00"),
  *     @OA\Property(property="status", type="string", enum={"extra","debt","even"}, example="even"),
+ *     @OA\Property(property="summary", ref="#/components/schemas/TimeEntryDaySummary"),
  *     @OA\Property(property="ignored", type="boolean", example=false),
  *     @OA\Property(property="reason", type="string", example="too_few_entries", nullable=true)
  * )

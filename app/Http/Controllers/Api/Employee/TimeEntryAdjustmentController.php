@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Employee;
 use App\Actions\TimeEntries\CreateTimeEntryAdjustmentAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimeEntryAdjustmentRequest;
+use App\Http\Resources\TimeEntryResource;
 use App\Models\TimeEntry;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +35,6 @@ class TimeEntryAdjustmentController extends Controller
             'source' => $request->proposed_source ?? 'adjustment',
         ]);
 
-        return response()->json($adjustment, 201);
+        return response()->json((new TimeEntryResource($adjustment))->resolve(), 201);
     }
 }

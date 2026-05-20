@@ -3,6 +3,7 @@
 namespace App\Services\TimeEntry;
 
 use App\Models\User;
+use App\Support\TimeEntryDaySummary;
 use Carbon\CarbonImmutable;
 
 class WorkedTodayService
@@ -34,28 +35,28 @@ class WorkedTodayService
             'entries' => [],
             'summary' => [],
         ];
-        $summary = $day['summary'];
+        $summary = TimeEntryDaySummary::normalize($day['summary'] ?? null);
 
-        return [
+        return array_merge([
             'date' => $day['date'],
-            'worked_seconds' => ((int) ($summary['worked_minutes'] ?? 0)) * 60,
-            'worked_minutes' => (int) ($summary['worked_minutes'] ?? 0),
-            'worked_hours_decimal' => round(((int) ($summary['worked_minutes'] ?? 0)) / 60, 2),
-            'expected_break_minutes' => (int) ($summary['allowed_break_minutes'] ?? 0),
-            'break_seconds_deducted' => ((int) ($summary['exceeded_break_minutes'] ?? 0)) * 60,
-            'open_session' => (bool) ($summary['open_session'] ?? false),
+            'worked_seconds' => $summary['worked_minutes'] * 60,
+            'worked_minutes' => $summary['worked_minutes'],
+            'worked_hours_decimal' => round($summary['worked_minutes'] / 60, 2),
+            'expected_break_minutes' => $summary['allowed_break_minutes'],
+            'break_seconds_deducted' => $summary['exceeded_break_minutes'] * 60,
+            'open_session' => $summary['open_session'],
             'summary' => $summary,
             'details' => [
-                'open_pair' => $summary['open_pair'] ?? null,
+                'open_pair' => $summary['open_pair'],
                 'pairs' => array_map(function (array $pair) {
                     return [
                         'in' => $pair['in'],
                         'out' => $pair['out'],
                         'seconds' => ((int) $pair['minutes']) * 60,
                     ];
-                }, $summary['pair_details'] ?? []),
+                }, $summary['pair_details']),
                 'entries' => $day['entries'],
             ],
-        ];
+        ], TimeEntryDaySummary::rootAliases($summary));
     }
 }

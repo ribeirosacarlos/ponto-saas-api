@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\AreaManager;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TimeEntryResource;
 use App\Models\TimeEntry;
 use App\Services\UserVisibilityService;
 use Illuminate\Http\Request;
@@ -41,8 +42,9 @@ class AdjustmentController extends Controller
             }
         }
 
-        return response()->json(
-            $query->paginate($request->integer('per_page', 15))
-        );
+        $entries = $query->paginate($request->integer('per_page', 15));
+        $entries->setCollection(collect(TimeEntryResource::collectionArray($entries->getCollection())));
+
+        return response()->json($entries);
     }
 }

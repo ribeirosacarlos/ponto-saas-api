@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimeEntryAdjustmentReviewRequest;
+use App\Http\Resources\TimeEntryResource;
 use App\Models\TimeEntry;
 use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
@@ -51,7 +52,7 @@ class TimeEntryAdjustmentController extends Controller
             companyId: $timeEntry->company_id,
         );
 
-        return response()->json($timeEntry);
+        return response()->json((new TimeEntryResource($timeEntry))->resolve());
     }
 
     public function reject(TimeEntryAdjustmentReviewRequest $request, TimeEntry $timeEntry): JsonResponse
@@ -85,7 +86,7 @@ class TimeEntryAdjustmentController extends Controller
             companyId: $timeEntry->company_id,
         );
 
-        return response()->json($timeEntry);
+        return response()->json((new TimeEntryResource($timeEntry))->resolve());
     }
 
     protected function timeEntrySnapshot(TimeEntry $timeEntry): array

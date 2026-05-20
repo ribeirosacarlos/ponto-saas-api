@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\AreaManager;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AreaManagerTeamEntriesRequest;
+use App\Http\Resources\TimeEntryResource;
 use App\Models\TimeEntry;
 use App\Services\UserVisibilityService;
 use App\Support\CompanyTime;
@@ -55,6 +56,7 @@ class TimeEntryController extends Controller
         $perPage = max(1, min($perPage, 200));
 
         $entries = $query->paginate($perPage);
+        $entries->setCollection(collect(TimeEntryResource::collectionArray($entries->getCollection())));
 
         return response()->json($entries);
     }

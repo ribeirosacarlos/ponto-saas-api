@@ -7,6 +7,7 @@ use App\Actions\TimeEntries\DispatchTimeEntryDayNormalizationAction;
 use App\Actions\TimeEntries\ResolveNextExpectedClockAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmployeeTimeEntryHistoryRequest;
+use App\Http\Resources\TimeEntryResource;
 use App\Http\Requests\TimeEntryStoreRequest;
 use App\Models\TimeEntry;
 use App\Models\VacationDay;
@@ -15,6 +16,7 @@ use App\Services\ExtraEmployeeChargeService;
 use App\Services\TimeEntry\OvertimeCalculatorService;
 use App\Services\UserShiftResolver;
 use App\Support\CompanyTime;
+use App\Support\TimeEntryDaySummary;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -110,7 +112,7 @@ class TimeEntryController extends Controller
             return response()->json([
                 'message' => 'Fora da jornada prevista. Solicitacao de ajuste criada.',
                 'status' => 'adjustment_requested',
-                'adjustment' => $adjustment,
+                'adjustment' => (new TimeEntryResource($adjustment))->resolve(),
             ], 202);
         }
 
@@ -129,7 +131,7 @@ class TimeEntryController extends Controller
             return response()->json([
                 'message' => 'Dia ja completo. Solicitacao de ajuste criada.',
                 'status' => 'adjustment_requested',
-                'adjustment' => $adjustment,
+                'adjustment' => (new TimeEntryResource($adjustment))->resolve(),
             ], 202);
         }
 
@@ -172,7 +174,7 @@ class TimeEntryController extends Controller
         $nextEventAfterCreate = $resolved['expected_events'][$completedCount + 1] ?? null;
 
         return response()->json([
-            'entry' => $entry,
+            'entry' => (new TimeEntryResource($entry))->resolve(),
             'next_event' => $this->serializeEvent($nextEventAfterCreate),
         ], 201);
     }
@@ -191,6 +193,8 @@ class TimeEntryController extends Controller
                 $this->authorize('view', $entry);
             }
 
+            $entries->setCollection(collect(TimeEntryResource::collectionArray($entries->getCollection())));
+
             return response()->json($entries);
         }
 
@@ -201,7 +205,7 @@ class TimeEntryController extends Controller
         }
 
         return response()->json([
-            'data' => $entries,
+            'data' => TimeEntryResource::collectionArray($entries),
         ]);
     }
 
@@ -293,18 +297,15 @@ class TimeEntryController extends Controller
                 }
             }
 
-            $summary = $daySummaries->get($date);
+            $summary = TimeEntryDaySummary::normalize($daySummaries->get($date)['summary'] ?? null);
 
-            $days[] = [
+            $days[] = array_merge([
                 'date' => $date,
                 'first_in' => $firstIn?->toIso8601String(),
                 'last_out' => $lastOut?->toIso8601String(),
-                'worked_hhmm' => $summary['worked_hhmm'] ?? '00:00',
-                'expected_hhmm' => $summary['expected_hhmm'] ?? '00:00',
-                'balance_hhmm' => $summary['balance_hhmm'] ?? '00:00',
-                'status' => $summary['status'] ?? 'even',
+                'summary' => $summary,
                 'open_day' => $entryCount % 2 !== 0,
-            ];
+            ], TimeEntryDaySummary::rootAliases($summary));
 
             $cursor = $cursor->addDay();
         }

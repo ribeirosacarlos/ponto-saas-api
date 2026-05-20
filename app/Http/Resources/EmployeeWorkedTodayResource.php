@@ -2,13 +2,16 @@
 
 namespace App\Http\Resources;
 
+use App\Support\TimeEntryDaySummary;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class EmployeeWorkedTodayResource extends JsonResource
 {
     public function toArray($request)
     {
-        return [
+        $summary = TimeEntryDaySummary::normalize($this->resource['summary'] ?? null);
+
+        return array_merge([
             'date' => $this->resource['date'],
             'worked_seconds' => $this->resource['worked_seconds'],
             'worked_minutes' => $this->resource['worked_minutes'],
@@ -16,12 +19,12 @@ class EmployeeWorkedTodayResource extends JsonResource
             'expected_break_minutes' => $this->resource['expected_break_minutes'],
             'break_seconds_deducted' => $this->resource['break_seconds_deducted'],
             'open_session' => $this->resource['open_session'],
-            'summary' => $this->resource['summary'] ?? null,
+            'summary' => $summary,
             'details' => [
                 'open_pair' => $this->resource['details']['open_pair'] ?? null,
                 'pairs' => $this->resource['details']['pairs'] ?? [],
                 'entries' => $this->resource['details']['entries'] ?? [],
             ],
-        ];
+        ], TimeEntryDaySummary::rootAliases($summary));
     }
 }

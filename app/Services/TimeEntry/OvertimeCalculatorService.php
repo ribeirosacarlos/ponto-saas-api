@@ -3,6 +3,7 @@
 namespace App\Services\TimeEntry;
 
 use App\Models\User;
+use App\Support\TimeEntryDaySummary;
 use Carbon\CarbonImmutable;
 
 class OvertimeCalculatorService
@@ -33,36 +34,14 @@ class OvertimeCalculatorService
         }
 
         $result['days'] = array_map(function (array $day) {
-            $summary = $day['summary'];
+            $summary = TimeEntryDaySummary::normalize($day['summary'] ?? null);
 
-            return [
+            return array_merge([
                 'date' => $day['date'],
-                'worked_minutes' => $summary['worked_minutes'],
-                'expected_minutes' => $summary['expected_minutes'],
-                'balance_minutes' => $summary['balance_minutes'],
-                'worked_hhmm' => $summary['worked_hhmm'],
-                'expected_hhmm' => $summary['expected_hhmm'],
-                'balance_hhmm' => $summary['balance_hhmm'],
-                'status' => $summary['status'],
-                'extra_minutes' => $summary['extra_minutes'],
-                'extra_hhmm' => $summary['extra_hhmm'],
-                'debt_minutes' => $summary['debt_minutes'],
-                'debt_hhmm' => $summary['debt_hhmm'],
-                'raw_worked_minutes' => $summary['raw_worked_minutes'],
-                'raw_worked_hhmm' => $summary['raw_worked_hhmm'],
-                'real_break_minutes' => $summary['real_break_minutes'],
-                'allowed_break_minutes' => $summary['allowed_break_minutes'],
-                'exceeded_break_minutes' => $summary['exceeded_break_minutes'],
-                'is_holiday' => $summary['is_holiday'],
-                'holiday_name' => $summary['holiday_name'],
-                'is_day_off' => $summary['is_day_off'],
-                'is_vacation' => $summary['is_vacation'],
-                'is_absence' => $summary['is_absence'],
-                'absence_type' => $summary['absence_type'],
-                'has_incomplete_entries' => $summary['has_incomplete_entries'],
+                'summary' => $summary,
                 'ignored' => $summary['has_incomplete_entries'] && $summary['worked_minutes'] === 0,
                 'reason' => $summary['has_incomplete_entries'] ? 'incomplete_entries' : null,
-            ];
+            ], TimeEntryDaySummary::rootAliases($summary));
         }, $result['days']);
 
         return $result;

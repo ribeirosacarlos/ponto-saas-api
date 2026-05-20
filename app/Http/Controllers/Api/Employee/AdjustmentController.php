@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TimeEntryResource;
 use App\Models\TimeEntry;
 use Illuminate\Http\Request;
 
@@ -21,8 +22,9 @@ class AdjustmentController extends Controller
             $query->where('adjustment_status', $request->status);
         }
 
-        return response()->json(
-            $query->paginate($request->integer('per_page', 15))
-        );
+        $entries = $query->paginate($request->integer('per_page', 15));
+        $entries->setCollection(collect(TimeEntryResource::collectionArray($entries->getCollection())));
+
+        return response()->json($entries);
     }
 }
