@@ -266,9 +266,7 @@ class TimesheetCalculationService
         $pairing = $this->pairWorkEntries($workEntries, $timezone, $allowedBreakMinutes);
         $workedMinutes = $this->resolveOfficialWorkedMinutes(
             $pairing['raw_worked_minutes'],
-            $expectedMinutes,
-            $pairing['exceeded_break_minutes'],
-            $pairing['pair_count'],
+            $pairing['counted_break_minutes'],
             $pairing['has_incomplete_entries']
         );
         $balanceMinutes = $workedMinutes - $expectedMinutes;
@@ -458,8 +456,8 @@ class TimesheetCalculationService
             $minutes = (int) $clockedAt->diffInMinutes($pendingIn, true);
             $rawWorkedMinutes += $minutes;
             $pairs[] = [
-                'in' => $this->formatIso8601ToMinute($pendingIn),
-                'out' => $this->formatIso8601ToMinute($clockedAt),
+                'in' => $pendingIn->toIso8601String(),
+                'out' => $clockedAt->toIso8601String(),
                 'minutes' => $minutes,
             ];
             $previousOut = $clockedAt;
@@ -469,6 +467,8 @@ class TimesheetCalculationService
         if ($pendingIn !== null) {
             $hasIncompleteEntries = true;
         }
+
+        $countedBreakMinutes = min($realBreakMinutes, $allowedBreakMinutes);
 
         return [
             'raw_worked_minutes' => $rawWorkedMinutes,
@@ -484,28 +484,19 @@ class TimesheetCalculationService
 
     protected function resolveOfficialWorkedMinutes(
         int $rawWorkedMinutes,
-        int $expectedMinutes,
-        int $exceededBreakMinutes,
-        int $pairCount,
+        int $countedBreakMinutes,
         bool $hasIncompleteEntries
     ): int {
-        if ($rawWorkedMinutes <= 0) {
+        if ($hasIncompleteEntries || $rawWorkedMinutes <= 0) {
             return 0;
         }
 
-        if ($expectedMinutes <= 0) {
-            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
-        }
+        return $rawWorkedMinutes + $countedBreakMinutes;
+    }
 
-        if ($hasIncompleteEntries || $pairCount < 2) {
-            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
-        }
-
-        if ($rawWorkedMinutes > $expectedMinutes) {
-            return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
-        }
-
-        return max(0, $expectedMinutes - $exceededBreakMinutes);
+    protected function truncateToMinute(CarbonImmutable $date): CarbonImmutable
+    {
+        return $date->setTime($date->hour, $date->minute, 0, 0);
     }
 
     /**

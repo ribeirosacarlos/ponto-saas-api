@@ -32,7 +32,7 @@ Regra:
 - filtros `date_from` e `date_to` aceitam dois modos:
   - `YYYY-MM-DD`: expande para o dia inteiro no fuso da empresa
   - valor com hora/offset (`2026-05-31T23:59:59-03:00`): a hora e ignorada e so a data (`2026-05-31`) e usada
-- quando `user_id` for informado em `GET /v1/area-manager/team/entries`, a rota retorna todas as batidas desse usuario em uma unica pagina e ignora `page`/`per_page`
+- quando `user_id` for informado em `GET /v1/area-manager/team/entries`, a rota retorna os dias agrupados desse usuario, ignora `page`/`per_page`, coloca `day_summary` uma vez por dia e lista as batidas em `entries[]`
 - quando o relacionamento `user` vier carregado, ele aparece como:
 
 ```json
@@ -91,37 +91,59 @@ Exemplo de um item de `days[]`:
 
 ## Observacao importante
 
-- `GET /v1/area-manager/team/entries` continua retornando batidas brutas, mas agora cada item tambem pode trazer:
+- `GET /v1/area-manager/team/entries` sem `user_id` continua retornando batidas brutas paginadas; cada item tambem pode trazer:
   - `work_date`
   - `day_summary`
-- `day_summary` segue exatamente a mesma regra do overtime.
-- Isso permite ao front mostrar o total trabalhado do dia na listagem de batidas sem trocar de endpoint.
+- `GET /v1/area-manager/team/entries` com `user_id` retorna `data[]` agrupado por dia:
+  - `date`
+  - `employee_id`
+  - `user`
+  - `day_summary`
+  - `entries[]`
+- `day_summary` segue exatamente a mesma regra do overtime e, no formato agrupado, nao e repetido dentro de cada batida.
 - Para uma consulta orientada a periodo/dias, o endpoint canonico continua sendo `GET /v1/area-manager/team/{employee}/overtime?include_days=1`.
 
-Exemplo de item em `GET /v1/area-manager/team/entries`:
+Exemplo com `user_id` em `GET /v1/area-manager/team/entries`:
 
 ```json
 {
-  "id": "uuid",
-  "user_id": "uuid",
-  "clocked_at": "2025-12-19T17:00:00+00:00",
-  "type": "out",
-  "source": "web",
-  "work_date": "2025-12-19",
-  "day_summary": {
-    "worked_minutes": 540,
-    "worked_hhmm": "09:00",
-    "expected_minutes": 540,
-    "expected_hhmm": "09:00",
-    "balance_minutes": 0,
-    "balance_hhmm": "00:00",
-    "extra_minutes": 0,
-    "debt_minutes": 0,
-    "status": "even",
-    "allowed_break_minutes": 60,
-    "exceeded_break_minutes": 0,
-    "has_incomplete_entries": false,
-    "open_session": false
-  }
+  "data": [
+    {
+      "date": "2025-12-19",
+      "employee_id": "uuid",
+      "user": {
+        "id": "uuid",
+        "name": "Nome",
+        "email": "email@empresa.com"
+      },
+      "day_summary": {
+        "worked_minutes": 540,
+        "worked_hhmm": "09:00",
+        "expected_minutes": 540,
+        "expected_hhmm": "09:00",
+        "balance_minutes": 0,
+        "balance_hhmm": "00:00",
+        "extra_minutes": 0,
+        "debt_minutes": 0,
+        "status": "even",
+        "allowed_break_minutes": 60,
+        "exceeded_break_minutes": 0,
+        "has_incomplete_entries": false,
+        "open_session": false
+      },
+      "entries": [
+        {
+          "id": "uuid",
+          "user_id": "uuid",
+          "clocked_at": "2025-12-19T17:00:00+00:00",
+          "type": "out",
+          "source": "web",
+          "work_date": "2025-12-19"
+        }
+      ]
+    }
+  ],
+  "total_days": 1,
+  "total_entries": 2
 }
 ```
