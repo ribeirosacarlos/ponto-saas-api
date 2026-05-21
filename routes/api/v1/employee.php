@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
+use App\Http\Controllers\Api\Employee\TimesheetController as EmployeeTimesheetController;
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
 use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\AbsenceController as EmployeeAbsenceController;
@@ -45,4 +46,9 @@ Route::prefix('employee')
         Route::post('/announcements/{announcement}/seen', [EmployeeAnnouncementController::class, 'markAsSeen']);
 
         Route::get('/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
+
+        Route::get('/timesheets', [EmployeeTimesheetController::class, 'index']);
+        Route::get('/timesheets/{timesheet}', [EmployeeTimesheetController::class, 'show']);
+        Route::post('/timesheets/{timesheet}/sign', [EmployeeTimesheetController::class, 'sign']);
+        Route::post('/timesheets/{timesheet}/dispute', [EmployeeTimesheetController::class, 'dispute']);
     });

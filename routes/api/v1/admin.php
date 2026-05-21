@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Api\Admin\AreaController;
+use App\Http\Controllers\Api\Admin\MonthlyClosureController;
+use App\Http\Controllers\Api\Admin\TimesheetAdminController;
 use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeCheckoutSessionController;
 use App\Http\Controllers\Api\Admin\CompanyDeviceSettingsController;
 use App\Http\Controllers\Api\Admin\CompanyGeolocationController;
@@ -43,6 +45,19 @@ Route::prefix('admin')->group(function () {
 
     Route::middleware(['role:admin|super_admin|area_manager|manager', 'subscription.access'])->group(function () {
         Route::get('/settings/location', [CompanyLocationSettingsController::class, 'show']);
+    });
+
+    Route::middleware(['role:admin', 'subscription.access'])->group(function () {
+        Route::post('/monthly-closures', [MonthlyClosureController::class, 'store']);
+    });
+
+    Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
+        Route::get('/monthly-closures', [MonthlyClosureController::class, 'index']);
+        Route::get('/monthly-closures/{closure}', [MonthlyClosureController::class, 'show']);
+        Route::get('/monthly-closures/{closure}/timesheets', [TimesheetAdminController::class, 'index']);
+        Route::get('/timesheets/{timesheet}', [TimesheetAdminController::class, 'show']);
+        Route::post('/timesheets/{timesheet}/sign', [TimesheetAdminController::class, 'sign']);
+        Route::post('/timesheets/{timesheet}/disputes/{dispute}/resolve', [TimesheetAdminController::class, 'resolveDispute']);
     });
 
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
