@@ -1,0 +1,95 @@
+name: Release Please
+
+on:
+    push:
+        branches: ["main"]
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    release-please:
+        runs-on: ubuntu-latest
+
+        outputs:
+            release_created: ${{ steps.release.outputs.release_created }}
+            tag_name: ${{ steps.release.outputs.tag_name }}
+
+        steps:
+            - uses: googleapis/release-please-action@v4
+              id: release
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  config-file: release-please-config.json
+                  manifest-file: .release-please-manifest.json
+
+    deploy:
+        runs-on: ubuntu-latest
+        needs: release-please
+        if: ${{ needs.release-please.outputs.release_created == 'true' }}
+
+        concurrency:
+            group: deploy-main
+            cancel-in-progress: true
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ secrets.AWS_REGION }}
+
+            - name: Login to Amazon ECR
+              id: ecr-login
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Build and push image to ECR
+              env:
+                  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+                  AWS_REGION: ${{ secrets.AWS_REGION }}
+                  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+                  IMAGE_TAG: ${{ needs.release-please.outputs.tag_name }}
+              run: |
+                  ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                  IMAGE="${ECR_URI}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+                  IMAGE_LATEST="${ECR_URI}/${ECR_REPOSITORY}:latest"
+
+                  docker build \
+                    --pull \
+                    --no-cache \
+                    --build-arg APP_BUILD_SHA="${IMAGE_TAG}" \
+                    -f ./.docker/php/Dockerfile \
+                    -t "$IMAGE" \
+                    -t "$IMAGE_LATEST" \
+                    .
+
+                  docker push "$IMAGE"
+                  docker push "$IMAGE_LATEST"
+
+            - name: Deploy on EC2 via SSH
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.EC2_HOST }}
+                  username: ${{ secrets.EC2_USER }}
+                  key: ${{ secrets.EC2_SSH_KEY }}
+                  script: |
+                      set -e
+                      cd /opt/jornafy-api
+
+                      aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+                        docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+                      docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+                      docker compose -f docker-compose.prod.yml up -d --pull always --force-recreate
+
+                      sleep 10
+
+                      docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+
+                      docker image prune -f

@@ -1,8 +1,6 @@
-name: Deploy API (ECR -> EC2)
+name: Deploy API (ECR -> EC2) — Manual
 
 on:
-    push:
-        branches: ["main"]
     workflow_dispatch: {}
 
 concurrency:
