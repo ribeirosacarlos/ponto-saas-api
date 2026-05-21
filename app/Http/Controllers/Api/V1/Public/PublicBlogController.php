@@ -32,9 +32,9 @@ class PublicBlogController extends Controller
             ->when($request->featured, fn ($q) => $q->where('featured', true))
             ->when($request->search, function ($q, $search) {
                 $q->where(function ($inner) use ($search) {
-                    $inner->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(title, '$.pt')) LIKE ?", ["%{$search}%"])
-                          ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(title, '$.es')) LIKE ?", ["%{$search}%"])
-                          ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(title, '$.en')) LIKE ?", ["%{$search}%"]);
+                    $inner->whereRaw("title->>'pt' ILIKE ?", ["%{$search}%"])
+                          ->orWhereRaw("title->>'es' ILIKE ?", ["%{$search}%"])
+                          ->orWhereRaw("title->>'en' ILIKE ?", ["%{$search}%"]);
                 });
             });
 

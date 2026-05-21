@@ -92,9 +92,10 @@ class AdminBlogPostController extends Controller
 
     public function unpublish(string $id): JsonResponse
     {
-        BlogPost::findOrFail($id)->update(['status' => 'draft']);
+        $post = BlogPost::findOrFail($id);
+        $post->update(['status' => 'draft']);
 
-        return response()->json(['data' => new BlogPostAdminResource(BlogPost::findOrFail($id))]);
+        return response()->json(['data' => new BlogPostAdminResource($post->fresh())]);
     }
 
     private function syncFaq(BlogPost $post, array $items): void
