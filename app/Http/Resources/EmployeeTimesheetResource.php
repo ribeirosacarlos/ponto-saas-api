@@ -29,6 +29,8 @@ class EmployeeTimesheetResource extends JsonResource
             'signatures' => TimesheetSignatureResource::collection($this->whenLoaded('signatures')),
             'open_dispute' => $openDispute,
             'pdf_path' => $this->pdf_path,
+            'pdf_generated_at' => $this->pdf_generated_at?->toIso8601String(),
+            'document_hash' => $this->document_hash,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

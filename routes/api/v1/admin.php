@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementCo
 use App\Http\Controllers\Api\Admin\AreaController;
 use App\Http\Controllers\Api\Admin\MonthlyClosureController;
 use App\Http\Controllers\Api\Admin\TimesheetAdminController;
+use App\Http\Controllers\Api\Admin\TimesheetPdfAdminController;
 use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeCheckoutSessionController;
 use App\Http\Controllers\Api\Admin\CompanyDeviceSettingsController;
 use App\Http\Controllers\Api\Admin\CompanyGeolocationController;
@@ -58,6 +59,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/timesheets/{timesheet}', [TimesheetAdminController::class, 'show']);
         Route::post('/timesheets/{timesheet}/sign', [TimesheetAdminController::class, 'sign']);
         Route::post('/timesheets/{timesheet}/disputes/{dispute}/resolve', [TimesheetAdminController::class, 'resolveDispute']);
+        Route::get('/timesheets/{timesheet}/pdf', [TimesheetPdfAdminController::class, 'download']);
     });
 
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {

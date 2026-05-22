@@ -43,6 +43,10 @@ class Company extends Model
         'location_validation_enabled',
         'allow_mobile_clock',
         'allow_desktop_clock',
+        'enable_native_signatures',
+        'require_timesheet_signature',
+        'require_password_confirmation_for_signature',
+        'allow_geolocation_on_signature',
     ];
 
     protected $casts = [
@@ -62,8 +66,12 @@ class Company extends Model
         'company_longitude' => 'decimal:7',
         'allowed_radius_meters' => 'integer',
         'location_validation_enabled' => 'boolean',
-        'allow_mobile_clock'          => 'boolean',
-        'allow_desktop_clock'         => 'boolean',
+        'allow_mobile_clock' => 'boolean',
+        'allow_desktop_clock' => 'boolean',
+        'enable_native_signatures' => 'boolean',
+        'require_timesheet_signature' => 'boolean',
+        'require_password_confirmation_for_signature' => 'boolean',
+        'allow_geolocation_on_signature' => 'boolean',
     ];
 
     public function users()

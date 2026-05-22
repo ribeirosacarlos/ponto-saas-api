@@ -68,7 +68,7 @@ class TimesheetDisputeTest extends TestCase
         $timesheet->update(['status' => TimesheetStatus::PENDING_EMPLOYEE->value]);
 
         $this->actingAs($employee)
-            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign")
+            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign", $this->validSignPayload())
             ->assertStatus(422)
             ->assertJsonValidationErrors('dispute');
     }
@@ -111,9 +111,20 @@ class TimesheetDisputeTest extends TestCase
         $timesheet = $this->createTimesheet($employee, TimesheetStatus::PENDING_EMPLOYEE);
 
         $this->actingAs($employee)
-            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign")
+            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign", $this->validSignPayload())
             ->assertOk()
             ->assertJsonPath('data.status', TimesheetStatus::PENDING_MANAGER->value);
+    }
+
+    private function validSignPayload(): array
+    {
+        $pngHeader = "\x89PNG\r\n\x1a\n" . str_repeat("\x00", 100);
+
+        return [
+            'signature_image' => 'data:image/png;base64,' . base64_encode($pngHeader),
+            'accepted_terms' => true,
+            'password' => 'password',
+        ];
     }
 
     private function createAdmin(): User

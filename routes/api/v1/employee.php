@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
 use App\Http\Controllers\Api\Employee\TimesheetController as EmployeeTimesheetController;
+use App\Http\Controllers\Api\Employee\TimesheetPdfController as EmployeeTimesheetPdfController;
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
 use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\AbsenceController as EmployeeAbsenceController;
@@ -51,4 +52,5 @@ Route::prefix('employee')
         Route::get('/timesheets/{timesheet}', [EmployeeTimesheetController::class, 'show']);
         Route::post('/timesheets/{timesheet}/sign', [EmployeeTimesheetController::class, 'sign']);
         Route::post('/timesheets/{timesheet}/dispute', [EmployeeTimesheetController::class, 'dispute']);
+        Route::get('/timesheets/{timesheet}/pdf', [EmployeeTimesheetPdfController::class, 'download']);
     });

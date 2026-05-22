@@ -33,7 +33,7 @@ class TimesheetSignatureTest extends TestCase
         $timesheet = $this->createTimesheet($employee, TimesheetStatus::PENDING_EMPLOYEE);
 
         $response = $this->actingAs($employee)
-            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign");
+            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign", $this->validSignPayload());
 
         $response->assertOk()
             ->assertJsonPath('data.status', TimesheetStatus::PENDING_MANAGER->value);
@@ -42,6 +42,7 @@ class TimesheetSignatureTest extends TestCase
             'employee_timesheet_id' => $timesheet->id,
             'signer_id' => $employee->id,
             'role' => 'employee',
+            'accepted_terms' => 1,
         ]);
     }
 
@@ -52,7 +53,7 @@ class TimesheetSignatureTest extends TestCase
         $timesheet = $this->createTimesheet($employee1, TimesheetStatus::PENDING_EMPLOYEE);
 
         $this->actingAs($employee2)
-            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign")
+            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign", $this->validSignPayload())
             ->assertForbidden();
     }
 
@@ -113,6 +114,17 @@ class TimesheetSignatureTest extends TestCase
             'id' => $closure->id,
             'status' => ClosureStatus::COMPLETED->value,
         ]);
+    }
+
+    private function validSignPayload(): array
+    {
+        $pngHeader = "\x89PNG\r\n\x1a\n" . str_repeat("\x00", 100);
+
+        return [
+            'signature_image' => 'data:image/png;base64,' . base64_encode($pngHeader),
+            'accepted_terms' => true,
+            'password' => 'password',
+        ];
     }
 
     private function createAdmin(): User

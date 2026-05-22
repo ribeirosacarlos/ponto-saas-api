@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Actions\Timesheet\ResolveDisputeAction;
 use App\Actions\Timesheet\SignTimesheetAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AdminSignTimesheetRequest;
 use App\Http\Requests\ResolveDisputeRequest;
-use App\Http\Requests\SignTimesheetRequest;
 use App\Http\Resources\EmployeeTimesheetResource;
 use App\Http\Resources\TimesheetDisputeResource;
 use App\Models\EmployeeTimesheet;
@@ -42,7 +42,7 @@ class TimesheetAdminController extends Controller
         return new EmployeeTimesheetResource($timesheet);
     }
 
-    public function sign(SignTimesheetRequest $request, EmployeeTimesheet $timesheet)
+    public function sign(AdminSignTimesheetRequest $request, EmployeeTimesheet $timesheet)
     {
         $this->authorize('signAsManager', $timesheet);
 

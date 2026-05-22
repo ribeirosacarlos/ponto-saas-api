@@ -9,7 +9,8 @@ use Carbon\CarbonImmutable;
 class TimesheetSnapshotService
 {
     public function __construct(
-        protected TimesheetCalculationService $calculationService
+        protected TimesheetCalculationService $calculationService,
+        protected TimesheetSignatureService $signatureService
     ) {}
 
     public function generate(EmployeeTimesheet $timesheet): void
@@ -30,6 +31,10 @@ class TimesheetSnapshotService
         $to = $from->endOfMonth();
 
         $snapshot = $this->calculationService->calculateForEmployee($employee, $from, $to);
+
+        // Antes de salvar o novo snapshot, verifica se havia assinaturas ativas.
+        // Se houver, invalida-as (superseded) pois o documento foi alterado.
+        $this->signatureService->supersedePreviousSignatures($timesheet);
 
         $timesheet->update([
             'snapshot' => $snapshot,

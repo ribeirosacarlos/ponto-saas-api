@@ -28,6 +28,7 @@ class EmployeeTimesheet extends Model
         'snapshot_generated_at',
         'pdf_path',
         'pdf_generated_at',
+        'document_hash',
     ];
 
     protected $casts = [
@@ -57,6 +58,12 @@ class EmployeeTimesheet extends Model
         return $this->hasMany(TimesheetSignature::class, 'employee_timesheet_id');
     }
 
+    public function activeSignatures(): HasMany
+    {
+        return $this->hasMany(TimesheetSignature::class, 'employee_timesheet_id')
+            ->whereNull('superseded_at');
+    }
+
     public function disputes(): HasMany
     {
         return $this->hasMany(TimesheetDispute::class, 'employee_timesheet_id');
@@ -72,5 +79,19 @@ class EmployeeTimesheet extends Model
         return $this->disputes()
             ->where('status', DisputeStatus::OPEN->value)
             ->exists();
+    }
+
+    public function computeDocumentHash(): string
+    {
+        return hash('sha256', json_encode($this->snapshot ?? []));
+    }
+
+    public function hasSignatureChanged(): bool
+    {
+        if (! $this->document_hash) {
+            return false;
+        }
+
+        return $this->computeDocumentHash() !== $this->document_hash;
     }
 }
