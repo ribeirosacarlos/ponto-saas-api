@@ -36,9 +36,12 @@ class TimesheetPdfService
             'declarationText' => 'Declaro que visualizei e confirmei eletronicamente esta folha de ponto, reconhecendo os registros apresentados para o período indicado.',
         ])->setPaper('a4', 'portrait');
 
+        $closure = $timesheet->monthlyClosure;
         $path = sprintf(
-            'timesheets/signed/%s/%s.pdf',
+            'companies/%s/%d/%02d/pdfs/%s.pdf',
             $timesheet->company_id,
+            $closure->reference_year,
+            $closure->reference_month,
             $timesheet->id
         );
 

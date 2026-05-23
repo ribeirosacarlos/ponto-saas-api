@@ -201,9 +201,13 @@ class TimesheetSignatureService
             ]);
         }
 
+        $timesheet->loadMissing('monthlyClosure');
+        $closure = $timesheet->monthlyClosure;
         $path = sprintf(
-            'timesheets/signatures/%s/%s_%s.png',
+            'companies/%s/%d/%02d/signatures/%s_%s.png',
             $timesheet->company_id,
+            $closure->reference_year,
+            $closure->reference_month,
             $timesheet->id,
             now()->format('YmdHis')
         );
