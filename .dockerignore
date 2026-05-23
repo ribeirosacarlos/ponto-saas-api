@@ -1,0 +1,15 @@
+vendor/
+node_modules/
+.git/
+.env.production
+public/build/
+public/hot/
+public/storage/
+storage/logs/*.log
+storage/framework/cache/data/
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*.php
+bootstrap/cache/*.php
+*.log
+.DS_Store
