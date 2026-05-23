@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.1.0...v1.1.1) (2026-05-23)
+
+
+### Correções de Bugs
+
+* trigger release workflow ([868c18d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/868c18de77a60d0253fe34c5f081beb660eb9af5))
+* trigger release workflow ([ececd82](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ececd820ef8fe1c734334c8852b86c86d36a3cb5))
+
 ## [1.1.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.0.0...v1.1.0) (2026-05-23)
 
 
