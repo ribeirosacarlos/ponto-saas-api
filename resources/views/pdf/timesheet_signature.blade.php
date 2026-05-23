@@ -6,7 +6,7 @@
     <title>Folha de Ponto Assinada</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1a1a1a; line-height: 1.5; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1a1a1a; line-height: 1.5; padding-bottom: 40px; }
         .header { background: #1e3a5f; color: white; padding: 16px 24px; margin-bottom: 20px; }
         .header h1 { font-size: 18px; font-weight: bold; }
         .header p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
@@ -18,10 +18,20 @@
         .info-value { display: table-cell; color: #1a1a1a; padding: 3px 0; }
         table.entries { width: 100%; border-collapse: collapse; font-size: 10px; }
         table.entries th { background: #e8eef5; color: #1e3a5f; text-align: left; padding: 5px 8px; font-weight: bold; }
+        table.entries th.right { text-align: right; }
         table.entries td { padding: 4px 8px; border-bottom: 1px solid #f0f0f0; }
+        table.entries td.right { text-align: right; }
         table.entries tr:nth-child(even) td { background: #fafafa; }
-        .totals-box { background: #f4f7fa; border: 1px solid #d0dce8; border-radius: 4px; padding: 12px 16px; }
-        .totals-row { display: flex; justify-content: space-between; padding: 2px 0; }
+        table.entries tr.totals-row td { background: #e8eef5; font-weight: bold; color: #1e3a5f; border-top: 2px solid #c0cfe0; }
+        .balance-positive { color: #155724; }
+        .balance-negative { color: #721c24; }
+        .balance-zero { color: #555; }
+        .summary-box { background: #f4f7fa; border: 1px solid #d0dce8; border-radius: 4px; padding: 12px 16px; }
+        .summary-grid { display: table; width: 100%; }
+        .summary-item { display: table-cell; width: 25%; text-align: center; padding: 4px 8px; }
+        .summary-item-label { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
+        .summary-item-value { font-size: 14px; font-weight: bold; color: #1e3a5f; }
+        .summary-divider { display: table-cell; width: 1px; background: #d0dce8; }
         .declaration-box { background: #fffbec; border: 1px solid #e8d98a; border-radius: 4px; padding: 12px 16px; font-size: 10px; color: #555; margin: 0 24px 16px; }
         .signature-section { margin: 0 24px 16px; display: table; width: calc(100% - 48px); }
         .signature-block { display: table-cell; width: 48%; vertical-align: top; padding: 12px; border: 1px solid #d0dce8; border-radius: 4px; }
@@ -32,16 +42,14 @@
         .evidence-table td:first-child { font-weight: bold; width: 40%; }
         .hash-value { font-family: Courier New, monospace; font-size: 8px; word-break: break-all; color: #777; }
         .footer { background: #f4f7fa; border-top: 1px solid #d0dce8; padding: 8px 24px; font-size: 9px; color: #888; position: fixed; bottom: 0; width: 100%; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: bold; }
-        .badge-signed { background: #d4edda; color: #155724; }
-        .badge-pending { background: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1>Folha de Ponto — Assinatura Eletrônica</h1>
-    <p>{{ $employee->company->name ?? '' }} &bull; Documento gerado em {{ now()->format('d/m/Y H:i:s') }} (UTC)</p>
+    @php $companyTz = $employee->company->timezone ?? 'UTC'; @endphp
+    <p>{{ $employee->company->name ?? '' }} &bull; Documento gerado em {{ now($companyTz)->format('d/m/Y H:i:s') }} ({{ $companyTz }})</p>
 </div>
 
 <div class="section">
@@ -58,7 +66,7 @@
         <div class="info-row">
             <div class="info-label">Período</div>
             <div class="info-value">
-                {{ \Carbon\Carbon::create($closure->reference_year, $closure->reference_month)->translatedFormat('F \d\e Y') }}
+                {{ \Carbon\Carbon::create($closure->reference_year, $closure->reference_month)->locale('pt_BR')->translatedFormat('F \d\e Y') }}
             </div>
         </div>
         <div class="info-row">
@@ -68,53 +76,69 @@
     </div>
 </div>
 
-@if(!empty($snapshot['totals']))
-<div class="section">
-    <div class="section-title">Totais do Período</div>
-    <div class="totals-box">
-        @php $totals = $snapshot['totals']; @endphp
-        @foreach($totals as $key => $value)
-        <div class="totals-row">
-            <span>{{ ucfirst(str_replace('_', ' ', $key)) }}</span>
-            <span><strong>{{ $value }}</strong></span>
-        </div>
-        @endforeach
-    </div>
-</div>
-@endif
-
 @if(!empty($snapshot['days']))
+@php
+    $totals = $snapshot['totals'] ?? [];
+    $balanceClass = fn(string $hhmm) => str_starts_with($hhmm, '+') ? 'balance-positive' : (str_starts_with($hhmm, '-') ? 'balance-negative' : 'balance-zero');
+@endphp
 <div class="section">
     <div class="section-title">Registros Diários</div>
     <table class="entries">
         <thead>
             <tr>
                 <th>Data</th>
-                <th>Entradas / Saídas</th>
-                <th>Total trabalhado</th>
-                <th>Horas extras</th>
+                <th>Batidas</th>
+                <th class="right">H. Trabalhadas</th>
+                <th class="right">H. Previstas</th>
+                <th class="right">Saldo</th>
             </tr>
         </thead>
         <tbody>
             @foreach($snapshot['days'] as $day)
+            @php
+                $summary = $day['summary'];
+                $balanceHhmm = $summary['balance_hhmm'] ?? '00:00';
+                $bClass = $balanceClass($balanceHhmm);
+                $dayLabel = '';
+                if ($summary['is_holiday']) $dayLabel = $summary['holiday_name'] ?? 'Feriado';
+                elseif ($summary['is_day_off']) $dayLabel = 'Folga';
+                elseif ($summary['is_vacation']) $dayLabel = 'Férias';
+                elseif ($summary['is_absence']) $dayLabel = 'Ausência';
+            @endphp
             <tr>
-                <td>{{ \Carbon\Carbon::parse($day['date'])->format('d/m/Y') }}</td>
+                <td>
+                    {{ \Carbon\Carbon::parse($day['date'])->format('d/m') }}
+                    {{ \Carbon\Carbon::parse($day['date'])->locale('pt_BR')->translatedFormat('(D)') }}
+                    @if($dayLabel)
+                        <span style="color:#888;font-size:9px;"> — {{ $dayLabel }}</span>
+                    @endif
+                </td>
                 <td>
                     @if(!empty($day['entries']))
-                        @foreach($day['entries'] as $entry)
-                            {{ $entry['type'] === 'in' ? '▶' : '■' }} {{ \Carbon\Carbon::parse($entry['clocked_at'])->format('H:i') }}
-                        @endforeach
+                        {{ implode('  ', array_map(fn($e) => \Carbon\Carbon::parse($e['clocked_at'])->format('H:i'), $day['entries'])) }}
                     @else
                         —
                     @endif
                 </td>
-                <td>{{ $day['summary']['total_worked'] ?? '—' }}</td>
-                <td>{{ $day['summary']['overtime'] ?? '—' }}</td>
+                <td class="right">{{ $summary['worked_hhmm'] ?? '—' }}</td>
+                <td class="right">{{ $summary['expected_hhmm'] ?? '—' }}</td>
+                <td class="right {{ $bClass }}">{{ $balanceHhmm !== '00:00' ? $balanceHhmm : '—' }}</td>
             </tr>
             @endforeach
         </tbody>
+        @if(!empty($totals))
+        <tfoot>
+            <tr class="totals-row">
+                <td colspan="2">Total do período</td>
+                <td class="right">{{ $totals['worked_hhmm'] ?? '—' }}</td>
+                <td class="right">{{ $totals['expected_hhmm'] ?? '—' }}</td>
+                <td class="right {{ $balanceClass($totals['balance_hhmm'] ?? '00:00') }}">{{ $totals['balance_hhmm'] ?? '—' }}</td>
+            </tr>
+        </tfoot>
+        @endif
     </table>
 </div>
+
 @endif
 
 <div class="declaration-box">

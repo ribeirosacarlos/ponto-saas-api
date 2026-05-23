@@ -25,14 +25,22 @@ class TimesheetPdfService
             }
         }
 
+        $snapshot = $timesheet->snapshot ?? [];
+        $previousBalanceHhmm = $snapshot['previous_balance_hhmm'] ?? $this->computePreviousBalanceHhmm($timesheet);
+        $currentBalanceMinutes = (int) ($snapshot['totals']['balance_minutes'] ?? 0);
+        $previousBalanceMinutes = $this->hhhmmToMinutes($previousBalanceHhmm);
+        $accumulatedBalanceHhmm = $snapshot['accumulated_balance_hhmm'] ?? $this->minutesToSignedHhmm($previousBalanceMinutes + $currentBalanceMinutes);
+
         $pdf = Pdf::loadView('pdf.timesheet_signature', [
             'timesheet' => $timesheet,
             'employee' => $timesheet->employee,
             'closure' => $timesheet->monthlyClosure,
-            'snapshot' => $timesheet->snapshot ?? [],
+            'snapshot' => $snapshot,
             'employeeSignature' => $employeeSignature,
             'managerSignature' => $managerSignature,
             'signatureImageBase64' => $signatureImageBase64,
+            'previousBalanceHhmm' => $previousBalanceHhmm,
+            'accumulatedBalanceHhmm' => $accumulatedBalanceHhmm,
             'declarationText' => 'Declaro que visualizei e confirmei eletronicamente esta folha de ponto, reconhecendo os registros apresentados para o período indicado.',
         ])->setPaper('a4', 'portrait');
 
@@ -54,6 +62,49 @@ class TimesheetPdfService
         ]);
 
         return $path;
+    }
+
+    private function computePreviousBalanceHhmm(EmployeeTimesheet $timesheet): string
+    {
+        $closure = $timesheet->monthlyClosure;
+
+        $minutes = EmployeeTimesheet::query()
+            ->where('employee_id', $timesheet->employee_id)
+            ->where('company_id', $timesheet->company_id)
+            ->where('id', '!=', $timesheet->id)
+            ->whereHas('monthlyClosure', function ($q) use ($closure) {
+                $q->where('reference_year', '<', $closure->reference_year)
+                    ->orWhere(function ($q2) use ($closure) {
+                        $q2->where('reference_year', $closure->reference_year)
+                            ->where('reference_month', '<', $closure->reference_month);
+                    });
+            })
+            ->get(['snapshot'])
+            ->sum(fn (EmployeeTimesheet $ts) => (int) ($ts->snapshot['totals']['balance_minutes'] ?? 0));
+
+        return $this->minutesToSignedHhmm((int) $minutes);
+    }
+
+    private function minutesToSignedHhmm(int $minutes): string
+    {
+        if ($minutes === 0) {
+            return '00:00';
+        }
+        $sign = $minutes > 0 ? '+' : '-';
+        $abs = abs($minutes);
+
+        return sprintf('%s%02d:%02d', $sign, (int) floor($abs / 60), $abs % 60);
+    }
+
+    private function hhhmmToMinutes(string $hhmm): int
+    {
+        if ($hhmm === '00:00') {
+            return 0;
+        }
+        $sign = str_starts_with($hhmm, '-') ? -1 : 1;
+        [$h, $m] = explode(':', ltrim($hhmm, '+-'));
+
+        return $sign * ((int) $h * 60 + (int) $m);
     }
 
     public function getSignedPdfUrl(EmployeeTimesheet $timesheet): ?string

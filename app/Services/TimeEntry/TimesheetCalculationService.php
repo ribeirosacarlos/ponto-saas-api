@@ -516,6 +516,8 @@ class TimesheetCalculationService
         $balance = 0;
         $extra = 0;
         $debt = 0;
+        $daysWorked = 0;
+        $absencesCount = 0;
 
         foreach ($days as $day) {
             $summary = $day['summary'];
@@ -524,6 +526,21 @@ class TimesheetCalculationService
             $balance += (int) $summary['balance_minutes'];
             $extra += (int) $summary['extra_minutes'];
             $debt += (int) $summary['debt_minutes'];
+
+            if ((int) $summary['worked_minutes'] > 0) {
+                $daysWorked++;
+            }
+
+            $isMissed = (int) $summary['expected_minutes'] > 0
+                && (int) $summary['worked_minutes'] === 0
+                && ! $summary['is_holiday']
+                && ! $summary['is_day_off']
+                && ! $summary['is_vacation']
+                && ! $summary['is_absence'];
+
+            if ($isMissed) {
+                $absencesCount++;
+            }
         }
 
         return [
@@ -533,6 +550,8 @@ class TimesheetCalculationService
             'extra_minutes' => $extra,
             'debt_minutes' => $debt,
             'abs_debt_minutes' => abs($debt),
+            'days_worked' => $daysWorked,
+            'absences_count' => $absencesCount,
             'worked_hhmm' => $this->minutesToHHMM($worked),
             'expected_hhmm' => $this->minutesToHHMM($expected),
             'balance_hhmm' => $this->minutesToSignedHHMM($balance),
