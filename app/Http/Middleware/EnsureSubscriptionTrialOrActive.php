@@ -20,6 +20,10 @@ class EnsureSubscriptionTrialOrActive
 
     public function handle(Request $request, Closure $next)
     {
+        if (app()->environment('local')) {
+            return $next($request);
+        }
+
         if ($request->user()?->hasRole('super_admin')) {
             return $next($request);
         }

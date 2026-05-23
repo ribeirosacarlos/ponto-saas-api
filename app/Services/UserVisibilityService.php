@@ -148,7 +148,8 @@ class UserVisibilityService
     private function managesArea(User $actor, ?string $areaId): bool
     {
         if (! $areaId) {
-            return false;
+            // Funcionário sem área é visível para qualquer gestor da mesma empresa
+            return true;
         }
 
         return in_array($areaId, $this->managedAreaIds($actor), true);
