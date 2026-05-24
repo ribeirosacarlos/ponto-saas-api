@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.1.1...v1.2.0) (2026-05-24)
+
+
+### Novas Funcionalidades
+
+* cover dashboard plan breakdown ([8ada4ea](https://github.com/ribeirosacarlos/ponto-saas-api/commit/8ada4ea12ed74e4ec63daf38e29bdef36c31fbb1))
+* cover dashboard plan breakdown ([47e9632](https://github.com/ribeirosacarlos/ponto-saas-api/commit/47e963207c5f12bbfc7738d4a984ed592486f065))
+
 ## [1.1.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.1.0...v1.1.1) (2026-05-23)
 
 
