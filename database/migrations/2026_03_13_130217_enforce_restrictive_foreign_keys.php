@@ -57,7 +57,6 @@ return new class extends Migration
             ['table' => 'leave_balances', 'column' => 'user_id', 'references_table' => 'users', 'references_column' => 'id', 'constraint' => 'leave_balances_user_id_foreign', 'delete_rule' => 'CASCADE'],
             ['table' => 'leave_policies', 'column' => 'company_id', 'references_table' => 'companies', 'references_column' => 'id', 'constraint' => 'leave_policies_company_id_foreign', 'delete_rule' => 'CASCADE'],
             ['table' => 'role_user', 'column' => 'role_id', 'references_table' => 'roles', 'references_column' => 'id', 'constraint' => 'role_user_role_id_foreign', 'delete_rule' => 'CASCADE'],
-            ['table' => 'role_user', 'column' => 'user_id', 'references_table' => 'users', 'references_column' => 'id', 'constraint' => 'role_user_user_id_foreign', 'delete_rule' => 'CASCADE'],
             ['table' => 'shift_day_events', 'column' => 'shift_day_id', 'references_table' => 'shift_days', 'references_column' => 'id', 'constraint' => 'shift_day_events_shift_day_id_foreign', 'delete_rule' => 'CASCADE'],
             ['table' => 'shift_days', 'column' => 'shift_id', 'references_table' => 'shifts', 'references_column' => 'id', 'constraint' => 'shift_days_shift_id_foreign', 'delete_rule' => 'CASCADE'],
             ['table' => 'shifts', 'column' => 'company_id', 'references_table' => 'companies', 'references_column' => 'id', 'constraint' => 'shifts_company_id_foreign', 'delete_rule' => 'CASCADE'],
