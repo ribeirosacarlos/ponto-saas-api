@@ -39,4 +39,19 @@ class CompanyPolicy
     {
         return $this->updateTimezone($user, $company);
     }
+
+    public function updateSignatureSettings(User $user, Company $company): bool
+    {
+        return $this->updateTimezone($user, $company);
+    }
+
+    public function updateInfo(User $user, Company $company): bool
+    {
+        return $this->updateTimezone($user, $company);
+    }
+
+    public function updateLocale(User $user, Company $company): bool
+    {
+        return $this->updateTimezone($user, $company);
+    }
 }
