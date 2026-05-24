@@ -13,9 +13,444 @@
         {
             "url": "https://api.jornafy.com/api",
             "description": "Produção"
+        },
+        {
+            "url": "/api"
         }
     ],
     "paths": {
+        "/v1/admin/company/signatures": {
+            "get": {
+                "tags": [
+                    "Admin - Company Settings"
+                ],
+                "summary": "Retorna as configurações de assinatura de folha de ponto",
+                "description": "==========================================\nGET /admin/company/signatures\n==========================================",
+                "operationId": "85c744d85bfd6dc55759d7a042acbdf7",
+                "responses": {
+                    "200": {
+                        "description": "Configurações de assinatura",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "enable_native_signatures": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "require_timesheet_signature": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "require_password_confirmation_for_signature": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "allow_geolocation_on_signature": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Empresa não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Company Settings"
+                ],
+                "summary": "Atualiza as configurações de assinatura de folha de ponto",
+                "description": "Todos os campos são opcionais (PATCH semântico). Envie apenas os campos que deseja alterar.",
+                "operationId": "f5f04efe6ef280015704e007f60b1570",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "enable_native_signatures": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "require_timesheet_signature": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "require_password_confirmation_for_signature": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "allow_geolocation_on_signature": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Configurações atualizadas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "enable_native_signatures": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "require_timesheet_signature": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "require_password_confirmation_for_signature": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "allow_geolocation_on_signature": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Empresa não encontrada"
+                    },
+                    "422": {
+                        "description": "Validação falhou"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/company/info": {
+            "get": {
+                "tags": [
+                    "Admin - Company Settings"
+                ],
+                "summary": "Retorna as informações cadastrais da empresa",
+                "description": "==========================================\nGET /admin/company/info\n==========================================",
+                "operationId": "7944f0eabd5bccaf0cc1d6aba11d00e4",
+                "responses": {
+                    "200": {
+                        "description": "Informações cadastrais",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Empresa LTDA"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "format": "email",
+                                            "example": "contato@empresa.com",
+                                            "nullable": true
+                                        },
+                                        "phone": {
+                                            "type": "string",
+                                            "example": "(11) 91234-5678",
+                                            "nullable": true
+                                        },
+                                        "address": {
+                                            "type": "string",
+                                            "example": "Rua das Flores, 123",
+                                            "nullable": true
+                                        },
+                                        "city": {
+                                            "type": "string",
+                                            "example": "São Paulo",
+                                            "nullable": true
+                                        },
+                                        "state": {
+                                            "type": "string",
+                                            "example": "SP",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Empresa não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Admin - Company Settings"
+                ],
+                "summary": "Atualiza as informações cadastrais da empresa",
+                "description": "Todos os campos são opcionais. Envie apenas os campos que deseja alterar.",
+                "operationId": "94fb251d0808d63f5b367cceb847b4a3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Empresa LTDA"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "contato@empresa.com",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "(11) 91234-5678",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Rua das Flores, 123",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "São Paulo",
+                                        "nullable": true
+                                    },
+                                    "state": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "SP",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Informações atualizadas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Empresa LTDA"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "contato@empresa.com",
+                                            "nullable": true
+                                        },
+                                        "phone": {
+                                            "type": "string",
+                                            "example": "(11) 91234-5678",
+                                            "nullable": true
+                                        },
+                                        "address": {
+                                            "type": "string",
+                                            "example": "Rua das Flores, 123",
+                                            "nullable": true
+                                        },
+                                        "city": {
+                                            "type": "string",
+                                            "example": "São Paulo",
+                                            "nullable": true
+                                        },
+                                        "state": {
+                                            "type": "string",
+                                            "example": "SP",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Empresa não encontrada"
+                    },
+                    "422": {
+                        "description": "Validação falhou"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/company/locale": {
+            "get": {
+                "tags": [
+                    "Admin - Company Settings"
+                ],
+                "summary": "Retorna o país e idioma configurados para a empresa",
+                "description": "==========================================\nGET /admin/company/locale\n==========================================",
+                "operationId": "437f38fc0bee8557c8468875587e77b1",
+                "responses": {
+                    "200": {
+                        "description": "Configurações de locale",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "country": {
+                                            "type": "string",
+                                            "example": "BR",
+                                            "nullable": true
+                                        },
+                                        "locale": {
+                                            "type": "string",
+                                            "example": "pt-BR",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Empresa não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Company Settings"
+                ],
+                "summary": "Atualiza o país e idioma da empresa",
+                "description": "country aceita código ISO 3166-1 alpha-2 (ex: BR, US). locale aceita código BCP 47 (ex: pt-BR, en-US).",
+                "operationId": "7e03fc7e0fa4765914fd2361ef4d5e06",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "country": {
+                                        "type": "string",
+                                        "maxLength": 10,
+                                        "example": "BR",
+                                        "nullable": true
+                                    },
+                                    "locale": {
+                                        "type": "string",
+                                        "maxLength": 10,
+                                        "example": "pt-BR",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Locale atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "country": {
+                                            "type": "string",
+                                            "example": "BR",
+                                            "nullable": true
+                                        },
+                                        "locale": {
+                                            "type": "string",
+                                            "example": "pt-BR",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Empresa não encontrada"
+                    },
+                    "422": {
+                        "description": "Validação falhou"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/admin/employees/{id}/shift": {
             "post": {
                 "tags": [
@@ -1821,30 +2256,50 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "policy": {
-                                            "properties": {
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Política Padrão Espanha"
-                                                }
-                                            },
-                                            "type": "object"
+                                        "period_start": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2026-01-01"
                                         },
-                                        "accrued": {
+                                        "period_end": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2026-12-31"
+                                        },
+                                        "annual_entitlement_days": {
+                                            "type": "number",
+                                            "example": 30
+                                        },
+                                        "accrual_basis": {
+                                            "type": "string",
+                                            "example": "calendar_days"
+                                        },
+                                        "computable_days": {
+                                            "type": "integer",
+                                            "example": 365
+                                        },
+                                        "non_computable_days": {
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "accrual_rate": {
+                                            "type": "number",
+                                            "example": 0.082191
+                                        },
+                                        "accrued_days": {
                                             "type": "number",
                                             "example": 12.5
                                         },
-                                        "used": {
+                                        "used_days": {
                                             "type": "number",
                                             "example": 5
                                         },
-                                        "adjustment": {
-                                            "type": "number",
-                                            "example": 0.5
-                                        },
-                                        "available": {
+                                        "available_days": {
                                             "type": "number",
                                             "example": 8
+                                        },
+                                        "breakdown": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2804,7 +3259,7 @@
                     "Area Manager - Time Entries"
                 ],
                 "summary": "Lista as batidas de ponto da equipe",
-                "description": "Retorna entradas de ponto da empresa do gestor/admin. Por padrão lista tudo (in e out). Suporta filtros e paginação.",
+                "description": "Sem user_id, retorna batidas brutas paginadas da equipe supervisionada. Com user_id, retorna os dias agrupados desse usuario, com day_summary uma vez por dia e batidas em entries[].",
                 "operationId": "b0cf11c2ba79f53e2cd53d6f8fbe77ad",
                 "parameters": [
                     {
@@ -2835,7 +3290,7 @@
                     {
                         "name": "date_from",
                         "in": "query",
-                        "description": "Data inicial (inclusive). Aceita qualquer formato parseável pelo Laravel, preferível ISO.",
+                        "description": "Data inicial (inclusive). Apenas o dia e considerado: se vier com hora/offset, essa parte e ignorada.",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -2846,7 +3301,7 @@
                     {
                         "name": "date_to",
                         "in": "query",
-                        "description": "Data final (inclusive).",
+                        "description": "Data final (inclusive). Apenas o dia e considerado: se vier com hora/offset, essa parte e ignorada.",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -2857,7 +3312,7 @@
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Número da página para paginação",
+                        "description": "Número da página para paginação. Ignorado quando user_id for informado.",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -2867,7 +3322,7 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Quantidade de itens por página (máx 200). Default 30.",
+                        "description": "Quantidade de itens por página (máx 200). Default 30. Ignorado quando user_id for informado.",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -2877,63 +3332,59 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada das batidas da equipe",
+                        "description": "Lista das batidas da equipe. Sem user_id, data contem batidas paginadas. Com user_id, data contem dias agrupados.",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "current_page": {
                                             "type": "integer",
-                                            "example": 1
+                                            "example": 1,
+                                            "nullable": true
                                         },
                                         "per_page": {
                                             "type": "integer",
-                                            "example": 30
+                                            "example": 30,
+                                            "nullable": true
                                         },
                                         "total": {
                                             "type": "integer",
-                                            "example": 120
+                                            "example": 120,
+                                            "nullable": true
+                                        },
+                                        "total_days": {
+                                            "type": "integer",
+                                            "example": 1,
+                                            "nullable": true
+                                        },
+                                        "total_entries": {
+                                            "type": "integer",
+                                            "example": 4,
+                                            "nullable": true
                                         },
                                         "data": {
                                             "type": "array",
                                             "items": {
                                                 "properties": {
-                                                    "id": {
+                                                    "date": {
                                                         "type": "string",
-                                                        "format": "uuid",
-                                                        "example": "019b9600-77ae-71dd-b912-4f26d4f2f354"
-                                                    },
-                                                    "user_id": {
-                                                        "type": "string",
-                                                        "format": "uuid",
-                                                        "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
-                                                    },
-                                                    "company_id": {
-                                                        "type": "string",
-                                                        "format": "uuid",
-                                                        "example": "78f4ab91-296c-4fdb-a70c-c91415be1532"
-                                                    },
-                                                    "clocked_at": {
-                                                        "type": "string",
-                                                        "example": "2026-01-06T13:03:00Z"
-                                                    },
-                                                    "type": {
-                                                        "type": "string",
-                                                        "example": "in"
-                                                    },
-                                                    "latitude": {
-                                                        "type": "string",
-                                                        "example": "-23.550520",
+                                                        "format": "date",
+                                                        "example": "2025-12-19",
                                                         "nullable": true
                                                     },
-                                                    "longitude": {
+                                                    "employee_id": {
                                                         "type": "string",
-                                                        "example": "-46.633308",
+                                                        "format": "uuid",
+                                                        "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7",
                                                         "nullable": true
                                                     },
-                                                    "source": {
-                                                        "type": "string",
-                                                        "example": "web"
+                                                    "day_summary": {
+                                                        "oneOf": [
+                                                            {
+                                                                "$ref": "#/components/schemas/TimeEntryDaySummary"
+                                                            }
+                                                        ],
+                                                        "nullable": true
                                                     },
                                                     "user": {
                                                         "description": "Informações do funcionário",
@@ -2952,7 +3403,59 @@
                                                                 "example": "joao@empresa.com"
                                                             }
                                                         },
-                                                        "type": "object"
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "entries": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "format": "uuid",
+                                                                    "example": "019b9600-77ae-71dd-b912-4f26d4f2f354"
+                                                                },
+                                                                "user_id": {
+                                                                    "type": "string",
+                                                                    "format": "uuid",
+                                                                    "example": "c16ad58b-99c1-431d-bbd7-c8c71eca33e7"
+                                                                },
+                                                                "company_id": {
+                                                                    "type": "string",
+                                                                    "format": "uuid",
+                                                                    "example": "78f4ab91-296c-4fdb-a70c-c91415be1532"
+                                                                },
+                                                                "clocked_at": {
+                                                                    "type": "string",
+                                                                    "example": "2026-01-06T13:03:00Z"
+                                                                },
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "example": "in"
+                                                                },
+                                                                "latitude": {
+                                                                    "type": "string",
+                                                                    "example": "-23.550520",
+                                                                    "nullable": true
+                                                                },
+                                                                "longitude": {
+                                                                    "type": "string",
+                                                                    "example": "-46.633308",
+                                                                    "nullable": true
+                                                                },
+                                                                "source": {
+                                                                    "type": "string",
+                                                                    "example": "web"
+                                                                },
+                                                                "work_date": {
+                                                                    "type": "string",
+                                                                    "format": "date",
+                                                                    "example": "2025-12-19"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "nullable": true
                                                     }
                                                 },
                                                 "type": "object"
@@ -4785,29 +5288,224 @@
                 ]
             }
         },
+        "/v1/employee/profile": {
+            "patch": {
+                "tags": [
+                    "Employee - Profile"
+                ],
+                "summary": "Atualiza o nome do usuário autenticado",
+                "description": "Atualiza o campo name do próprio usuário. O usuário é identificado pelo Bearer token — nenhum ID na URL. Disponível para employee, area_manager, manager e admin.",
+                "operationId": "d1c0f7c74ef85d2b206dfb4315661d4c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Ana Pereira"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Perfil atualizado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "018f1a2b-3c4d-5e6f-7a8b-9c0d1e2f3a4b"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Ana Pereira"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "ana@empresa.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validação falhou",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "O campo nome é obrigatório."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "O campo nome é obrigatório."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/password": {
+            "put": {
+                "tags": [
+                    "Employee - Profile"
+                ],
+                "summary": "Troca a senha do usuário autenticado",
+                "description": "Verifica a senha atual antes de aplicar a nova. O usuário é identificado pelo Bearer token. Disponível para employee, area_manager, manager e admin.",
+                "operationId": "82c3c16be100f1c71d364d24fc566ece",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "example": "senha-atual-123"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "nova-senha-456"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "nova-senha-456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Senha trocada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Senha atualizada com sucesso."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Senha atual incorreta ou confirmação não confere",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "A senha atual está incorreta."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "current_password": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "A senha atual está incorreta."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/employee/clock": {
             "post": {
                 "tags": [
                     "Employee - Time Entries"
                 ],
                 "summary": "Registrar batida de ponto",
-                "description": "O backend define automaticamente o type (in/out) com base no proximo evento esperado da jornada.",
+                "description": "O backend define automaticamente o type (in/out) com base no proximo evento esperado da jornada. Quando a empresa possui geolocalizacao habilitada no plano, latitude e longitude passam a ser obrigatorias.",
                 "operationId": "19dedd588c22206ec7c07003fccf0013",
                 "requestBody": {
-                    "description": "Dados opcionais da batida",
+                    "description": "Dados da batida. Latitude e longitude sao obrigatorias quando a geolocalizacao estiver habilitada para a empresa.",
                     "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "properties": {
                                     "latitude": {
-                                        "type": "string",
-                                        "example": "-23.550520",
+                                        "type": "number",
+                                        "format": "double",
+                                        "example": -23.55052,
                                         "nullable": true
                                     },
                                     "longitude": {
-                                        "type": "string",
-                                        "example": "-46.633308",
+                                        "type": "number",
+                                        "format": "double",
+                                        "example": -46.633308,
                                         "nullable": true
                                     },
                                     "source": {
@@ -4925,6 +5623,67 @@
                                         }
                                     },
                                     "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/entries/history": {
+            "get": {
+                "tags": [
+                    "Employee - Time Entries"
+                ],
+                "summary": "Historico diario de marcacoes do funcionario autenticado",
+                "description": "==========================================\nHistorico diario de marcacoes\n==========================================",
+                "operationId": "aabf831d6fb9d7dbfc06086e2beb9fcb",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Data inicial (YYYY-MM-DD).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-02-01"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Data final (YYYY-MM-DD).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-02-28"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Quantidade de dias para retorno quando from/to nao forem informados.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 7
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resumo diario retornado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EmployeeTimeEntryHistoryResponse"
                                 }
                             }
                         }
@@ -5267,35 +6026,50 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "policy": {
-                                            "properties": {
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Política Padrão Espanha"
-                                                },
-                                                "counting_method": {
-                                                    "type": "string",
-                                                    "example": "calendar_days"
-                                                }
-                                            },
-                                            "type": "object"
+                                        "period_start": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2026-01-01"
                                         },
-                                        "accrued": {
+                                        "period_end": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2026-12-31"
+                                        },
+                                        "annual_entitlement_days": {
                                             "type": "number",
-                                            "format": "float",
+                                            "example": 30
+                                        },
+                                        "accrual_basis": {
+                                            "type": "string",
+                                            "example": "calendar_days"
+                                        },
+                                        "computable_days": {
+                                            "type": "integer",
+                                            "example": 365
+                                        },
+                                        "non_computable_days": {
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "accrual_rate": {
+                                            "type": "number",
+                                            "example": 0.082191
+                                        },
+                                        "accrued_days": {
+                                            "type": "number",
                                             "example": 15
                                         },
-                                        "used": {
+                                        "used_days": {
                                             "type": "number",
                                             "example": 5
                                         },
-                                        "adjustment": {
-                                            "type": "number",
-                                            "example": 0
-                                        },
-                                        "available": {
+                                        "available_days": {
                                             "type": "number",
                                             "example": 10
+                                        },
+                                        "breakdown": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -6178,6 +6952,9 @@
                         ],
                         "example": "even"
                     },
+                    "summary": {
+                        "$ref": "#/components/schemas/TimeEntryDaySummary"
+                    },
                     "ignored": {
                         "type": "boolean",
                         "example": false
@@ -6827,10 +7604,12 @@
                     },
                     "latitude": {
                         "type": "string",
+                        "example": "-23.550520",
                         "nullable": true
                     },
                     "longitude": {
                         "type": "string",
+                        "example": "-46.633308",
                         "nullable": true
                     },
                     "source": {
@@ -7014,6 +7793,163 @@
                 },
                 "type": "object"
             },
+            "TimeEntryDaySummary": {
+                "properties": {
+                    "worked_minutes": {
+                        "type": "integer",
+                        "example": 490
+                    },
+                    "worked_hhmm": {
+                        "type": "string",
+                        "example": "08:10"
+                    },
+                    "expected_minutes": {
+                        "type": "integer",
+                        "example": 480
+                    },
+                    "expected_hhmm": {
+                        "type": "string",
+                        "example": "08:00"
+                    },
+                    "balance_minutes": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "balance_hhmm": {
+                        "type": "string",
+                        "example": "+00:10"
+                    },
+                    "extra_minutes": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "extra_hhmm": {
+                        "type": "string",
+                        "example": "00:10"
+                    },
+                    "debt_minutes": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "debt_hhmm": {
+                        "type": "string",
+                        "example": "00:00"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "extra",
+                            "debt",
+                            "even"
+                        ],
+                        "example": "extra"
+                    },
+                    "allowed_break_minutes": {
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "exceeded_break_minutes": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "has_incomplete_entries": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "open_session": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeTimeEntryHistoryDay": {
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-02-08"
+                    },
+                    "first_in": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-08T08:05:00-03:00",
+                        "nullable": true
+                    },
+                    "last_out": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-08T17:45:00-03:00",
+                        "nullable": true
+                    },
+                    "worked_minutes": {
+                        "type": "integer",
+                        "example": 490
+                    },
+                    "worked_hhmm": {
+                        "type": "string",
+                        "example": "08:10"
+                    },
+                    "expected_minutes": {
+                        "type": "integer",
+                        "example": 480
+                    },
+                    "expected_hhmm": {
+                        "type": "string",
+                        "example": "08:00"
+                    },
+                    "balance_minutes": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "balance_hhmm": {
+                        "type": "string",
+                        "example": "+00:10"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "extra",
+                            "debt",
+                            "even"
+                        ],
+                        "example": "extra"
+                    },
+                    "summary": {
+                        "$ref": "#/components/schemas/TimeEntryDaySummary"
+                    },
+                    "open_day": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "EmployeeTimeEntryHistoryResponse": {
+                "properties": {
+                    "from": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-02-01"
+                    },
+                    "to": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-02-28"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "example": "America/Sao_Paulo"
+                    },
+                    "days": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EmployeeTimeEntryHistoryDay"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "EmployeeWorkedToday": {
                 "properties": {
                     "date": {
@@ -7028,6 +7964,10 @@
                     "worked_minutes": {
                         "type": "integer",
                         "example": 480
+                    },
+                    "worked_hhmm": {
+                        "type": "string",
+                        "example": "08:00"
                     },
                     "worked_hours_decimal": {
                         "type": "number",
@@ -7045,6 +7985,34 @@
                     "open_session": {
                         "type": "boolean",
                         "example": false
+                    },
+                    "expected_minutes": {
+                        "type": "integer",
+                        "example": 480
+                    },
+                    "expected_hhmm": {
+                        "type": "string",
+                        "example": "08:00"
+                    },
+                    "balance_minutes": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "balance_hhmm": {
+                        "type": "string",
+                        "example": "00:00"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "extra",
+                            "debt",
+                            "even"
+                        ],
+                        "example": "even"
+                    },
+                    "summary": {
+                        "$ref": "#/components/schemas/TimeEntryDaySummary"
                     },
                     "details": {
                         "properties": {
@@ -7757,6 +8725,29 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
+                    },
+                    "access_expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "blocked_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "blocked_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_blocked": {
+                        "type": "boolean"
+                    },
+                    "is_plan_active": {
+                        "type": "boolean"
+                    },
+                    "can_cancel": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -7918,6 +8909,9 @@
                     "geolocation_enabled": {
                         "type": "boolean"
                     },
+                    "geolocation_required": {
+                        "type": "boolean"
+                    },
                     "require_photo": {
                         "type": "boolean",
                         "nullable": true
@@ -7986,6 +8980,10 @@
     },
     "tags": [
         {
+            "name": "Admin - Company Settings",
+            "description": "Configurações da empresa: assinaturas de folha, informações cadastrais e localização/idioma"
+        },
+        {
             "name": "Admin - Employees",
             "description": "Gestão de funcionários da empresa (CRUD)"
         },
@@ -8040,6 +9038,10 @@
         {
             "name": "Employee - Adjustments",
             "description": "Ajustes de ponto solicitados pelo funcionario"
+        },
+        {
+            "name": "Employee - Profile",
+            "description": "Configurações de perfil do usuário autenticado"
         },
         {
             "name": "Employee - Time Entries",

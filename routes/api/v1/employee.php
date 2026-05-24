@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
+use App\Http\Controllers\Api\Employee\ProfileController as EmployeeProfileController;
 use App\Http\Controllers\Api\Employee\TimesheetController as EmployeeTimesheetController;
 use App\Http\Controllers\Api\Employee\TimesheetPdfController as EmployeeTimesheetPdfController;
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
@@ -15,6 +16,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('employee')
     ->middleware(['role:employee|area_manager|manager|admin', 'subscription.access'])
     ->group(function () {
+
+        // Perfil do usuário autenticado
+        Route::patch('/profile', [EmployeeProfileController::class, 'update']);
+        Route::put('/password', [EmployeeProfileController::class, 'updatePassword']);
 
         // Registrar batida
         Route::post('/clock', [EmployeeTimeEntryController::class, 'clock']);
