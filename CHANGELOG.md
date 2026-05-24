@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.3.0...v1.3.1) (2026-05-24)
+
+
+### Correções de Bugs
+
+* soft delete employees to preserve historical records ([c7f8ff1](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c7f8ff11f719b16d6fad13c78b6a964a98b6c27b))
+* soft delete employees to preserve historical records ([683b48c](https://github.com/ribeirosacarlos/ponto-saas-api/commit/683b48c12494af96e12ca01c2f24d5cfca9dc895))
+
 ## [1.3.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.2.0...v1.3.0) (2026-05-24)
 
 
