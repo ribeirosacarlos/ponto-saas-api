@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use App\Traits\HasUuid;
 use App\Traits\CompanyScoped;
@@ -12,7 +13,16 @@ use Illuminate\Support\Arr;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuid, CompanyScoped;
+    use HasApiTokens, HasFactory, Notifiable, HasUuid, CompanyScoped, SoftDeletes;
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::deleting(function (User $user) {
+            $user->roles()->detach();
+        });
+    }
 
     public $incrementing = false;
     protected $keyType = 'string';
