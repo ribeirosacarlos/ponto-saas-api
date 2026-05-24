@@ -3,10 +3,10 @@
 namespace Tests\Feature\SuperAdmin;
 
 use App\Enums\SubscriptionStatus;
+use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\Plan;
 use App\Models\Role;
-use App\Models\Subscription;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\Carbon;
@@ -25,7 +25,7 @@ class SuperAdminDashboardTest extends TestCase
         parent::setUp();
 
         config(['billing.default_plan_slug' => 'basic_monthly']);
-        (new PlansSeeder())->run();
+        (new PlansSeeder)->run();
     }
 
     public function test_super_admin_can_view_dashboard_summary(): void
@@ -62,17 +62,59 @@ class SuperAdminDashboardTest extends TestCase
             'source' => 'web',
         ]);
 
+        AuditLog::create([
+            'company_id' => null,
+            'target_company_id' => $activeCompany->id,
+            'user_id' => $superAdmin->id,
+            'performed_by_role' => 'super_admin',
+            'action' => 'platform.company_unblocked',
+            'entity_type' => Company::class,
+            'entity_id' => $activeCompany->id,
+            'description' => 'Empresa desbloqueada por super admin.',
+            'created_at' => now()->subHour(),
+        ]);
+
         Sanctum::actingAs($superAdmin, ['*']);
 
-        $response = $this->getJson('/api/v1/platform/super-admin/dashboard');
+        $response = $this->getJson('/v1/platform/super-admin/dashboard');
 
         $response->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'time_entries_series' => [
+                        'granularity',
+                        'windows' => [
+                            '30d' => ['days', 'from', 'to', 'points'],
+                            '60d' => ['days', 'from', 'to', 'points'],
+                            '90d' => ['days', 'from', 'to', 'points'],
+                        ],
+                    ],
+                    'active_companies_series',
+                    'subscription_status_breakdown',
+                    'plan_breakdown',
+                    'recent_events',
+                    'top_companies_by_activity',
+                    'top_companies_by_risk',
+                ],
+            ])
             ->assertJsonPath('data.companies.total', 2)
             ->assertJsonPath('data.companies.paying', 1)
             ->assertJsonPath('data.companies.trialing', 1)
             ->assertJsonPath('data.employees.total', 2)
-            ->assertJsonPath('data.time_entries.today', 0)
-            ->assertJsonPath('data.time_entries.last_30_days', 3);
+            ->assertJsonPath('data.time_entries.today', 1)
+            ->assertJsonPath('data.time_entries.last_30_days', 3)
+            ->assertJsonPath('data.time_entries_series.granularity', 'day')
+            ->assertJsonPath('data.time_entries_series.windows.30d.days', 30)
+            ->assertJsonCount(30, 'data.time_entries_series.windows.30d.points')
+            ->assertJsonPath('data.active_companies_series.windows.60d.days', 60)
+            ->assertJsonCount(90, 'data.active_companies_series.windows.90d.points')
+            ->assertJsonPath('data.subscription_status_breakdown.0.status', 'trialing')
+            ->assertJsonPath('data.subscription_status_breakdown.0.total', 1)
+            ->assertJsonPath('data.subscription_status_breakdown.1.status', 'active')
+            ->assertJsonPath('data.subscription_status_breakdown.1.total', 1)
+            ->assertJsonPath('data.top_companies_by_activity.0.company.id', $activeCompany->id)
+            ->assertJsonPath('data.top_companies_by_activity.0.time_entries_30d', 2)
+            ->assertJsonFragment(['type' => 'company_unblocked']);
     }
 
     public function test_super_admin_can_list_companies_with_metrics(): void
@@ -94,7 +136,7 @@ class SuperAdminDashboardTest extends TestCase
 
         Sanctum::actingAs($superAdmin, ['*']);
 
-        $response = $this->getJson('/api/v1/platform/super-admin/companies');
+        $response = $this->getJson('/v1/platform/super-admin/companies');
 
         $response->assertOk()
             ->assertJsonStructure([
