@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.2.0...v1.3.0) (2026-05-24)
+
+
+### Novas Funcionalidades
+
+* add user profile and company settings endpoints ([1c4f00d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/1c4f00df8e7ae824fc455acca48c149b9939f35c))
+* add user profile and company settings endpoints ([d327454](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d327454e98c4cf47212e649ea93905bec7df79e5))
+
 ## [1.2.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.1.1...v1.2.0) (2026-05-24)
 
 
