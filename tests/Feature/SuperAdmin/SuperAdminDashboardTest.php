@@ -112,6 +112,8 @@ class SuperAdminDashboardTest extends TestCase
             ->assertJsonPath('data.subscription_status_breakdown.0.total', 1)
             ->assertJsonPath('data.subscription_status_breakdown.1.status', 'active')
             ->assertJsonPath('data.subscription_status_breakdown.1.total', 1)
+            ->assertJsonFragment(['plan_slug' => 'basic_monthly'])
+            ->assertJsonFragment(['plan_slug' => 'pro_yearly'])
             ->assertJsonPath('data.top_companies_by_activity.0.company.id', $activeCompany->id)
             ->assertJsonPath('data.top_companies_by_activity.0.time_entries_30d', 2)
             ->assertJsonFragment(['type' => 'company_unblocked']);
