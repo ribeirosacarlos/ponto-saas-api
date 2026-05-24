@@ -10,6 +10,14 @@ use Illuminate\Support\Facades\DB;
 
 class SuperAdminAnalyticsService
 {
+    protected const SERIES_WINDOWS = [30, 60, 90];
+
+    protected const RECENT_EVENT_ACTIONS = [
+        'platform.company_created' => 'company_created',
+        'platform.company_blocked' => 'company_blocked',
+        'platform.company_unblocked' => 'company_unblocked',
+    ];
+
     public function dashboardSummary(): array
     {
         $now = Carbon::now();
@@ -94,6 +102,13 @@ class SuperAdminAnalyticsService
                 'last_30_days' => $timeEntries30d,
             ],
             'revenue' => $revenue,
+            'time_entries_series' => $this->timeEntriesSeries($now),
+            'active_companies_series' => $this->activeCompaniesSeries($now),
+            'subscription_status_breakdown' => $this->subscriptionStatusBreakdown(),
+            'plan_breakdown' => $this->planBreakdown(),
+            'recent_events' => $this->recentEvents($now),
+            'top_companies_by_activity' => $this->topCompaniesByActivity($day30),
+            'top_companies_by_risk' => $this->topCompaniesByRisk($now),
         ];
     }
 
@@ -228,6 +243,385 @@ class SuperAdminAnalyticsService
             ->where('clocked_at', '>=', $from)
             ->distinct('user_id')
             ->count('user_id');
+    }
+
+    protected function timeEntriesSeries(Carbon $now): array
+    {
+        return $this->seriesWindows($now, fn (Carbon $from, Carbon $to) => $this->timeEntriesDailyPoints($from, $to));
+    }
+
+    protected function activeCompaniesSeries(Carbon $now): array
+    {
+        return $this->seriesWindows($now, fn (Carbon $from, Carbon $to) => $this->activeCompaniesDailyPoints($from, $to));
+    }
+
+    protected function seriesWindows(Carbon $now, callable $resolver): array
+    {
+        $to = $now->copy()->endOfDay();
+        $windows = [];
+
+        foreach (self::SERIES_WINDOWS as $days) {
+            $from = $now->copy()->subDays($days - 1)->startOfDay();
+
+            $windows["{$days}d"] = [
+                'days' => $days,
+                'from' => $from->toDateString(),
+                'to' => $to->toDateString(),
+                'points' => $resolver($from, $to),
+            ];
+        }
+
+        return [
+            'granularity' => 'day',
+            'windows' => $windows,
+        ];
+    }
+
+    protected function timeEntriesDailyPoints(Carbon $from, Carbon $to): array
+    {
+        $rows = DB::table('time_entries')
+            ->selectRaw('DATE(clocked_at) as metric_date, COUNT(*) as total')
+            ->whereBetween('clocked_at', [$from, $to])
+            ->groupByRaw('DATE(clocked_at)')
+            ->get()
+            ->mapWithKeys(fn ($row) => [(string) $row->metric_date => (int) $row->total]);
+
+        return $this->fillDailyPoints($from, $to, $rows->all(), 'time_entries');
+    }
+
+    protected function activeCompaniesDailyPoints(Carbon $from, Carbon $to): array
+    {
+        $rows = DB::table('time_entries')
+            ->selectRaw('DATE(clocked_at) as metric_date, COUNT(DISTINCT company_id) as total')
+            ->whereBetween('clocked_at', [$from, $to])
+            ->groupByRaw('DATE(clocked_at)')
+            ->get()
+            ->mapWithKeys(fn ($row) => [(string) $row->metric_date => (int) $row->total]);
+
+        return $this->fillDailyPoints($from, $to, $rows->all(), 'active_companies');
+    }
+
+    protected function fillDailyPoints(Carbon $from, Carbon $to, array $totalsByDate, string $valueKey): array
+    {
+        $points = [];
+        $cursor = $from->copy()->startOfDay();
+
+        while ($cursor->lessThanOrEqualTo($to)) {
+            $date = $cursor->toDateString();
+
+            $points[] = [
+                'date' => $date,
+                $valueKey => (int) ($totalsByDate[$date] ?? 0),
+            ];
+
+            $cursor->addDay();
+        }
+
+        return $points;
+    }
+
+    protected function subscriptionStatusBreakdown(): array
+    {
+        $rows = DB::table('companies')
+            ->leftJoin('subscriptions', function ($join) {
+                $join->on('subscriptions.company_id', '=', 'companies.id')
+                    ->whereNull('subscriptions.deleted_at');
+            })
+            ->whereNull('companies.deleted_at')
+            ->selectRaw("COALESCE(subscriptions.status, 'none') as status, COUNT(companies.id) as total")
+            ->groupByRaw("COALESCE(subscriptions.status, 'none')")
+            ->get()
+            ->mapWithKeys(fn ($row) => [(string) $row->status => (int) $row->total]);
+
+        $statuses = [
+            SubscriptionStatus::TRIALING->value,
+            SubscriptionStatus::ACTIVE->value,
+            SubscriptionStatus::PAST_DUE->value,
+            SubscriptionStatus::CANCELED->value,
+            'none',
+        ];
+
+        return array_map(fn (string $status) => [
+            'status' => $status,
+            'label' => $this->subscriptionStatusLabel($status === 'none' ? null : $status),
+            'total' => (int) ($rows[$status] ?? 0),
+        ], $statuses);
+    }
+
+    protected function planBreakdown(): array
+    {
+        return DB::table('companies')
+            ->leftJoin('subscriptions', function ($join) {
+                $join->on('subscriptions.company_id', '=', 'companies.id')
+                    ->whereNull('subscriptions.deleted_at');
+            })
+            ->leftJoin('plans', function ($join) {
+                $join->on('plans.id', '=', 'subscriptions.plan_id')
+                    ->whereNull('plans.deleted_at');
+            })
+            ->whereNull('companies.deleted_at')
+            ->select([
+                'plans.id as plan_id',
+                'plans.slug as plan_slug',
+                'plans.name as plan_name',
+                'plans.billing_interval as billing_interval',
+            ])
+            ->selectRaw('COUNT(companies.id) as total')
+            ->groupBy('plans.id', 'plans.slug', 'plans.name', 'plans.billing_interval')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($row) => [
+                'plan_id' => $row->plan_id,
+                'plan_slug' => $row->plan_slug,
+                'plan_name' => $row->plan_name ?? 'Sem plano',
+                'billing_interval' => $row->billing_interval,
+                'total' => (int) $row->total,
+            ])
+            ->all();
+    }
+
+    protected function recentEvents(Carbon $now, int $limit = 20): array
+    {
+        $from = $now->copy()->subDays(30);
+
+        $events = collect()
+            ->merge($this->recentAuditEvents($from))
+            ->merge($this->recentCompanyCreatedEvents($from))
+            ->merge($this->recentCompanyBlockedEvents($from))
+            ->merge($this->recentSubscriptionPastDueEvents($from));
+
+        return $events
+            ->unique(fn (array $event) => $event['type'].':'.($event['company']['id'] ?? '').':'.substr($event['occurred_at'], 0, 10))
+            ->sortByDesc('occurred_at')
+            ->values()
+            ->take($limit)
+            ->all();
+    }
+
+    protected function recentAuditEvents(Carbon $from): array
+    {
+        return DB::table('audit_logs')
+            ->leftJoin('companies', 'companies.id', '=', 'audit_logs.target_company_id')
+            ->whereIn('audit_logs.action', array_keys(self::RECENT_EVENT_ACTIONS))
+            ->where('audit_logs.created_at', '>=', $from)
+            ->orderByDesc('audit_logs.created_at')
+            ->limit(20)
+            ->get([
+                'audit_logs.id',
+                'audit_logs.action',
+                'audit_logs.description',
+                'audit_logs.created_at',
+                'companies.id as company_id',
+                'companies.name as company_name',
+                'companies.slug as company_slug',
+            ])
+            ->map(fn ($row) => [
+                'id' => $row->id,
+                'type' => self::RECENT_EVENT_ACTIONS[$row->action],
+                'occurred_at' => $this->toIsoString($row->created_at),
+                'company' => $this->companySummary($row->company_id, $row->company_name, $row->company_slug),
+                'description' => $row->description,
+                'source' => 'audit_log',
+            ])
+            ->all();
+    }
+
+    protected function recentCompanyCreatedEvents(Carbon $from): array
+    {
+        return DB::table('companies')
+            ->whereNull('deleted_at')
+            ->where('created_at', '>=', $from)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get(['id', 'name', 'slug', 'created_at'])
+            ->map(fn ($row) => [
+                'id' => 'company_created:'.$row->id,
+                'type' => 'company_created',
+                'occurred_at' => $this->toIsoString($row->created_at),
+                'company' => $this->companySummary($row->id, $row->name, $row->slug),
+                'description' => 'Empresa criada.',
+                'source' => 'companies.created_at',
+            ])
+            ->all();
+    }
+
+    protected function recentCompanyBlockedEvents(Carbon $from): array
+    {
+        return DB::table('companies')
+            ->whereNull('deleted_at')
+            ->where('is_blocked', true)
+            ->where('blocked_at', '>=', $from)
+            ->orderByDesc('blocked_at')
+            ->limit(20)
+            ->get(['id', 'name', 'slug', 'blocked_at', 'blocked_reason'])
+            ->map(fn ($row) => [
+                'id' => 'company_blocked:'.$row->id,
+                'type' => 'company_blocked',
+                'occurred_at' => $this->toIsoString($row->blocked_at),
+                'company' => $this->companySummary($row->id, $row->name, $row->slug),
+                'description' => $row->blocked_reason ? 'Empresa bloqueada: '.$row->blocked_reason : 'Empresa bloqueada.',
+                'source' => 'companies.blocked_at',
+            ])
+            ->all();
+    }
+
+    protected function recentSubscriptionPastDueEvents(Carbon $from): array
+    {
+        return DB::table('subscriptions')
+            ->join('companies', 'companies.id', '=', 'subscriptions.company_id')
+            ->whereNull('subscriptions.deleted_at')
+            ->whereNull('companies.deleted_at')
+            ->where('subscriptions.status', SubscriptionStatus::PAST_DUE->value)
+            ->where('subscriptions.past_due_since', '>=', $from)
+            ->orderByDesc('subscriptions.past_due_since')
+            ->limit(20)
+            ->get([
+                'subscriptions.id',
+                'subscriptions.past_due_since',
+                'companies.id as company_id',
+                'companies.name as company_name',
+                'companies.slug as company_slug',
+            ])
+            ->map(fn ($row) => [
+                'id' => 'subscription_past_due:'.$row->id,
+                'type' => 'subscription_past_due',
+                'occurred_at' => $this->toIsoString($row->past_due_since),
+                'company' => $this->companySummary($row->company_id, $row->company_name, $row->company_slug),
+                'description' => 'Assinatura entrou em atraso.',
+                'source' => 'subscriptions.past_due_since',
+            ])
+            ->all();
+    }
+
+    protected function topCompaniesByActivity(Carbon $from, int $limit = 10): array
+    {
+        return DB::table('companies')
+            ->leftJoin('subscriptions', function ($join) {
+                $join->on('subscriptions.company_id', '=', 'companies.id')
+                    ->whereNull('subscriptions.deleted_at');
+            })
+            ->leftJoin('plans', 'plans.id', '=', 'subscriptions.plan_id')
+            ->leftJoinSub($this->timeEntries30dSubquery($from->toDateTimeString()), 'time_entries_30d_metrics', fn ($join) => $join->on('time_entries_30d_metrics.company_id', '=', 'companies.id'))
+            ->leftJoinSub($this->activeEmployeesSubquery($from->toDateTimeString()), 'active_employee_metrics', fn ($join) => $join->on('active_employee_metrics.company_id', '=', 'companies.id'))
+            ->leftJoinSub($this->lastActivitySubquery(), 'activity_metrics', fn ($join) => $join->on('activity_metrics.company_id', '=', 'companies.id'))
+            ->whereNull('companies.deleted_at')
+            ->orderByDesc('time_entries_30d')
+            ->orderByDesc('active_billable_users_30d')
+            ->orderBy('companies.name')
+            ->limit($limit)
+            ->get([
+                'companies.id',
+                'companies.name',
+                'companies.slug',
+                'subscriptions.status as subscription_status',
+                'plans.slug as plan_slug',
+                DB::raw('COALESCE(time_entries_30d_metrics.time_entries_30d, 0) as time_entries_30d'),
+                DB::raw('COALESCE(active_employee_metrics.active_employees_30d, 0) as active_billable_users_30d'),
+                DB::raw('activity_metrics.last_activity_at as last_activity_at'),
+            ])
+            ->map(fn ($row) => [
+                'company' => $this->companySummary($row->id, $row->name, $row->slug),
+                'subscription_status' => $row->subscription_status,
+                'plan_slug' => $row->plan_slug,
+                'time_entries_30d' => (int) $row->time_entries_30d,
+                'active_billable_users_30d' => (int) $row->active_billable_users_30d,
+                'last_activity_at' => $this->toIsoString($row->last_activity_at),
+            ])
+            ->all();
+    }
+
+    protected function topCompaniesByRisk(Carbon $now, int $limit = 10): array
+    {
+        $day14 = $now->copy()->subDays(14)->toDateTimeString();
+
+        return DB::table('companies')
+            ->leftJoin('subscriptions', function ($join) {
+                $join->on('subscriptions.company_id', '=', 'companies.id')
+                    ->whereNull('subscriptions.deleted_at');
+            })
+            ->leftJoin('plans', 'plans.id', '=', 'subscriptions.plan_id')
+            ->leftJoinSub($this->timeEntries30dSubquery($now->copy()->subDays(30)->toDateTimeString()), 'time_entries_30d_metrics', fn ($join) => $join->on('time_entries_30d_metrics.company_id', '=', 'companies.id'))
+            ->leftJoinSub($this->lastActivitySubquery(), 'activity_metrics', fn ($join) => $join->on('activity_metrics.company_id', '=', 'companies.id'))
+            ->whereNull('companies.deleted_at')
+            ->select([
+                'companies.id',
+                'companies.name',
+                'companies.slug',
+                'companies.is_blocked',
+                'subscriptions.status as subscription_status',
+                'plans.slug as plan_slug',
+                DB::raw('COALESCE(time_entries_30d_metrics.time_entries_30d, 0) as time_entries_30d'),
+                DB::raw('activity_metrics.last_activity_at as last_activity_at'),
+            ])
+            ->selectRaw(
+                'CASE WHEN companies.is_blocked THEN 60 ELSE 0 END
+                    + CASE WHEN subscriptions.status = ? THEN 50 ELSE 0 END
+                    + CASE
+                        WHEN activity_metrics.last_activity_at IS NULL THEN 30
+                        WHEN activity_metrics.last_activity_at < ? THEN 25
+                        ELSE 0
+                    END as risk_score',
+                [SubscriptionStatus::PAST_DUE->value, $day14]
+            )
+            ->orderByDesc('risk_score')
+            ->orderBy('activity_metrics.last_activity_at')
+            ->limit($limit)
+            ->get()
+            ->filter(fn ($row) => (int) $row->risk_score > 0)
+            ->values()
+            ->map(function ($row) use ($now, $day14) {
+                return [
+                    'company' => $this->companySummary($row->id, $row->name, $row->slug),
+                    'subscription_status' => $row->subscription_status,
+                    'plan_slug' => $row->plan_slug,
+                    'health_status' => $this->healthStatus($row, $day14),
+                    'risk_score' => (int) $row->risk_score,
+                    'risk_reasons' => $this->riskReasons($row, $day14),
+                    'time_entries_30d' => (int) $row->time_entries_30d,
+                    'last_activity_at' => $this->toIsoString($row->last_activity_at),
+                    'days_inactive' => $row->last_activity_at ? Carbon::parse($row->last_activity_at)->diffInDays($now) : null,
+                ];
+            })
+            ->all();
+    }
+
+    protected function riskReasons(object $company, string $activeThreshold): array
+    {
+        $reasons = [];
+
+        if ($company->is_blocked) {
+            $reasons[] = 'blocked';
+        }
+
+        if ($company->subscription_status === SubscriptionStatus::PAST_DUE->value) {
+            $reasons[] = 'past_due';
+        }
+
+        if (empty($company->last_activity_at)) {
+            $reasons[] = 'no_activity';
+        } elseif ($company->last_activity_at < $activeThreshold) {
+            $reasons[] = 'inactive_14d';
+        }
+
+        return $reasons;
+    }
+
+    protected function companySummary(?string $id, ?string $name, ?string $slug): ?array
+    {
+        if (! $id) {
+            return null;
+        }
+
+        return [
+            'id' => $id,
+            'name' => $name,
+            'slug' => $slug,
+        ];
+    }
+
+    protected function toIsoString(mixed $value): ?string
+    {
+        return $value ? Carbon::parse($value)->toISOString() : null;
     }
 
     protected function estimatedRevenueSnapshot(): array
