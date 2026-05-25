@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.3.1...v1.4.0) (2026-05-25)
+
+
+### Novas Funcionalidades
+
+* use employee name, month and year as PDF filename on download ([16cbfd7](https://github.com/ribeirosacarlos/ponto-saas-api/commit/16cbfd7fe12c5962f99d3156c552ee013d81eec5))
+* use employee name, month and year as PDF filename on download ([3580920](https://github.com/ribeirosacarlos/ponto-saas-api/commit/358092026758aaae0695152b570176bd12d83d49))
+
 ## [1.3.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.3.0...v1.3.1) (2026-05-24)
 
 
