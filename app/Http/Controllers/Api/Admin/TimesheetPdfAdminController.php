@@ -31,6 +31,25 @@ class TimesheetPdfAdminController extends Controller
             return response()->json(['url' => $url]);
         }
 
-        return Storage::disk($disk)->download($timesheet->pdf_path, 'folha-de-ponto.pdf');
+        return Storage::disk($disk)->download($timesheet->pdf_path, $this->buildFilename($timesheet));
+    }
+
+    private function buildFilename(EmployeeTimesheet $timesheet): string
+    {
+        $timesheet->loadMissing(['employee', 'monthlyClosure']);
+
+        $name = $timesheet->employee
+            ? str($timesheet->employee->name)->slug('-')
+            : 'colaborador';
+
+        $month = $timesheet->monthlyClosure
+            ? str_pad((string) $timesheet->monthlyClosure->reference_month, 2, '0', STR_PAD_LEFT)
+            : '00';
+
+        $year = $timesheet->monthlyClosure
+            ? (string) $timesheet->monthlyClosure->reference_year
+            : date('Y');
+
+        return "folha-de-ponto-{$name}-{$month}-{$year}.pdf";
     }
 }
