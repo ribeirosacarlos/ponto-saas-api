@@ -18,8 +18,12 @@ class Plan extends Model
     protected $fillable = [
         'name',
         'slug',
+        'code',
+        'plan_code',
         'description',
         'price_cents',
+        'monthly_price_cents',
+        'yearly_price_cents',
         'currency',
         'billing_interval',
         'trial_days',
@@ -27,18 +31,24 @@ class Plan extends Model
         'sort_order',
         'features',
         'quotas',
+        'included_employees',
         'extra_employee_price_cents',
         'stripe_price_id',
+        'stripe_product_id',
         'stripe_extra_employee_price_id',
+        'stripe_extra_employee_product_id',
     ];
 
     protected $casts = [
         'price_cents' => 'integer',
+        'monthly_price_cents' => 'integer',
+        'yearly_price_cents' => 'integer',
         'trial_days' => 'integer',
         'is_active' => 'boolean',
         'sort_order' => 'integer',
         'features' => 'array',
         'quotas' => 'array',
+        'included_employees' => 'integer',
         'extra_employee_price_cents' => 'integer',
     ];
 

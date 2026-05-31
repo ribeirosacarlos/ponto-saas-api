@@ -147,6 +147,9 @@ class StripeBillingService
             case 'customer.subscription.deleted':
                 $this->handleStripeSubscription($event->data->object ?? null);
                 break;
+            case 'invoice.payment_succeeded':
+                $this->handleInvoicePaymentSucceeded($event->data->object ?? null);
+                break;
             case 'invoice.payment_failed':
                 $this->handleInvoicePaymentFailed($event->data->object ?? null);
                 break;
@@ -264,6 +267,38 @@ class StripeBillingService
         $this->syncStripeSubscription($company, $stripeSubscription);
     }
 
+    protected function handleInvoicePaymentSucceeded(?\Stripe\Invoice $invoice): void
+    {
+        if (! $invoice || empty($invoice->subscription)) {
+            return;
+        }
+
+        $subscription = Subscription::firstWhere('stripe_subscription_id', $invoice->subscription);
+
+        if (! $subscription) {
+            Log::warning('Invoice payment_succeeded could not find subscription', [
+                'invoice_id' => $invoice->id,
+            ]);
+
+            return;
+        }
+
+        $periodEnd = $this->toCarbon($invoice->period_end ?? null)
+            ?? $subscription->current_period_end;
+
+        $subscription = $this->billingService->activate($subscription, $periodEnd ?? now()->addMonth());
+
+        $company = $subscription->company;
+
+        if ($company) {
+            $company->update([
+                'subscription_status' => SubscriptionStatus::ACTIVE->value,
+            ]);
+
+            $this->companySubscriptionService->restoreAccess($company);
+        }
+    }
+
     protected function handleInvoicePaymentFailed(?\Stripe\Invoice $invoice): void
     {
         if (! $invoice || empty($invoice->subscription)) {
@@ -300,9 +335,12 @@ class StripeBillingService
             : ($status === SubscriptionStatus::CANCELED ? ($currentPeriodEnd ?? $existingAccessExpiresAt) : null);
         $subscription = Subscription::firstOrNew(['company_id' => $company->id]);
 
+        $includedEmployees = $plan?->included_employees ?? $plan?->quota('included_employees');
+
         $subscription->fill([
             'plan_id' => $plan?->id ?? $subscription->plan_id ?? $company->current_plan_id,
             'status' => $status,
+            'stripe_status' => $stripeSubscription->status ?? null,
             'trial_ends_at' => $this->toCarbon($stripeSubscription->trial_end ?? null),
             'current_period_start' => $currentPeriodStart,
             'current_period_end' => $currentPeriodEnd,
@@ -313,6 +351,8 @@ class StripeBillingService
             'stripe_price_id' => $this->resolvePriceId($stripeSubscription),
             'stripe_subscription_item_id' => $this->resolveBaseSubscriptionItemId($stripeSubscription, $plan),
             'stripe_extra_subscription_item_id' => $this->resolveExtraSubscriptionItemId($stripeSubscription, $plan),
+            'included_employees' => $includedEmployees,
+            'active_employees' => $company->billableUsersCount(),
             'metadata' => $this->metadataToArray($stripeSubscription->metadata ?? []),
         ]);
 

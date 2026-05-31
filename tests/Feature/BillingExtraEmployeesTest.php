@@ -27,17 +27,19 @@ class BillingExtraEmployeesTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_plans_seeder_creates_pro_br_plan_with_extra_employee_pricing(): void
+    public function test_plans_seeder_creates_starter_plan_with_extra_employee_pricing(): void
     {
         (new PlansSeeder())->run();
 
-        $plan = Plan::where('slug', 'pro_br_monthly')->first();
+        $plan = Plan::where('slug', 'starter_monthly')->first();
 
         $this->assertNotNull($plan);
-        $this->assertSame('BRL', $plan->currency);
-        $this->assertSame(12000, $plan->price_cents);
-        $this->assertSame(1500, $plan->extra_employee_price_cents);
-        $this->assertSame(15, data_get($plan->quotas, 'max_employees'));
+        $this->assertSame('EUR', $plan->currency);
+        $this->assertSame(1900, $plan->price_cents);
+        $this->assertSame(250, $plan->extra_employee_price_cents);
+        $this->assertSame(5, data_get($plan->quotas, 'max_employees'));
+        $this->assertSame('starter', $plan->code);
+        $this->assertSame(5, $plan->included_employees);
     }
 
     public function test_company_subscription_billing_service_calculates_and_syncs_extra_employees(): void
