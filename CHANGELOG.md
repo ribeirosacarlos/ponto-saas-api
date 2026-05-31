@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.4.0...v1.5.0) (2026-05-31)
+
+
+### Novas Funcionalidades
+
+* align billing backend with BACKEND_BILLING_SETUP.md spec ([2fbb061](https://github.com/ribeirosacarlos/ponto-saas-api/commit/2fbb061fe52ecef7460498b37bf0495d25e01218))
+* align billing backend with BACKEND_BILLING_SETUP.md spec ([977b2b6](https://github.com/ribeirosacarlos/ponto-saas-api/commit/977b2b6c966bdb6a313e8e978c556e4a7c90448d))
+
 ## [1.4.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.3.1...v1.4.0) (2026-05-25)
 
 
