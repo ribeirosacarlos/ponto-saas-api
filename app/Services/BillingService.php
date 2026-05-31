@@ -21,10 +21,13 @@ class BillingService
     public function markPastDue(Subscription $subscription, ?\DateTimeInterface $since = null): Subscription
     {
         $pastDueSince = $since ? Carbon::instance($since) : Carbon::now();
+        $graceDays = $subscription->grace_period_days ?? config('billing.grace_period_days_default', 7);
+        $graceEndsAt = $pastDueSince->copy()->addDays($graceDays);
 
         $subscription->update([
             'status' => SubscriptionStatus::PAST_DUE,
             'past_due_since' => $pastDueSince,
+            'grace_period_ends_at' => $graceEndsAt,
         ]);
 
         return $subscription->refresh();
@@ -38,6 +41,7 @@ class BillingService
             'status' => SubscriptionStatus::ACTIVE,
             'current_period_end' => $end,
             'past_due_since' => null,
+            'grace_period_ends_at' => null,
             'canceled_at' => null,
         ]);
 

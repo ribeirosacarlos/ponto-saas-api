@@ -25,8 +25,12 @@ class Subscription extends Model
         'canceled_at',
         'past_due_since',
         'grace_period_days',
+        'grace_period_ends_at',
         'stripe_customer_id',
         'stripe_subscription_id',
+        'stripe_status',
+        'included_employees',
+        'active_employees',
         'metadata',
         'cancel_at_period_end',
         'stripe_price_id',
@@ -41,7 +45,10 @@ class Subscription extends Model
         'current_period_end' => 'datetime',
         'canceled_at' => 'datetime',
         'past_due_since' => 'datetime',
+        'grace_period_ends_at' => 'datetime',
         'grace_period_days' => 'integer',
+        'included_employees' => 'integer',
+        'active_employees' => 'integer',
         'metadata' => 'array',
         'cancel_at_period_end' => 'boolean',
     ];
@@ -78,6 +85,10 @@ class Subscription extends Model
 
     public function isInGracePeriod(): bool
     {
+        if ($this->grace_period_ends_at) {
+            return now()->lessThanOrEqualTo($this->grace_period_ends_at);
+        }
+
         if (! $this->past_due_since || ($this->grace_period_days ?? 0) <= 0) {
             return false;
         }
