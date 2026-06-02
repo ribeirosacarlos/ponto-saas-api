@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.0...v1.5.1) (2026-06-02)
+
+
+### Correções de Bugs
+
+* discount exceeded break from worked balance ([ecae444](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ecae444b1b68ad16cd372bcb1fca2caf9635113d))
+* keep break time out of worked hours ([517d90e](https://github.com/ribeirosacarlos/ponto-saas-api/commit/517d90e18001e0c89acab548ca3a9ca6fb913766))
+
 ## [1.5.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.4.0...v1.5.0) (2026-05-31)
 
 
