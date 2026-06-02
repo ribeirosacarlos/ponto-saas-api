@@ -267,6 +267,7 @@ class TimesheetCalculationService
         $workedMinutes = $this->resolveOfficialWorkedMinutes(
             $pairing['raw_worked_minutes'],
             $pairing['counted_break_minutes'],
+            $pairing['exceeded_break_minutes'],
             $pairing['has_incomplete_entries']
         );
         $isFinalized = $dateKey < CarbonImmutable::now($timezone)->toDateString();
@@ -443,11 +444,13 @@ class TimesheetCalculationService
                 }
 
                 $pendingIn = $clockedAt;
+
                 continue;
             }
 
             if ($pendingIn === null) {
                 $hasIncompleteEntries = true;
+
                 continue;
             }
 
@@ -455,6 +458,7 @@ class TimesheetCalculationService
                 $hasIncompleteEntries = true;
                 $pendingIn = null;
                 $previousOut = null;
+
                 continue;
             }
 
@@ -491,13 +495,14 @@ class TimesheetCalculationService
     protected function resolveOfficialWorkedMinutes(
         int $rawWorkedMinutes,
         int $countedBreakMinutes,
+        int $exceededBreakMinutes,
         bool $hasIncompleteEntries
     ): int {
         if ($hasIncompleteEntries || $rawWorkedMinutes <= 0) {
             return 0;
         }
 
-        return $rawWorkedMinutes + $countedBreakMinutes;
+        return max(0, $rawWorkedMinutes + $countedBreakMinutes - $exceededBreakMinutes);
     }
 
     protected function truncateToMinute(CarbonImmutable $date): CarbonImmutable

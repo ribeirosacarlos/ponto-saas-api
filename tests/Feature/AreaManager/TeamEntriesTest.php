@@ -238,6 +238,85 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.day_summary.status', 'extra');
     }
 
+    public function test_team_entries_day_summary_subtracts_exceeded_break_from_worked_time_and_balance(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-07 09:00:00', 'America/Sao_Paulo'));
+
+        $company = Company::factory()->create([
+            'timezone' => 'America/Sao_Paulo',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-05-06', 'America/Sao_Paulo');
+        $this->assignShift($employee, $date, [
+            'start_time' => '11:38',
+            'end_time' => '17:38',
+            'scheduled_minutes' => 360,
+            'break_minutes' => 20,
+            'break_start_time' => '16:56',
+            'break_end_time' => '17:16',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(11, 38)->utc(),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(16, 56)->utc(),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(17, 22)->utc(),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(18, 56)->utc(),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-05-06T00:00:00-03:00&date_to=2026-05-06T23:59:59-03:00");
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.day_summary.raw_worked_minutes', 412)
+            ->assertJsonPath('data.0.day_summary.raw_worked_hhmm', '06:52')
+            ->assertJsonPath('data.0.day_summary.real_break_minutes', 26)
+            ->assertJsonPath('data.0.day_summary.real_break_hhmm', '00:26')
+            ->assertJsonPath('data.0.day_summary.allowed_break_minutes', 20)
+            ->assertJsonPath('data.0.day_summary.counted_break_minutes', 20)
+            ->assertJsonPath('data.0.day_summary.exceeded_break_minutes', 6)
+            ->assertJsonPath('data.0.day_summary.exceeded_break_hhmm', '00:06')
+            ->assertJsonPath('data.0.day_summary.worked_minutes', 426)
+            ->assertJsonPath('data.0.day_summary.worked_hhmm', '07:06')
+            ->assertJsonPath('data.0.day_summary.expected_minutes', 360)
+            ->assertJsonPath('data.0.day_summary.balance_minutes', 66)
+            ->assertJsonPath('data.0.day_summary.balance_hhmm', '+01:06')
+            ->assertJsonPath('data.0.day_summary.extra_minutes', 66)
+            ->assertJsonPath('data.0.day_summary.extra_hhmm', '01:06')
+            ->assertJsonPath('data.0.day_summary.status', 'extra');
+    }
+
     public function test_team_entries_does_not_close_overtime_for_current_day(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-19 19:30:00', 'America/Sao_Paulo'));
