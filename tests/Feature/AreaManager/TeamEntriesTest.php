@@ -238,7 +238,7 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.day_summary.status', 'even');
     }
 
-    public function test_team_entries_day_summary_subtracts_exceeded_break_from_balance_only(): void
+    public function test_team_entries_day_summary_subtracts_exceeded_break_from_worked_time(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-07 09:00:00', 'America/Sao_Paulo'));
 
@@ -307,8 +307,8 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.day_summary.counted_break_minutes', 20)
             ->assertJsonPath('data.0.day_summary.exceeded_break_minutes', 6)
             ->assertJsonPath('data.0.day_summary.exceeded_break_hhmm', '00:06')
-            ->assertJsonPath('data.0.day_summary.worked_minutes', 412)
-            ->assertJsonPath('data.0.day_summary.worked_hhmm', '06:52')
+            ->assertJsonPath('data.0.day_summary.worked_minutes', 406)
+            ->assertJsonPath('data.0.day_summary.worked_hhmm', '06:46')
             ->assertJsonPath('data.0.day_summary.expected_minutes', 340)
             ->assertJsonPath('data.0.day_summary.balance_minutes', 66)
             ->assertJsonPath('data.0.day_summary.balance_hhmm', '+01:06')

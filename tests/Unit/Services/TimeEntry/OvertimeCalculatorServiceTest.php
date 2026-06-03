@@ -262,7 +262,7 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
         $this->assertSame(25, $result['days'][0]['actual_break_minutes']);
         $this->assertSame(5, $result['days'][0]['exceeded_break_minutes']);
-        $this->assertSame(335, $result['days'][0]['worked_minutes']);
+        $this->assertSame(330, $result['days'][0]['worked_minutes']);
         $this->assertSame(-10, $result['days'][0]['balance_minutes']);
         $this->assertSame('debt', $result['days'][0]['status']);
     }
@@ -320,7 +320,7 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(30, $result['days'][0]['real_break_minutes']);
         $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
         $this->assertSame(10, $result['days'][0]['exceeded_break_minutes']);
-        $this->assertSame(330, $result['days'][0]['worked_minutes']);
+        $this->assertSame(320, $result['days'][0]['worked_minutes']);
         $this->assertSame(-20, $result['days'][0]['balance_minutes']);
     }
 
@@ -355,8 +355,8 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(23, $result['days'][0]['real_break_minutes']);
         $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
         $this->assertSame(3, $result['days'][0]['exceeded_break_minutes']);
-        $this->assertSame(443, $result['days'][0]['worked_minutes']);
-        $this->assertSame('07:23', $result['days'][0]['worked_hhmm']);
+        $this->assertSame(440, $result['days'][0]['worked_minutes']);
+        $this->assertSame('07:20', $result['days'][0]['worked_hhmm']);
         $this->assertSame(100, $result['days'][0]['balance_minutes']);
         $this->assertSame('+01:40', $result['days'][0]['balance_hhmm']);
         $this->assertSame(100, $result['days'][0]['extra_minutes']);
@@ -409,13 +409,14 @@ class OvertimeCalculatorServiceTest extends TestCase
 
         $this->createTimeEntry($user, 'in', $date->setTime(8, 0));
         $this->createTimeEntry($user, 'out', $date->setTime(12, 0));
-        $this->createTimeEntry($user, 'in', $date->setTime(12, 20));
+        $this->createTimeEntry($user, 'in', $date->setTime(12, 25));
         $this->createTimeEntry($user, 'out', $date->setTime(14, 0));
 
         $service = app(OvertimeCalculatorService::class);
         $result = $service->calculateForEmployee($user, $date, $date, true);
 
-        $this->assertSame(340, $result['days'][0]['worked_minutes']);
+        $this->assertSame(330, $result['days'][0]['worked_minutes']);
+        $this->assertSame(5, $result['days'][0]['exceeded_break_minutes']);
         $this->assertSame(0, $result['days'][0]['balance_minutes']);
         $this->assertSame(0, $result['days'][0]['extra_minutes']);
         $this->assertSame(0, $result['days'][0]['debt_minutes']);
