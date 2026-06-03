@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.1...v1.5.2) (2026-06-03)
+
+
+### Correções de Bugs
+
+* report worked hours as net of break overage ([b542f2e](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b542f2ea3e01fdcec6630c085cfbb37dc98cd65d))
+* report worked hours as net of break overage ([a920d25](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a920d25c4e1953ba51442a08fa187a38b0738900))
+
 ## [1.5.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.0...v1.5.1) (2026-06-02)
 
 
