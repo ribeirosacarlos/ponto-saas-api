@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.2...v1.5.3) (2026-06-04)
+
+
+### Correções de Bugs
+
+* block deleting assigned shifts ([35a6dc6](https://github.com/ribeirosacarlos/ponto-saas-api/commit/35a6dc62c78e1963a940d031e27c873eda14affe))
+* block deleting assigned shifts ([cc2278c](https://github.com/ribeirosacarlos/ponto-saas-api/commit/cc2278c4f7c7d62f84095436a2b295ffa492f38b))
+
 ## [1.5.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.1...v1.5.2) (2026-06-03)
 
 
