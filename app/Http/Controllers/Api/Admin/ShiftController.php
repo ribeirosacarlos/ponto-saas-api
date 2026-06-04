@@ -188,6 +188,13 @@ class ShiftController extends Controller
     public function destroy(Request $request, Shift $shift)
     {
         $this->authorizeCompany($request, $shift);
+
+        if ($shift->userShifts()->exists()) {
+            throw ValidationException::withMessages([
+                'shift' => 'Não é possível remover uma jornada vinculada a colaboradores.',
+            ]);
+        }
+
         $snapshot = $this->shiftSnapshot($shift->load([
             'shiftDays' => fn ($query) => $query->orderBy('weekday'),
             'shiftDays.events' => fn ($query) => $query->orderBy('sort_order'),
