@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.7.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.1...v1.7.2) (2026-06-05)
+
+
+### Correções de Bugs
+
+* exclude rejected team entries ([631eeee](https://github.com/ribeirosacarlos/ponto-saas-api/commit/631eeeeb09228b5c9f19c7d7660bd07819285d7b))
+* exclude rejected team entries ([9f72e34](https://github.com/ribeirosacarlos/ponto-saas-api/commit/9f72e34e9ab6efc7b884f57e516546b86e62c129))
+* keep worked minutes as real worked time ([04d3d35](https://github.com/ribeirosacarlos/ponto-saas-api/commit/04d3d358cb07236442fe3343fcca9cfa47a8cb5e))
+* keep worked minutes as real worked time ([11941cb](https://github.com/ribeirosacarlos/ponto-saas-api/commit/11941cb3cabc3365beb54fd1e10539ffcd10821e))
+
 ## [1.7.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.0...v1.7.1) (2026-06-05)
 
 
