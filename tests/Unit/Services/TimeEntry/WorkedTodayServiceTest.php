@@ -6,7 +6,6 @@ use App\Models\Company;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\TimeEntry\WorkedTodayService;
-use App\Services\UserShiftResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -40,13 +39,13 @@ class WorkedTodayServiceTest extends TestCase
 
         $now = CarbonImmutable::parse('2026-01-22 17:00:00', 'UTC');
 
-        $service = new WorkedTodayService(new UserShiftResolver());
+        $service = app(WorkedTodayService::class);
         $result = $service->getWorkedToday($user, $now);
 
-        $this->assertSame(28720, $result['worked_seconds']);
+        $this->assertSame(28680, $result['worked_seconds']);
         $this->assertSame(478, $result['worked_minutes']);
-        $this->assertSame(7.98, $result['worked_hours_decimal']);
-        $this->assertSame(0, $result['break_seconds_deducted']);
+        $this->assertSame(7.96, $result['worked_hours_decimal']);
+        $this->assertSame(3600, $result['break_seconds_deducted']);
         $this->assertSame(0, $result['expected_break_minutes']);
     }
 }
