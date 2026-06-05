@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.0...v1.7.1) (2026-06-05)
+
+
+### Correções de Bugs
+
+* remove document storage conflict markers ([3ee96b4](https://github.com/ribeirosacarlos/ponto-saas-api/commit/3ee96b48e9e6fdf4510cad2c134610f9cee6251a))
+* remove document storage conflict markers ([ede2859](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ede285944da7fc7602d040361744f00bb9b15f30))
+
 ## [1.7.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.6.0...v1.7.0) (2026-06-05)
 
 
