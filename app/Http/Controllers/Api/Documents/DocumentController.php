@@ -11,6 +11,7 @@ use App\Http\Resources\DocumentResource;
 use App\Models\Document;
 use App\Models\User;
 use App\Services\UserVisibilityService;
+use App\Support\DocumentStoragePath;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -23,16 +24,20 @@ class DocumentController extends Controller
     use LogsDocumentAudits;
 
     private const PRIVILEGED_ROLES = ['admin', 'manager', 'area_manager'];
+
     private const SORT_FIELDS = ['updated_at'];
+
     private const DEFAULT_SORT_FIELD = 'updated_at';
+
     private const DEFAULT_SORT_DIRECTION = 'desc';
+
     private const DEFAULT_PER_PAGE = 20;
+
     private const MAX_PER_PAGE = 100;
 
     public function __construct(
         protected UserVisibilityService $userVisibilityService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -355,16 +360,7 @@ class DocumentController extends Controller
 
     private function uploadPrivateEmployeeDocumentToS3(UploadedFile $file, string $companyId, string $employeeId): array
     {
-        $id = (string) Str::ulid();
-        $rawExtension = Str::lower($file->getClientOriginalExtension() ?: ($file->guessExtension() ?: 'bin'));
-        $extension = preg_replace('/[^a-z0-9]+/', '', $rawExtension) ?: 'bin';
-        $path = sprintf(
-            'companies/%s/employees/%s/documents/%s.%s',
-            $companyId,
-            $employeeId,
-            $id,
-            $extension,
-        );
+        [$path, $extension] = DocumentStoragePath::newEmployeeDocumentPath($file, $companyId, $employeeId);
 
         $stream = fopen($file->getRealPath(), 'rb');
         $uploaded = $stream

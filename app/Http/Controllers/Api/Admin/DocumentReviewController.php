@@ -12,6 +12,7 @@ use App\Models\Document;
 use App\Models\DocumentNotification;
 use App\Models\User;
 use App\Services\UserVisibilityService;
+use App\Support\DocumentStoragePath;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -23,8 +24,7 @@ class DocumentReviewController extends Controller
 
     public function __construct(
         protected UserVisibilityService $userVisibilityService
-    ) {
-    }
+    ) {}
 
     public function pending(AdminPendingIndexRequest $request)
     {
@@ -121,15 +121,10 @@ class DocumentReviewController extends Controller
         $disk = 's3';
 
         foreach ($request->file('files', []) as $file) {
-            $id = (string) Str::ulid();
-            $rawExtension = Str::lower($file->getClientOriginalExtension() ?: ($file->guessExtension() ?: 'bin'));
-            $extension = preg_replace('/[^a-z0-9]+/', '', $rawExtension) ?: 'bin';
-            $path = sprintf(
-                'companies/%s/employees/%s/documents/%s.%s',
+            [$path, $extension] = DocumentStoragePath::newEmployeeDocumentPath(
+                $file,
                 $targetUser->company_id,
                 $targetUser->id,
-                $id,
-                $extension,
             );
 
             $stream = fopen($file->getRealPath(), 'rb');
