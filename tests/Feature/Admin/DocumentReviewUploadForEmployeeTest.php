@@ -57,7 +57,11 @@ class DocumentReviewUploadForEmployeeTest extends TestCase
 
         $document = Document::query()->findOrFail($documentId);
 
+<<<<<<< HEAD
         $expectedPrefix = "jornafy-documents/{$admin->company_id}/documents/employees/{$employee->id}/";
+=======
+        $expectedPrefix = "{$admin->company_id}/documents/employees/{$employee->id}/";
+>>>>>>> 3d28fcd (feat: separate document uploads by company prefix)
         $this->assertStringStartsWith($expectedPrefix, $document->path);
         $this->assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}\.pdf$/', basename($document->path));
 
