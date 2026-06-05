@@ -2,10 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Company;
-use App\Models\DocumentAudit;
-use App\Models\DocumentNotification;
-use App\Models\User;
 use App\Traits\CompanyScoped;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,13 +11,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Document extends Model
 {
-    use HasFactory, HasUuid, CompanyScoped;
+    use CompanyScoped, HasFactory, HasUuid;
 
     public const STORAGE_DISK = 'local';
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_REVIEW = 'review';
+
     public const STATUS_AVAILABLE = 'available';
+
     public const STATUS_EXPIRED = 'expired';
 
     public const STATUSES = [
@@ -32,8 +31,11 @@ class Document extends Model
     ];
 
     public const CATEGORY_PAYROLL = 'payroll';
+
     public const CATEGORY_COURSES = 'courses';
+
     public const CATEGORY_PERSONAL = 'personal';
+
     public const CATEGORY_OTHERS = 'others';
 
     public const CATEGORIES = [
@@ -44,6 +46,7 @@ class Document extends Model
     ];
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -87,5 +90,10 @@ class Document extends Model
     public function notifications(): HasMany
     {
         return $this->hasMany(DocumentNotification::class);
+    }
+
+    public function absences()
+    {
+        return $this->belongsToMany(Absence::class, 'absence_document')->withTimestamps();
     }
 }

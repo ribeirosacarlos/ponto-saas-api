@@ -1,11 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AbsenceController as AdminAbsenceController;
 use App\Http\Controllers\Api\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Api\Admin\AreaController;
-use App\Http\Controllers\Api\Admin\MonthlyClosureController;
-use App\Http\Controllers\Api\Admin\TimesheetAdminController;
-use App\Http\Controllers\Api\Admin\TimesheetPdfAdminController;
 use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeCheckoutSessionController;
+use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeSyncController;
 use App\Http\Controllers\Api\Admin\CompanyDeviceSettingsController;
 use App\Http\Controllers\Api\Admin\CompanyGeolocationController;
 use App\Http\Controllers\Api\Admin\CompanyInfoController;
@@ -14,16 +13,18 @@ use App\Http\Controllers\Api\Admin\CompanySignatureSettingsController;
 use App\Http\Controllers\Api\Admin\CompanyTimezoneController;
 use App\Http\Controllers\Api\Admin\DocumentReviewController;
 use App\Http\Controllers\Api\Admin\EmployeeController;
-use App\Http\Controllers\Api\AuditLogController;
-use App\Http\Controllers\Api\Admin\AbsenceController as AdminAbsenceController;
-use App\Http\Controllers\Api\Admin\Billing\ExtraEmployeeSyncController;
 use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\LeavePolicyController;
+use App\Http\Controllers\Api\Admin\MedicalCertificateController as AdminMedicalCertificateController;
+use App\Http\Controllers\Api\Admin\MonthlyClosureController;
 use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\ShiftController;
-use App\Http\Controllers\Api\Admin\TimeEntryController as AdminTimeEntryController;
 use App\Http\Controllers\Api\Admin\TimeEntryAdjustmentController as AdminTimeEntryAdjustmentController;
+use App\Http\Controllers\Api\Admin\TimeEntryController as AdminTimeEntryController;
+use App\Http\Controllers\Api\Admin\TimesheetAdminController;
+use App\Http\Controllers\Api\Admin\TimesheetPdfAdminController;
 use App\Http\Controllers\Api\Admin\VacationController as AdminVacationController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
 use App\Http\Controllers\Api\Settings\CompanyLocationSettingsController;
 use Illuminate\Support\Facades\Route;
@@ -123,6 +124,11 @@ Route::prefix('admin')->group(function () {
 
         Route::get('/absences', [AdminAbsenceController::class, 'index']);
         Route::post('/absences', [AdminAbsenceController::class, 'store']);
+        Route::get('/medical-certificates', [AdminMedicalCertificateController::class, 'index']);
+        Route::post('/medical-certificates', [AdminMedicalCertificateController::class, 'store']);
+        Route::get('/medical-certificates/{absence}', [AdminMedicalCertificateController::class, 'show']);
+        Route::patch('/medical-certificates/{absence}/approve', [AdminMedicalCertificateController::class, 'approve']);
+        Route::patch('/medical-certificates/{absence}/reject', [AdminMedicalCertificateController::class, 'reject']);
 
         Route::apiResource('announcements', AdminAnnouncementController::class);
     });
