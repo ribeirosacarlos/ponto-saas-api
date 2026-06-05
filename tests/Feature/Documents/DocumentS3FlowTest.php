@@ -50,7 +50,11 @@ class DocumentS3FlowTest extends TestCase
 
         $document = Document::query()->findOrFail($response->json('data.0.id'));
 
+<<<<<<< HEAD
         $prefix = "jornafy-documents/{$employee->company_id}/documents/employees/{$employee->id}/";
+=======
+        $prefix = "{$employee->company_id}/documents/employees/{$employee->id}/";
+>>>>>>> 3d28fcd (feat: separate document uploads by company prefix)
         $this->assertStringStartsWith($prefix, $document->path);
         $this->assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}\.pdf$/', basename($document->path));
 
@@ -104,7 +108,11 @@ class DocumentS3FlowTest extends TestCase
 
         $document->refresh();
 
+<<<<<<< HEAD
         $prefix = "jornafy-documents/{$employee->company_id}/documents/employees/{$employee->id}/";
+=======
+        $prefix = "{$employee->company_id}/documents/employees/{$employee->id}/";
+>>>>>>> 3d28fcd (feat: separate document uploads by company prefix)
         $this->assertStringStartsWith($prefix, $document->path);
         Storage::disk('s3')->assertExists($document->path);
         Storage::disk('local')->assertMissing($oldPath);
@@ -124,7 +132,11 @@ class DocumentS3FlowTest extends TestCase
         $employee = $this->createEmployee();
         Sanctum::actingAs($employee, ['*']);
 
+<<<<<<< HEAD
         $path = "jornafy-documents/{$employee->company_id}/documents/employees/{$employee->id}/01JTESTABCDEFGHJKMNPQRST.pdf";
+=======
+        $path = "{$employee->company_id}/documents/employees/{$employee->id}/01JTESTABCDEFGHJKMNPQRST.pdf";
+>>>>>>> 3d28fcd (feat: separate document uploads by company prefix)
 
         $document = Document::create([
             'company_id' => $employee->company_id,
