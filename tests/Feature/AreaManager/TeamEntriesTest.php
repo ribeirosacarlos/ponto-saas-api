@@ -89,6 +89,92 @@ class TeamEntriesTest extends TestCase
             ->assertJsonMissingPath('data.0.entries.0.day_summary');
     }
 
+    public function test_team_entries_grouped_response_excludes_rejected_adjustments(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-06-05', 'UTC');
+        $this->assignShift($employee, $date);
+
+        $visibleEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(8, 0),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $rejectedEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(12, 0),
+            'type' => 'out',
+            'source' => 'web',
+            'adjustment_status' => 'rejected',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('total_entries', 1)
+            ->assertJsonCount(1, 'data.0.entries')
+            ->assertJsonPath('data.0.entries.0.id', $visibleEntry->id)
+            ->assertJsonMissing(['id' => $rejectedEntry->id])
+            ->assertJsonMissing(['adjustment_status' => 'rejected']);
+    }
+
+    public function test_team_entries_paginated_response_excludes_rejected_adjustments(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-06-05', 'UTC');
+        $this->assignShift($employee, $date);
+
+        $visibleEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(8, 0),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $rejectedEntry = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(12, 0),
+            'type' => 'out',
+            'source' => 'web',
+            'adjustment_status' => 'rejected',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson('/v1/area-manager/team/entries');
+
+        $response->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $visibleEntry->id)
+            ->assertJsonMissing(['id' => $rejectedEntry->id])
+            ->assertJsonMissing(['adjustment_status' => 'rejected']);
+    }
+
     public function test_team_entries_ignores_time_component_in_date_filters(): void
     {
         $company = Company::factory()->create([

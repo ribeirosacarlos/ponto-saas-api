@@ -17,18 +17,17 @@ class TimeEntryController extends Controller
 {
     public function __construct(
         protected UserVisibilityService $userVisibilityService
-    ) {
-    }
+    ) {}
 
     public function teamEntries(
         AreaManagerTeamEntriesRequest $request,
         OvertimeCalculatorService $overtimeCalculator
-    )
-    {
+    ) {
         $user = $request->user();
 
         $query = TimeEntry::query()
             ->with(['user:id,name,email,company_id'])
+            ->excludeRejected()
             ->orderByDesc('clocked_at');
         $this->userVisibilityService->applyToUserOwnedQuery($query, $user);
 
