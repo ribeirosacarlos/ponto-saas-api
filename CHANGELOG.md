@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.6.0...v1.7.0) (2026-06-05)
+
+
+### Novas Funcionalidades
+
+* separate document uploads by company prefix ([4096e05](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4096e05de5d43089292160762fd8344ff8698b64))
+* separate document uploads by company prefix ([4004694](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4004694ec97bd1df1ddd711448bc44a18dbd5c48))
+
 ## [1.6.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.3...v1.6.0) (2026-06-05)
 
 
