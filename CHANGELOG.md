@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.2...v1.7.3) (2026-06-06)
+
+
+### Correções de Bugs
+
+* correct time entry adjustment sequence ([655d1e5](https://github.com/ribeirosacarlos/ponto-saas-api/commit/655d1e5153e4d2eb2916f64d03945a5f62679aeb))
+* correct time entry adjustment sequence ([5436251](https://github.com/ribeirosacarlos/ponto-saas-api/commit/543625136456b1c4c982e776bbb9fc604f8392ac))
+
 ## [1.7.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.1...v1.7.2) (2026-06-05)
 
 
