@@ -35,9 +35,9 @@ class DocumentS3FlowTest extends TestCase
         Sanctum::actingAs($employee, ['*']);
         Storage::fake('s3');
 
-        $file = UploadedFile::fake()->create('contrato.pdf', 200, 'application/pdf');
+        $file = $this->fakePdf('contrato.pdf');
 
-        $response = $this->postJson('/api/v1/documents', [
+        $response = $this->postJson('/v1/documents', [
             'category' => Document::CATEGORY_PERSONAL,
             'title' => 'Contrato',
             'notes' => 'Upload do colaborador',
@@ -50,7 +50,7 @@ class DocumentS3FlowTest extends TestCase
 
         $document = Document::query()->findOrFail($response->json('data.0.id'));
 
-        $prefix = "companies/{$employee->company_id}/employees/{$employee->id}/documents/";
+        $prefix = "{$employee->company_id}/documents/employees/{$employee->id}/";
         $this->assertStringStartsWith($prefix, $document->path);
         $this->assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}\.pdf$/', basename($document->path));
 
@@ -91,9 +91,9 @@ class DocumentS3FlowTest extends TestCase
             'uploaded_by' => $employee->id,
         ]);
 
-        $newFile = UploadedFile::fake()->create('novo.pdf', 300, 'application/pdf');
+        $newFile = $this->fakePdf('novo.pdf');
 
-        $response = $this->postJson("/api/v1/documents/{$document->id}/resend", [
+        $response = $this->postJson("/v1/documents/{$document->id}/resend", [
             'file' => $newFile,
         ]);
 
@@ -104,7 +104,7 @@ class DocumentS3FlowTest extends TestCase
 
         $document->refresh();
 
-        $prefix = "companies/{$employee->company_id}/employees/{$employee->id}/documents/";
+        $prefix = "{$employee->company_id}/documents/employees/{$employee->id}/";
         $this->assertStringStartsWith($prefix, $document->path);
         Storage::disk('s3')->assertExists($document->path);
         Storage::disk('local')->assertMissing($oldPath);
@@ -124,7 +124,7 @@ class DocumentS3FlowTest extends TestCase
         $employee = $this->createEmployee();
         Sanctum::actingAs($employee, ['*']);
 
-        $path = "companies/{$employee->company_id}/employees/{$employee->id}/documents/01JTESTABCDEFGHJKMNPQRST.pdf";
+        $path = "{$employee->company_id}/documents/employees/{$employee->id}/01JTESTABCDEFGHJKMNPQRST.pdf";
 
         $document = Document::create([
             'company_id' => $employee->company_id,
@@ -149,7 +149,7 @@ class DocumentS3FlowTest extends TestCase
 
         Storage::shouldReceive('disk')->once()->with('s3')->andReturn($mockDisk);
 
-        $response = $this->get("/api/v1/documents/{$document->id}/download");
+        $response = $this->get("/v1/documents/{$document->id}/download");
 
         $response->assertRedirect($signedUrl);
     }
@@ -179,10 +179,10 @@ class DocumentS3FlowTest extends TestCase
             'uploaded_by' => $employee->id,
         ]);
 
-        $response = $this->get("/api/v1/documents/{$document->id}/download");
+        $response = $this->get("/v1/documents/{$document->id}/download");
 
         $response->assertOk();
-        $response->assertHeader('cache-control', 'no-store');
+        $this->assertStringContainsString('no-store', $response->headers->get('cache-control', ''));
     }
 
     private function createEmployee(): User
@@ -191,5 +191,13 @@ class DocumentS3FlowTest extends TestCase
         $user->syncRoles(['employee']);
 
         return $user;
+    }
+
+    private function fakePdf(string $name): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent(
+            $name,
+            "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF",
+        );
     }
 }

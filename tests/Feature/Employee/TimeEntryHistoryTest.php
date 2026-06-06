@@ -46,12 +46,13 @@ class TimeEntryHistoryTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('days.0.date', '2025-12-19')
-            ->assertJsonPath('days.0.worked_minutes', 540)
-            ->assertJsonPath('days.0.worked_hhmm', '09:00')
-            ->assertJsonPath('days.0.summary.worked_minutes', 540)
-            ->assertJsonPath('days.0.summary.worked_hhmm', '09:00')
+            ->assertJsonPath('days.0.worked_minutes', 480)
+            ->assertJsonPath('days.0.worked_hhmm', '08:00')
+            ->assertJsonPath('days.0.summary.worked_minutes', 480)
+            ->assertJsonPath('days.0.summary.worked_hhmm', '08:00')
             ->assertJsonPath('days.0.summary.expected_minutes', 540)
-            ->assertJsonPath('days.0.summary.status', 'even');
+            ->assertJsonPath('days.0.summary.balance_minutes', -60)
+            ->assertJsonPath('days.0.summary.status', 'debt');
     }
 
     private function assignShift(User $user, CarbonImmutable $date): void

@@ -96,7 +96,8 @@ class DocumentPolicy
             return false;
         }
 
-        return $user->id === $document->user_id && $document->status === Document::STATUS_REVIEW;
+        return (string) $user->id === (string) $document->user_id
+            && $document->status === Document::STATUS_REVIEW;
     }
 
     private function sameCompany(User $user, Document $document): bool

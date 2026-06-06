@@ -34,7 +34,10 @@ class DocumentReviewUploadForEmployeeTest extends TestCase
         Sanctum::actingAs($admin, ['*']);
         Storage::fake('s3');
 
-        $file = UploadedFile::fake()->create('holerite.pdf', 256, 'application/pdf');
+        $file = UploadedFile::fake()->createWithContent(
+            'holerite.pdf',
+            "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF",
+        );
 
         $response = $this->postJson('/v1/admin/documents/upload-for-employee', [
             'user_id' => $employee->id,
@@ -54,7 +57,7 @@ class DocumentReviewUploadForEmployeeTest extends TestCase
 
         $document = Document::query()->findOrFail($documentId);
 
-        $expectedPrefix = "companies/{$admin->company_id}/employees/{$employee->id}/documents/";
+        $expectedPrefix = "{$admin->company_id}/documents/employees/{$employee->id}/";
         $this->assertStringStartsWith($expectedPrefix, $document->path);
         $this->assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}\.pdf$/', basename($document->path));
 

@@ -48,12 +48,12 @@ class EmployeeOvertimeTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonPath('employee_id', (string) $employee->id);
-        $response->assertJsonPath('totals.worked_minutes', 600);
-        $response->assertJsonPath('totals.extra_minutes', 60);
+        $response->assertJsonPath('totals.worked_minutes', 540);
+        $response->assertJsonPath('totals.extra_minutes', 0);
         $response->assertJsonPath('days.0.date', '2025-12-15');
-        $response->assertJsonPath('days.0.summary.worked_minutes', 600);
-        $response->assertJsonPath('days.0.summary.worked_hhmm', '10:00');
-        $response->assertJsonPath('days.0.status', 'extra');
+        $response->assertJsonPath('days.0.summary.worked_minutes', 540);
+        $response->assertJsonPath('days.0.summary.worked_hhmm', '09:00');
+        $response->assertJsonPath('days.0.status', 'even');
         $response->assertJsonPath('days.0.ignored', false);
     }
 

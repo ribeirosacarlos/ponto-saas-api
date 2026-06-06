@@ -269,7 +269,7 @@ class TimesheetCalculationService
             $pairing['exceeded_break_minutes']
         );
         $isFinalized = $dateKey < CarbonImmutable::now($timezone)->toDateString();
-        $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes : 0;
+        $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes - $pairing['exceeded_break_minutes'] : 0;
         $extraMinutes = max(0, $balanceMinutes);
         $debtMinutes = min(0, $balanceMinutes);
 
@@ -285,10 +285,14 @@ class TimesheetCalculationService
                 'worked_hhmm' => $this->minutesToHHMM($workedMinutes),
                 'raw_worked_minutes' => $pairing['raw_worked_minutes'],
                 'raw_worked_hhmm' => $this->minutesToHHMM($pairing['raw_worked_minutes']),
+                'actual_worked_minutes' => $pairing['raw_worked_minutes'],
+                'actual_worked_hhmm' => $this->minutesToHHMM($pairing['raw_worked_minutes']),
                 'expected_minutes' => $expectedMinutes,
                 'expected_hhmm' => $this->minutesToHHMM($expectedMinutes),
                 'real_break_minutes' => $pairing['real_break_minutes'],
                 'real_break_hhmm' => $this->minutesToHHMM($pairing['real_break_minutes']),
+                'actual_break_minutes' => $pairing['real_break_minutes'],
+                'actual_break_hhmm' => $this->minutesToHHMM($pairing['real_break_minutes']),
                 'allowed_break_minutes' => $allowedBreakMinutes,
                 'allowed_break_hhmm' => $this->minutesToHHMM($allowedBreakMinutes),
                 'counted_break_minutes' => $pairing['counted_break_minutes'],
@@ -498,7 +502,7 @@ class TimesheetCalculationService
             return 0;
         }
 
-        return max(0, $rawWorkedMinutes - $exceededBreakMinutes);
+        return $rawWorkedMinutes;
     }
 
     protected function truncateToMinute(CarbonImmutable $date): CarbonImmutable

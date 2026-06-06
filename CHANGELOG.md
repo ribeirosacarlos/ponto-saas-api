@@ -1,5 +1,55 @@
 # Changelog
 
+## [1.7.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.2...v1.7.3) (2026-06-06)
+
+
+### Correções de Bugs
+
+* correct time entry adjustment sequence ([655d1e5](https://github.com/ribeirosacarlos/ponto-saas-api/commit/655d1e5153e4d2eb2916f64d03945a5f62679aeb))
+* correct time entry adjustment sequence ([5436251](https://github.com/ribeirosacarlos/ponto-saas-api/commit/543625136456b1c4c982e776bbb9fc604f8392ac))
+
+## [1.7.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.1...v1.7.2) (2026-06-05)
+
+
+### Correções de Bugs
+
+* exclude rejected team entries ([631eeee](https://github.com/ribeirosacarlos/ponto-saas-api/commit/631eeeeb09228b5c9f19c7d7660bd07819285d7b))
+* exclude rejected team entries ([9f72e34](https://github.com/ribeirosacarlos/ponto-saas-api/commit/9f72e34e9ab6efc7b884f57e516546b86e62c129))
+* keep worked minutes as real worked time ([04d3d35](https://github.com/ribeirosacarlos/ponto-saas-api/commit/04d3d358cb07236442fe3343fcca9cfa47a8cb5e))
+* keep worked minutes as real worked time ([11941cb](https://github.com/ribeirosacarlos/ponto-saas-api/commit/11941cb3cabc3365beb54fd1e10539ffcd10821e))
+
+## [1.7.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.0...v1.7.1) (2026-06-05)
+
+
+### Correções de Bugs
+
+* remove document storage conflict markers ([3ee96b4](https://github.com/ribeirosacarlos/ponto-saas-api/commit/3ee96b48e9e6fdf4510cad2c134610f9cee6251a))
+* remove document storage conflict markers ([ede2859](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ede285944da7fc7602d040361744f00bb9b15f30))
+
+## [1.7.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.6.0...v1.7.0) (2026-06-05)
+
+
+### Novas Funcionalidades
+
+* separate document uploads by company prefix ([4096e05](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4096e05de5d43089292160762fd8344ff8698b64))
+* separate document uploads by company prefix ([4004694](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4004694ec97bd1df1ddd711448bc44a18dbd5c48))
+
+## [1.6.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.3...v1.6.0) (2026-06-05)
+
+
+### Novas Funcionalidades
+
+* separate document uploads by company prefix ([13bcd96](https://github.com/ribeirosacarlos/ponto-saas-api/commit/13bcd96a45721c3684f71a00a660f0dfb02c9b36))
+* separate document uploads by company prefix ([e9a72b7](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e9a72b7b299389026d16d91ad19d2fa7858f4ee9))
+
+## [1.5.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.2...v1.5.3) (2026-06-04)
+
+
+### Correções de Bugs
+
+* block deleting assigned shifts ([35a6dc6](https://github.com/ribeirosacarlos/ponto-saas-api/commit/35a6dc62c78e1963a940d031e27c873eda14affe))
+* block deleting assigned shifts ([cc2278c](https://github.com/ribeirosacarlos/ponto-saas-api/commit/cc2278c4f7c7d62f84095436a2b295ffa492f38b))
+
 ## [1.5.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.5.1...v1.5.2) (2026-06-03)
 
 

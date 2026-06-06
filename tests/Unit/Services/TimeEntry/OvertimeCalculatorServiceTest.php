@@ -265,7 +265,7 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(5, $result['days'][0]['balance_minutes']);
     }
 
-    public function test_break_time_above_allowed_reduces_credit(): void
+    public function test_break_time_above_allowed_preserves_worked_time_and_reduces_balance(): void
     {
         $date = CarbonImmutable::parse('2025-12-22', 'UTC');
         $user = User::factory()->create();
@@ -290,7 +290,7 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
         $this->assertSame(25, $result['days'][0]['actual_break_minutes']);
         $this->assertSame(5, $result['days'][0]['exceeded_break_minutes']);
-        $this->assertSame(330, $result['days'][0]['worked_minutes']);
+        $this->assertSame(335, $result['days'][0]['worked_minutes']);
         $this->assertSame(-10, $result['days'][0]['balance_minutes']);
         $this->assertSame('debt', $result['days'][0]['status']);
     }
@@ -348,8 +348,56 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(30, $result['days'][0]['real_break_minutes']);
         $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
         $this->assertSame(10, $result['days'][0]['exceeded_break_minutes']);
-        $this->assertSame(320, $result['days'][0]['worked_minutes']);
+        $this->assertSame(330, $result['days'][0]['worked_minutes']);
         $this->assertSame(-20, $result['days'][0]['balance_minutes']);
+    }
+
+    public function test_reported_exceeded_break_case_keeps_worked_time_as_pair_sum(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-16 09:00:00', 'America/Sao_Paulo'));
+
+        $date = CarbonImmutable::parse('2026-05-15', 'America/Sao_Paulo');
+        $user = User::factory()->create();
+        $user->company->update(['timezone' => 'America/Sao_Paulo']);
+        $this->assignShift($user, $date->isoWeekday(), [
+            'start_time' => '10:31',
+            'end_time' => '17:59',
+            'scheduled_minutes' => 340,
+            'break_minutes' => 20,
+            'break_start_time' => '11:32',
+            'break_end_time' => '11:52',
+            'start_date' => $date->startOfMonth(),
+        ]);
+
+        $this->createTimeEntry($user, 'in', $date->setTime(10, 31)->utc());
+        $this->createTimeEntry($user, 'out', $date->setTime(11, 32)->utc());
+        $this->createTimeEntry($user, 'in', $date->setTime(13, 44)->utc());
+        $this->createTimeEntry($user, 'out', $date->setTime(17, 59)->utc());
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $date, $date, true);
+
+        $this->assertSame(316, $result['days'][0]['raw_worked_minutes']);
+        $this->assertSame(316, $result['days'][0]['actual_worked_minutes']);
+        $this->assertSame(316, $result['days'][0]['worked_minutes']);
+        $this->assertSame('05:16', $result['days'][0]['raw_worked_hhmm']);
+        $this->assertSame('05:16', $result['days'][0]['actual_worked_hhmm']);
+        $this->assertSame('05:16', $result['days'][0]['worked_hhmm']);
+        $this->assertSame(132, $result['days'][0]['real_break_minutes']);
+        $this->assertSame('02:12', $result['days'][0]['real_break_hhmm']);
+        $this->assertSame(132, $result['days'][0]['actual_break_minutes']);
+        $this->assertSame('02:12', $result['days'][0]['actual_break_hhmm']);
+        $this->assertSame(20, $result['days'][0]['allowed_break_minutes']);
+        $this->assertSame('00:20', $result['days'][0]['allowed_break_hhmm']);
+        $this->assertSame(112, $result['days'][0]['exceeded_break_minutes']);
+        $this->assertSame('01:52', $result['days'][0]['exceeded_break_hhmm']);
+        $this->assertSame(-136, $result['days'][0]['balance_minutes']);
+        $this->assertSame('-02:16', $result['days'][0]['balance_hhmm']);
+        $this->assertSame(0, $result['days'][0]['extra_minutes']);
+        $this->assertSame('00:00', $result['days'][0]['extra_hhmm']);
+        $this->assertSame(-136, $result['days'][0]['debt_minutes']);
+        $this->assertSame('02:16', $result['days'][0]['debt_hhmm']);
+        $this->assertSame('debt', $result['days'][0]['status']);
     }
 
     public function test_reported_day_summary_case_does_not_count_allowed_break_as_worked_time(): void
@@ -383,8 +431,8 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(23, $result['days'][0]['real_break_minutes']);
         $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
         $this->assertSame(3, $result['days'][0]['exceeded_break_minutes']);
-        $this->assertSame(440, $result['days'][0]['worked_minutes']);
-        $this->assertSame('07:20', $result['days'][0]['worked_hhmm']);
+        $this->assertSame(443, $result['days'][0]['worked_minutes']);
+        $this->assertSame('07:23', $result['days'][0]['worked_hhmm']);
         $this->assertSame(100, $result['days'][0]['balance_minutes']);
         $this->assertSame('+01:40', $result['days'][0]['balance_hhmm']);
         $this->assertSame(100, $result['days'][0]['extra_minutes']);
@@ -443,7 +491,7 @@ class OvertimeCalculatorServiceTest extends TestCase
         $service = app(OvertimeCalculatorService::class);
         $result = $service->calculateForEmployee($user, $date, $date, true);
 
-        $this->assertSame(330, $result['days'][0]['worked_minutes']);
+        $this->assertSame(335, $result['days'][0]['worked_minutes']);
         $this->assertSame(5, $result['days'][0]['exceeded_break_minutes']);
         $this->assertSame(0, $result['days'][0]['balance_minutes']);
         $this->assertSame(0, $result['days'][0]['extra_minutes']);
