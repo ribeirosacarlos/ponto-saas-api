@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.4](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.3...v1.7.4) (2026-06-06)
+
+
+### Correções de Bugs
+
+* count closed pairs when session remains open ([51da83a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/51da83aea6851d7819f7351769ab090f4f84087a))
+
 ## [1.7.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.2...v1.7.3) (2026-06-06)
 
 
