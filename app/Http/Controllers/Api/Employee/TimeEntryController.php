@@ -7,8 +7,8 @@ use App\Actions\TimeEntries\DispatchTimeEntryDayNormalizationAction;
 use App\Actions\TimeEntries\ResolveNextExpectedClockAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmployeeTimeEntryHistoryRequest;
-use App\Http\Resources\TimeEntryResource;
 use App\Http\Requests\TimeEntryStoreRequest;
+use App\Http\Resources\TimeEntryResource;
 use App\Models\TimeEntry;
 use App\Models\VacationDay;
 use App\Services\AuditLogService;
@@ -97,17 +97,21 @@ class TimeEntryController extends Controller
                 ? "Feriado: {$resolved['holiday_name']}. Registro fora da jornada prevista."
                 : 'Fora do turno/jornada (dia não trabalhado ou sem jornada).';
 
-            $adjustment = $createAdjustment->handle($user, $user, [
+            $adjustmentData = [
                 'clocked_at' => $now,
                 'reason' => $reason,
                 'source' => $validated['source'] ?? 'web',
                 'device_type' => $deviceType,
                 'latitude' => $validated['latitude'] ?? null,
                 'longitude' => $validated['longitude'] ?? null,
-                'resolved_type' => $nextEvent['expected_type'] ?? null,
-                'event_kind' => $nextEvent['kind'] ?? 'free',
                 'user_shift_id' => $resolved['assignment']?->id,
-            ]);
+            ];
+
+            if ($resolved['is_holiday'] || ! $resolved['is_working_day'] || ! $resolved['shift_day']) {
+                $adjustmentData['event_kind'] = 'free';
+            }
+
+            $adjustment = $createAdjustment->handle($user, $user, $adjustmentData);
 
             return response()->json([
                 'message' => 'Fora da jornada prevista. Solicitacao de ajuste criada.',

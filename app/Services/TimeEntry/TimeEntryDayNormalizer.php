@@ -6,7 +6,6 @@ use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\TimeEntry;
 use App\Models\User;
-use App\Models\UserShift;
 use App\Services\UserShiftResolver;
 use App\Support\ShiftDayEventNormalizer;
 use Carbon\CarbonImmutable;
@@ -108,11 +107,22 @@ class TimeEntryDayNormalizer
             return $this->fallbackContext($timezone, $localReference);
         }
 
+        $windowStart = $context['window_start'];
+        $windowEnd = $context['window_end'];
+
+        if ($localReference->lessThan($windowStart)) {
+            $windowStart = $localReference;
+        }
+
+        if ($localReference->greaterThan($windowEnd)) {
+            $windowEnd = $localReference;
+        }
+
         return [
             'timezone' => $timezone,
             'base_date' => $context['base_date'],
-            'window_start' => $context['window_start'],
-            'window_end' => $context['window_end'],
+            'window_start' => $windowStart,
+            'window_end' => $windowEnd,
             'expected_events' => $context['events'],
         ];
     }
@@ -123,9 +133,18 @@ class TimeEntryDayNormalizer
      */
     private function normalizedAttributesForIndex(array $expectedEvents, int $index): array
     {
+        if (array_key_exists($index, $expectedEvents)) {
+            return [
+                'type' => $expectedEvents[$index]['expected_type'],
+                'event_kind' => $expectedEvents[$index]['kind'],
+            ];
+        }
+
+        $extraIndex = $index - count($expectedEvents);
+
         return [
-            'type' => $index % 2 === 0 ? 'in' : 'out',
-            'event_kind' => $expectedEvents[$index]['kind'] ?? 'free',
+            'type' => $extraIndex % 2 === 0 ? 'in' : 'out',
+            'event_kind' => 'free',
         ];
     }
 

@@ -115,6 +115,51 @@ class TimeEntryDayNormalizerTest extends TestCase
         $this->assertSame('work_end', $lateExit->event_kind);
     }
 
+    public function test_uses_shift_event_expected_type_instead_of_index_parity(): void
+    {
+        $user = $this->createEmployee();
+        $assignment = $this->createShiftDayWithEvents($user, 1, [
+            ['kind' => 'custom_out', 'time' => '08:00:00', 'day_offset' => 0, 'expected_type' => 'out'],
+            ['kind' => 'custom_in', 'time' => '09:00:00', 'day_offset' => 0, 'expected_type' => 'in'],
+        ]);
+
+        foreach ([
+            ['08:00:00', 'in', 'custom_in'],
+            ['09:00:00', 'out', 'custom_out'],
+        ] as [$clockedAt, $type, $eventKind]) {
+            TimeEntry::create([
+                'company_id' => $user->company_id,
+                'user_id' => $user->id,
+                'user_shift_id' => $assignment->id,
+                'clocked_at' => CarbonImmutable::parse("2026-02-16 {$clockedAt}", 'Europe/Madrid'),
+                'type' => $type,
+                'event_kind' => $eventKind,
+                'source' => 'web',
+            ]);
+        }
+
+        app(TimeEntryDayNormalizer::class)->normalizeForReference(
+            $user,
+            CarbonImmutable::parse('2026-02-16 09:00:00', 'Europe/Madrid')
+        );
+
+        $ordered = TimeEntry::query()
+            ->where('user_id', $user->id)
+            ->orderBy('clocked_at')
+            ->get(['clocked_at', 'type', 'event_kind'])
+            ->map(fn (TimeEntry $entry) => [
+                'clocked_at' => $entry->clocked_at->format('H:i:s'),
+                'type' => $entry->type,
+                'event_kind' => $entry->event_kind,
+            ])
+            ->all();
+
+        $this->assertSame([
+            ['clocked_at' => '08:00:00', 'type' => 'out', 'event_kind' => 'custom_out'],
+            ['clocked_at' => '09:00:00', 'type' => 'in', 'event_kind' => 'custom_in'],
+        ], $ordered);
+    }
+
     public function test_allows_extra_entries_and_marks_them_as_free(): void
     {
         $user = $this->createEmployee();
@@ -228,7 +273,7 @@ class TimeEntryDayNormalizerTest extends TestCase
     {
         $shift = Shift::create([
             'company_id' => $user->company_id,
-            'name' => 'Shift ' . Str::random(5),
+            'name' => 'Shift '.Str::random(5),
             'start_time' => $events[0]['time'] ?? '08:00:00',
             'end_time' => $events[array_key_last($events)]['time'] ?? '17:00:00',
             'is_flexible' => false,
