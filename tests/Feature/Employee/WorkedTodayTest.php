@@ -5,13 +5,13 @@ namespace Tests\Feature\Employee;
 use App\Enums\SubscriptionStatus;
 use App\Http\Middleware\EnsureCompanyHasAccess;
 use App\Models\Plan;
+use App\Models\Role;
 use App\Models\Shift;
 use App\Models\ShiftDay;
 use App\Models\Subscription;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\UserShift;
-use App\Models\Role;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -92,6 +92,44 @@ class WorkedTodayTest extends TestCase
                     'worked_seconds' => 0,
                     'worked_minutes' => 0,
                     'worked_hours_decimal' => 0,
+                    'expected_break_minutes' => 60,
+                    'break_seconds_deducted' => 0,
+                    'open_session' => true,
+                ],
+            ]);
+    }
+
+    public function test_counts_closed_pairs_when_there_is_an_open_pair()
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2025-12-19 15:00:00', 'UTC'));
+
+        $user = $this->createEmployee();
+        $this->assignShift($user, [
+            'break_start_time' => '12:00',
+            'break_end_time' => '13:00',
+            'break_minutes' => 60,
+        ]);
+
+        $this->createTimeEntry($user, 'in', CarbonImmutable::parse('2025-12-19 08:00:00', 'UTC'));
+        $this->createTimeEntry($user, 'out', CarbonImmutable::parse('2025-12-19 12:00:00', 'UTC'));
+        $this->createTimeEntry($user, 'in', CarbonImmutable::parse('2025-12-19 13:00:00', 'UTC'));
+
+        $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
+
+        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 13:00:00', 'UTC')
+            ->setTimezone(config('app.timezone') ?? 'UTC')
+            ->toIso8601String();
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1, 'data.details.pairs')
+            ->assertJsonPath('data.details.pairs.0.seconds', 14400)
+            ->assertJsonPath('data.details.open_pair.in', $expectedOpenPairIn)
+            ->assertJson([
+                'data' => [
+                    'worked_seconds' => 14400,
+                    'worked_minutes' => 240,
+                    'worked_hhmm' => '04:00',
+                    'worked_hours_decimal' => 4.0,
                     'expected_break_minutes' => 60,
                     'break_seconds_deducted' => 0,
                     'open_session' => true,

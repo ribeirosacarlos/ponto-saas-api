@@ -216,6 +216,64 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.entries.1.id', $morningEntry->id);
     }
 
+    public function test_team_entries_day_summary_counts_closed_pairs_when_open_pair_exists(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2025-12-19', 'UTC');
+        $this->assignShift($employee, $date);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(8, 0),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(12, 0),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(13, 0),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2025-12-19&date_to=2025-12-19");
+
+        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 13:00:00', config('app.timezone'))
+            ->setTimezone('UTC')
+            ->toIso8601String();
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonCount(3, 'data.0.entries')
+            ->assertJsonPath('data.0.day_summary.worked_minutes', 240)
+            ->assertJsonPath('data.0.day_summary.raw_worked_minutes', 240)
+            ->assertJsonPath('data.0.day_summary.balance_minutes', -300)
+            ->assertJsonPath('data.0.day_summary.status', 'debt')
+            ->assertJsonPath('data.0.day_summary.has_incomplete_entries', true)
+            ->assertJsonPath('data.0.day_summary.open_session', true)
+            ->assertJsonPath('data.0.day_summary.open_pair.in', $expectedOpenPairIn);
+    }
+
     public function test_team_entries_returns_all_entries_for_a_specific_user_without_paging_cutoff(): void
     {
         $company = Company::factory()->create([

@@ -266,7 +266,7 @@ class TimesheetCalculationService
         $pairing = $this->pairWorkEntries($workEntries, $timezone, $allowedBreakMinutes);
         $workedMinutes = $this->resolveOfficialWorkedMinutes(
             $pairing['raw_worked_minutes'],
-            $pairing['has_incomplete_entries']
+            $pairing['exceeded_break_minutes']
         );
         $isFinalized = $dateKey < CarbonImmutable::now($timezone)->toDateString();
         $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes - $pairing['exceeded_break_minutes'] : 0;
@@ -496,9 +496,9 @@ class TimesheetCalculationService
 
     protected function resolveOfficialWorkedMinutes(
         int $rawWorkedMinutes,
-        bool $hasIncompleteEntries
+        int $exceededBreakMinutes
     ): int {
-        if ($hasIncompleteEntries || $rawWorkedMinutes <= 0) {
+        if ($rawWorkedMinutes <= 0) {
             return 0;
         }
 
