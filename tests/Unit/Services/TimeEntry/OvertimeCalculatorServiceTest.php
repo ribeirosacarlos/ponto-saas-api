@@ -89,7 +89,7 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertEquals(0, $result['days'][0]['balance_minutes']);
     }
 
-    public function test_odd_number_of_entries_is_ignored(): void
+    public function test_open_pair_keeps_closed_pairs_counted_for_the_day(): void
     {
         $date = CarbonImmutable::parse('2025-12-16', 'UTC');
         $user = User::factory()->create();
@@ -102,9 +102,37 @@ class OvertimeCalculatorServiceTest extends TestCase
         $service = app(OvertimeCalculatorService::class);
         $result = $service->calculateForEmployee($user, $date, $date, true);
 
-        $this->assertEquals(0, $result['totals']['worked_minutes']);
-        $this->assertTrue($result['days'][0]['ignored']);
-        $this->assertSame('open_day_odd_entries', $result['days'][0]['reason']);
+        $this->assertEquals(240, $result['totals']['worked_minutes']);
+        $this->assertEquals(-300, $result['totals']['debt_minutes']);
+        $this->assertEquals(240, $result['days'][0]['worked_minutes']);
+        $this->assertEquals(240, $result['days'][0]['raw_worked_minutes']);
+        $this->assertTrue($result['days'][0]['has_incomplete_entries']);
+        $this->assertTrue($result['days'][0]['open_session']);
+        $this->assertFalse($result['days'][0]['ignored']);
+        $this->assertNull($result['days'][0]['reason']);
+    }
+
+    public function test_open_pair_keeps_closed_pair_extra_counted_for_overtime(): void
+    {
+        $date = CarbonImmutable::parse('2025-12-17', 'UTC');
+        $user = User::factory()->create();
+        $this->assignShift($user, $date->isoWeekday(), [
+            'scheduled_minutes' => 240,
+            'break_minutes' => 0,
+        ]);
+
+        $this->createTimeEntry($user, 'in', $date->setTime(8, 0));
+        $this->createTimeEntry($user, 'out', $date->setTime(13, 0));
+        $this->createTimeEntry($user, 'in', $date->setTime(14, 0));
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $date, $date, true);
+
+        $this->assertEquals(300, $result['totals']['worked_minutes']);
+        $this->assertEquals(60, $result['totals']['extra_minutes']);
+        $this->assertEquals('+01:00', $result['days'][0]['balance_hhmm']);
+        $this->assertEquals('extra', $result['days'][0]['status']);
+        $this->assertFalse($result['days'][0]['ignored']);
     }
 
     public function test_day_not_defined_in_shift_is_all_extra(): void
