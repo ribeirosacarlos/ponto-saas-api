@@ -200,11 +200,10 @@ class TimesheetCalculationService
      */
     protected function fetchAbsences(User $employee, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $effectiveStatuses = ['approved', 'recorded'];
         $absences = Absence::query()
             ->where('company_id', $employee->company_id)
             ->where('user_id', $employee->id)
-            ->whereIn('status', $effectiveStatuses)
+            ->whereIn('status', Absence::EFFECTIVE_STATUSES)
             ->whereDate('start_date', '<=', $to->toDateString())
             ->where(function ($query) use ($from) {
                 $query->whereNull('end_date')
@@ -250,11 +249,16 @@ class TimesheetCalculationService
         $shift = $this->resolveShiftForDate($date, $shiftAssignments, $defaultShift);
         $shiftDay = $this->resolveShiftDayForDate($shift, $date);
         $isRegularDayOff = $shift !== null && $shiftDay === null;
-        $isLeaveDay = $vacationDay !== null || $absence !== null;
-        $expectedMinutes = ($isHoliday || $isRegularDayOff || $isLeaveDay)
+        $isFullDayAbsence = $absence !== null && $absence->isFullDayCoverage();
+        $isFullLeaveDay = $vacationDay !== null || $isFullDayAbsence;
+        $baseExpectedMinutes = ($isHoliday || $isRegularDayOff || $isFullLeaveDay)
             ? 0
             : $this->expectedMinutesForShiftDay($shiftDay);
-        $allowedBreakMinutes = ($isHoliday || $isRegularDayOff || $isLeaveDay)
+        $absenceMinutes = ($absence !== null && $absence->isHoursCoverage() && ! $isHoliday && ! $isRegularDayOff && $vacationDay === null)
+            ? $this->hourlyAbsenceMinutes($absence, $date, $shiftDay, $shift?->is_flexible ?? false, $baseExpectedMinutes, $timezone)
+            : 0;
+        $expectedMinutes = max(0, $baseExpectedMinutes - $absenceMinutes);
+        $allowedBreakMinutes = ($isHoliday || $isRegularDayOff || $isFullLeaveDay)
             ? 0
             : $this->resolveBreakMinutes($shiftDay);
 
@@ -313,6 +317,9 @@ class TimesheetCalculationService
                 'is_vacation' => $vacationDay !== null,
                 'is_absence' => $absence !== null,
                 'absence_type' => $absence ? $absence->type : null,
+                'absence_coverage_type' => $absence ? ($absence->coverage_type ?? Absence::COVERAGE_FULL_DAY) : null,
+                'absence_minutes' => $absenceMinutes,
+                'absence_hhmm' => $this->minutesToHHMM($absenceMinutes),
                 'has_incomplete_entries' => $pairing['has_incomplete_entries'],
                 'open_session' => $pairing['open_session'],
                 'pair_count' => $pairing['pair_count'],
@@ -405,6 +412,71 @@ class TimesheetCalculationService
         }
 
         return max(0, $breakEnd->diffInMinutes($breakStart, true));
+    }
+
+    protected function hourlyAbsenceMinutes(
+        Absence $absence,
+        CarbonImmutable $date,
+        ?ShiftDay $definition,
+        bool $isFlexibleShift,
+        int $expectedMinutes,
+        string $timezone
+    ): int {
+        if (! $absence->start_time || ! $absence->end_time || $expectedMinutes <= 0) {
+            return 0;
+        }
+
+        $absenceStart = $this->dateTimeFromDateAndTime($date, $absence->start_time, $timezone);
+        $absenceEnd = $this->dateTimeFromDateAndTime($date, $absence->end_time, $timezone);
+
+        if ($absenceEnd->lessThanOrEqualTo($absenceStart)) {
+            return 0;
+        }
+
+        if ($isFlexibleShift || ! $definition || ! $definition->start_time || ! $definition->end_time) {
+            return min($expectedMinutes, (int) $absenceEnd->diffInMinutes($absenceStart, true));
+        }
+
+        $workStart = $this->dateTimeFromDateAndTime($date, $definition->start_time, $timezone);
+        $workEnd = $this->dateTimeFromDateAndTime($date, $definition->end_time, $timezone);
+
+        if ($workEnd->lessThanOrEqualTo($workStart)) {
+            $workEnd = $workEnd->addDay();
+        }
+
+        $minutes = $this->overlapMinutes($absenceStart, $absenceEnd, $workStart, $workEnd);
+
+        if ($definition->break_start_time && $definition->break_end_time) {
+            $breakStart = $this->dateTimeFromDateAndTime($date, $definition->break_start_time, $timezone);
+            $breakEnd = $this->dateTimeFromDateAndTime($date, $definition->break_end_time, $timezone);
+
+            if ($breakEnd->lessThanOrEqualTo($breakStart)) {
+                $breakEnd = $breakEnd->addDay();
+            }
+
+            $minutes -= $this->overlapMinutes($absenceStart, $absenceEnd, $breakStart, $breakEnd);
+        }
+
+        return min($expectedMinutes, max(0, $minutes));
+    }
+
+    protected function dateTimeFromDateAndTime(CarbonImmutable $date, string $time, string $timezone): CarbonImmutable
+    {
+        $time = substr($time, 0, 5);
+
+        return CarbonImmutable::parse(sprintf('%s %s', $date->toDateString(), $time), $timezone);
+    }
+
+    protected function overlapMinutes(CarbonImmutable $leftStart, CarbonImmutable $leftEnd, CarbonImmutable $rightStart, CarbonImmutable $rightEnd): int
+    {
+        $start = $leftStart->greaterThan($rightStart) ? $leftStart : $rightStart;
+        $end = $leftEnd->lessThan($rightEnd) ? $leftEnd : $rightEnd;
+
+        if ($end->lessThanOrEqualTo($start)) {
+            return 0;
+        }
+
+        return (int) $end->diffInMinutes($start, true);
     }
 
     /**

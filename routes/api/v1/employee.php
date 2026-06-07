@@ -1,15 +1,16 @@
 <?php
 
-use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
-use App\Http\Controllers\Api\Employee\ProfileController as EmployeeProfileController;
-use App\Http\Controllers\Api\Employee\TimesheetController as EmployeeTimesheetController;
-use App\Http\Controllers\Api\Employee\TimesheetPdfController as EmployeeTimesheetPdfController;
-use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
-use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
 use App\Http\Controllers\Api\Employee\AbsenceController as EmployeeAbsenceController;
 use App\Http\Controllers\Api\Employee\AdjustmentController as EmployeeAdjustmentController;
+use App\Http\Controllers\Api\Employee\AnnouncementController as EmployeeAnnouncementController;
+use App\Http\Controllers\Api\Employee\EmployeeOvertimeController;
+use App\Http\Controllers\Api\Employee\EmployeeWorkedTodayController;
+use App\Http\Controllers\Api\Employee\MedicalCertificateController as EmployeeMedicalCertificateController;
+use App\Http\Controllers\Api\Employee\ProfileController as EmployeeProfileController;
 use App\Http\Controllers\Api\Employee\TimeEntryAdjustmentController as EmployeeTimeEntryAdjustmentController;
 use App\Http\Controllers\Api\Employee\TimeEntryController as EmployeeTimeEntryController;
+use App\Http\Controllers\Api\Employee\TimesheetController as EmployeeTimesheetController;
+use App\Http\Controllers\Api\Employee\TimesheetPdfController as EmployeeTimesheetPdfController;
 use App\Http\Controllers\Api\Employee\VacationController as EmployeeVacationController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,10 @@ Route::prefix('employee')
         Route::get('/vacations/balance', [EmployeeVacationController::class, 'balance']);
         Route::delete('/vacations/{vacation}', [EmployeeVacationController::class, 'destroy']);
         Route::get('/absences', [EmployeeAbsenceController::class, 'index']);
+        Route::get('/medical-certificates', [EmployeeMedicalCertificateController::class, 'index']);
+        Route::post('/medical-certificates', [EmployeeMedicalCertificateController::class, 'store']);
+        Route::get('/medical-certificates/{absence}', [EmployeeMedicalCertificateController::class, 'show']);
+        Route::delete('/medical-certificates/{absence}', [EmployeeMedicalCertificateController::class, 'destroy']);
 
         Route::get('/announcements', [EmployeeAnnouncementController::class, 'index']);
         Route::get('/announcements/pending-count', [EmployeeAnnouncementController::class, 'pendingCount']);
