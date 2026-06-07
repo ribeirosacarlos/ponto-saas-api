@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.4...v1.8.0) (2026-06-07)
+
+
+### Novas Funcionalidades
+
+* add medical certificate workflow ([7c0a40d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/7c0a40d4026994e66faa1ff0fc4cd991437ee3e6))
+* add medical certificate workflow ([3517b94](https://github.com/ribeirosacarlos/ponto-saas-api/commit/3517b94e04138436c234972e9db5fbaa9f202678))
+
 ## [1.7.4](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.3...v1.7.4) (2026-06-06)
 
 
