@@ -31,7 +31,7 @@ class TimesheetCalculationService
      *     date: string,
      *     employee_id: string,
      *     entries: array<int, array<string, mixed>>,
-     *     summary: array<string, mixed>
+     *     summary: array<string, mixed> 
      *   }>
      * }
      */
