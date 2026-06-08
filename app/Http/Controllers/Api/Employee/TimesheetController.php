@@ -25,10 +25,11 @@ class TimesheetController extends Controller
         $user = $request->user();
 
         $timesheets = EmployeeTimesheet::where('employee_id', $user->id)
+            ->where('company_id', $user->company_id)
             ->whereHas('monthlyClosure', fn ($q) => $q->whereIn('status', [
                 ClosureStatus::OPEN->value,
                 ClosureStatus::COMPLETED->value,
-            ]))
+            ])->where('company_id', $user->company_id))
             ->with(['monthlyClosure', 'signatures.signer', 'disputes.resolvedBy'])
             ->orderByDesc('created_at')
             ->paginate($request->integer('per_page', 20));

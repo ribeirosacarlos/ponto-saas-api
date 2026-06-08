@@ -42,7 +42,8 @@ class DocumentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = Document::query();
+        $query = Document::query()
+            ->where('company_id', $user->company_id);
 
         if ($this->isPrivileged($user) && $request->filled('user_id')) {
             if ($this->userVisibilityService->canManageUserId($user, $request->input('user_id'))) {

@@ -63,11 +63,19 @@ class TimeEntryController extends Controller
             ], 422);
         }
 
-        if (! $user->hasRole('employee') && ! $user->timeEntries()->exists() && $user->company) {
+        if (
+            ! $user->hasRole('employee')
+            && ! $user->timeEntries()->where('company_id', $user->company_id)->exists()
+            && $user->company
+        ) {
             $extraEmployeeChargeService->registerPendingExtraEmployees($user->company);
         }
 
-        $lastEntry = $user->timeEntries()->excludeRejected()->latest('clocked_at')->first();
+        $lastEntry = $user->timeEntries()
+            ->where('company_id', $user->company_id)
+            ->excludeRejected()
+            ->latest('clocked_at')
+            ->first();
         if ($lastEntry && $lastEntry->clocked_at->diffInSeconds($now) < 60) {
             return response()->json(['message' => 'Aguarde 1 minuto entre os registros.'], 422);
         }
@@ -187,6 +195,7 @@ class TimeEntryController extends Controller
     {
         $query = $request->user()
             ->timeEntries()
+            ->where('company_id', $request->user()->company_id)
             ->excludeRejected()
             ->orderBy('clocked_at', 'desc');
 
@@ -252,6 +261,7 @@ class TimeEntryController extends Controller
         $toUtc = $toLocal->setTimezone('UTC');
 
         $entries = $user->timeEntries()
+            ->where('company_id', $user->company_id)
             ->excludeRejected()
             ->whereBetween('clocked_at', [$fromUtc->toDateTimeString(), $toUtc->toDateTimeString()])
             ->orderBy('clocked_at')

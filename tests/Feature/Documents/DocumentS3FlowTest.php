@@ -3,6 +3,7 @@
 namespace Tests\Feature\Documents;
 
 use App\Http\Middleware\EnsureCompanyHasAccess;
+use App\Models\Company;
 use App\Models\Document;
 use App\Models\Role;
 use App\Models\User;
@@ -117,6 +118,51 @@ class DocumentS3FlowTest extends TestCase
             'uploaded_by' => $employee->id,
             'status' => Document::STATUS_PENDING,
         ]);
+    }
+
+    public function test_employee_document_list_ignores_rows_with_mismatched_company(): void
+    {
+        $employee = $this->createEmployee();
+        Sanctum::actingAs($employee, ['*']);
+
+        $ownDocument = Document::create([
+            'company_id' => $employee->company_id,
+            'user_id' => $employee->id,
+            'title' => 'Documento correto',
+            'category' => Document::CATEGORY_PERSONAL,
+            'status' => Document::STATUS_AVAILABLE,
+            'mime_type' => 'application/pdf',
+            'ext' => 'pdf',
+            'size_bytes' => 100,
+            'path' => 'own.pdf',
+            'storage_disk' => 'local',
+            'original_name' => 'own.pdf',
+            'uploaded_by' => $employee->id,
+        ]);
+
+        $mismatchedDocument = Document::create([
+            'company_id' => Company::factory()->create()->id,
+            'user_id' => $employee->id,
+            'title' => 'Documento de outro tenant',
+            'category' => Document::CATEGORY_PERSONAL,
+            'status' => Document::STATUS_AVAILABLE,
+            'mime_type' => 'application/pdf',
+            'ext' => 'pdf',
+            'size_bytes' => 100,
+            'path' => 'mismatched.pdf',
+            'storage_disk' => 'local',
+            'original_name' => 'mismatched.pdf',
+            'uploaded_by' => $employee->id,
+        ]);
+
+        $response = $this->getJson('/v1/documents');
+
+        $response->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id')->all();
+
+        $this->assertContains($ownDocument->id, $ids);
+        $this->assertNotContains($mismatchedDocument->id, $ids);
     }
 
     public function test_download_redirects_to_presigned_url_for_s3_documents(): void

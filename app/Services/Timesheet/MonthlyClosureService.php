@@ -24,11 +24,11 @@ class MonthlyClosureService
     {
         $now = Carbon::now();
 
-        // if ($year > $now->year || ($year === $now->year && $month >= $now->month)) {
-          //  throw ValidationException::withMessages([
-            //    'reference_month' => 'Não é possível fechar um mês futuro ou o mês atual.',
-           // ]);
-       // }
+        if ($year > $now->year || ($year === $now->year && $month >= $now->month)) {
+            throw ValidationException::withMessages([
+                'reference_month' => 'Não é possível fechar um mês futuro ou o mês atual.',
+            ]);
+        }
 
         $exists = MonthlyClosure::where('company_id', $admin->company_id)
             ->where('reference_year', $year)

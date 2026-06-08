@@ -21,6 +21,7 @@ class MonthlyClosureController extends Controller
 
         $closures = MonthlyClosure::withCount('timesheets')
             ->with('closedBy')
+            ->where('company_id', $request->user()->company_id)
             ->orderByDesc('reference_year')
             ->orderByDesc('reference_month')
             ->paginate($request->integer('per_page', 20));

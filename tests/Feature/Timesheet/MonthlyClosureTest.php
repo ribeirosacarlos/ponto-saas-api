@@ -6,6 +6,8 @@ use App\Enums\ClosureStatus;
 use App\Enums\TimesheetStatus;
 use App\Http\Middleware\EnsureCompanyHasAccess;
 use App\Jobs\GenerateEmployeeTimesheetJob;
+use App\Models\Area;
+use App\Models\Company;
 use App\Models\EmployeeTimesheet;
 use App\Models\MonthlyClosure;
 use App\Models\Role;
@@ -13,6 +15,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class MonthlyClosureTest extends TestCase
@@ -27,6 +30,7 @@ class MonthlyClosureTest extends TestCase
 
         Role::updateOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
         Role::updateOrCreate(['name' => 'manager'], ['display_name' => 'Manager']);
+        Role::updateOrCreate(['name' => 'area_manager'], ['display_name' => 'Area Manager']);
         Role::updateOrCreate(['name' => 'employee'], ['display_name' => 'Employee']);
     }
 
@@ -81,7 +85,7 @@ class MonthlyClosureTest extends TestCase
             'reference_month' => 3,
         ])->assertStatus(201);
 
-        $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
+        $this->actingAs($admin)->postJson('/api/v1/admin/monthly-closures', [
             'reference_year' => 2026,
             'reference_month' => 3,
         ])->assertStatus(422)
@@ -143,19 +147,131 @@ class MonthlyClosureTest extends TestCase
         ]);
     }
 
-    private function createAdmin(): User
+    public function test_index_lists_only_closures_from_authenticated_company(): void
     {
-        $user = User::factory()->create();
+        $admin = $this->createAdmin();
+        $otherAdmin = $this->createAdmin();
+
+        $ownClosure = $this->createClosure($admin, 2026, 4);
+        $otherClosure = $this->createClosure($otherAdmin, 2026, 3);
+
+        $response = $this->actingAs($admin)->getJson('/v1/admin/monthly-closures');
+
+        $response->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id')->all();
+
+        $this->assertSame([$ownClosure->id], $ids);
+        $this->assertNotContains($otherClosure->id, $ids);
+    }
+
+    public function test_user_cannot_view_closure_from_another_company(): void
+    {
+        $admin = $this->createAdmin();
+        $otherAdmin = $this->createAdmin();
+        $otherClosure = $this->createClosure($otherAdmin, 2026, 4);
+
+        $this->actingAs($admin)
+            ->getJson("/v1/admin/monthly-closures/{$otherClosure->id}")
+            ->assertForbidden();
+    }
+
+    public function test_user_cannot_list_timesheets_from_closure_in_another_company(): void
+    {
+        $admin = $this->createAdmin();
+        $otherAdmin = $this->createAdmin();
+        $otherEmployee = $this->createEmployee($otherAdmin->company_id);
+        $otherClosure = $this->createClosure($otherAdmin, 2026, 4);
+
+        $this->createTimesheet($otherClosure, $otherEmployee);
+
+        $this->actingAs($admin)
+            ->getJson("/v1/admin/monthly-closures/{$otherClosure->id}/timesheets")
+            ->assertForbidden();
+    }
+
+    public function test_area_manager_lists_only_timesheets_from_managed_areas(): void
+    {
+        $company = Company::factory()->create();
+        $visibleArea = Area::factory()->create(['company_id' => $company->id]);
+        $hiddenArea = Area::factory()->create(['company_id' => $company->id]);
+
+        $areaManager = $this->createAreaManager($company->id, [$visibleArea]);
+        $visibleEmployee = $this->createEmployee($company->id, $visibleArea->id);
+        $hiddenEmployee = $this->createEmployee($company->id, $hiddenArea->id);
+        $closure = $this->createClosure($areaManager, 2026, 4);
+
+        $visibleTimesheet = $this->createTimesheet($closure, $visibleEmployee);
+        $hiddenTimesheet = $this->createTimesheet($closure, $hiddenEmployee);
+
+        $response = $this->actingAs($areaManager)
+            ->getJson("/v1/admin/monthly-closures/{$closure->id}/timesheets");
+
+        $response->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id')->all();
+
+        $this->assertSame([$visibleTimesheet->id], $ids);
+        $this->assertNotContains($hiddenTimesheet->id, $ids);
+    }
+
+    private function createAdmin(?string $companyId = null): User
+    {
+        $user = User::factory()->create(array_filter(['company_id' => $companyId]));
         $user->assignRole('admin');
 
         return $user;
     }
 
-    private function createEmployee(string $companyId): User
+    private function createAreaManager(string $companyId, array $managedAreas): User
     {
         $user = User::factory()->create(['company_id' => $companyId]);
+        $user->assignRole('area_manager');
+
+        $payload = collect($managedAreas)
+            ->mapWithKeys(fn (Area $area) => [$area->id => [
+                'id' => (string) Str::uuid(),
+                'company_id' => $companyId,
+            ]])
+            ->all();
+
+        $user->managedAreas()->sync($payload);
+
+        return $user->fresh('roles', 'managedAreas');
+    }
+
+    private function createEmployee(string $companyId, ?string $areaId = null): User
+    {
+        $user = User::factory()->create([
+            'company_id' => $companyId,
+            'area_id' => $areaId,
+        ]);
         $user->assignRole('employee');
 
         return $user;
+    }
+
+    private function createClosure(User $closedBy, int $year, int $month): MonthlyClosure
+    {
+        return MonthlyClosure::create([
+            'company_id' => $closedBy->company_id,
+            'closed_by' => $closedBy->id,
+            'reference_year' => $year,
+            'reference_month' => $month,
+            'status' => ClosureStatus::OPEN->value,
+            'closed_at' => now(),
+        ]);
+    }
+
+    private function createTimesheet(MonthlyClosure $closure, User $employee): EmployeeTimesheet
+    {
+        return EmployeeTimesheet::create([
+            'company_id' => $closure->company_id,
+            'monthly_closure_id' => $closure->id,
+            'employee_id' => $employee->id,
+            'status' => TimesheetStatus::PENDING_EMPLOYEE->value,
+            'snapshot_generated_at' => now(),
+            'snapshot' => ['totals' => []],
+        ]);
     }
 }

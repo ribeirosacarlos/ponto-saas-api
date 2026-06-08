@@ -10,8 +10,8 @@ use App\Models\Role;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class TimeEntryAdjustmentTest extends TestCase
@@ -464,11 +464,52 @@ class TimeEntryAdjustmentTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->getJson('/v1/admin/reports/time?start=' . Carbon::now()->subDays(2)->toDateString() . '&end=' . Carbon::now()->toDateString());
+            ->getJson('/v1/admin/reports/time?start='.Carbon::now()->subDays(2)->toDateString().'&end='.Carbon::now()->toDateString());
 
         $response->assertStatus(200);
         $data = $response->json();
         $this->assertNotEmpty($data);
         $this->assertArrayHasKey('adjustment_status', $data[0]);
+    }
+
+    public function test_employee_adjustment_list_ignores_rows_with_mismatched_company(): void
+    {
+        $this->seedRoles();
+        $company = $this->createSubscribedCompany();
+        $otherCompany = $this->createSubscribedCompany();
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $ownAdjustment = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->subHour(),
+            'type' => 'in',
+            'source' => 'web',
+            'adjustment_status' => 'pending',
+            'adjustment_requested_by' => $employee->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        $mismatchedAdjustment = TimeEntry::create([
+            'company_id' => $otherCompany->id,
+            'user_id' => $employee->id,
+            'clocked_at' => Carbon::now()->subMinutes(30),
+            'type' => 'out',
+            'source' => 'web',
+            'adjustment_status' => 'pending',
+            'adjustment_requested_by' => $employee->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        $response = $this->actingAs($employee)->getJson('/v1/employee/adjustments');
+
+        $response->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id')->all();
+
+        $this->assertContains($ownAdjustment->id, $ids);
+        $this->assertNotContains($mismatchedAdjustment->id, $ids);
     }
 }

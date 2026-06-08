@@ -15,6 +15,7 @@ class AdjustmentController extends Controller
 
         $query = TimeEntry::query()
             ->where('user_id', $user->id)
+            ->where('company_id', $user->company_id)
             ->whereNotNull('adjustment_status')
             ->orderByDesc('adjustment_requested_at');
 

@@ -105,6 +105,63 @@ class TimesheetDisputeTest extends TestCase
         ]);
     }
 
+    public function test_admin_cannot_resolve_dispute_that_does_not_belong_to_timesheet(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $timesheet = $this->createTimesheet($employee, TimesheetStatus::DISPUTED);
+
+        $otherAdmin = $this->createAdmin();
+        $otherEmployee = $this->createEmployee($otherAdmin->company_id);
+        $otherTimesheet = $this->createTimesheet($otherEmployee, TimesheetStatus::DISPUTED);
+        $otherDispute = TimesheetDispute::create([
+            'company_id' => $otherTimesheet->company_id,
+            'employee_timesheet_id' => $otherTimesheet->id,
+            'employee_id' => $otherEmployee->id,
+            'reason' => 'Divergência de outro tenant.',
+            'status' => DisputeStatus::OPEN->value,
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson("/v1/admin/timesheets/{$timesheet->id}/disputes/{$otherDispute->id}/resolve", [
+                'resolution_note' => 'Tentativa de resolver disputa de outro fechamento.',
+            ])
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('timesheet_disputes', [
+            'id' => $otherDispute->id,
+            'status' => DisputeStatus::OPEN->value,
+            'resolved_by' => null,
+        ]);
+    }
+
+    public function test_admin_cannot_resolve_dispute_from_another_company_timesheet(): void
+    {
+        $admin = $this->createAdmin();
+        $otherAdmin = $this->createAdmin();
+        $otherEmployee = $this->createEmployee($otherAdmin->company_id);
+        $otherTimesheet = $this->createTimesheet($otherEmployee, TimesheetStatus::DISPUTED);
+        $otherDispute = TimesheetDispute::create([
+            'company_id' => $otherTimesheet->company_id,
+            'employee_timesheet_id' => $otherTimesheet->id,
+            'employee_id' => $otherEmployee->id,
+            'reason' => 'Divergência de outro tenant.',
+            'status' => DisputeStatus::OPEN->value,
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson("/v1/admin/timesheets/{$otherTimesheet->id}/disputes/{$otherDispute->id}/resolve", [
+                'resolution_note' => 'Tentativa de resolver disputa de outra empresa.',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('timesheet_disputes', [
+            'id' => $otherDispute->id,
+            'status' => DisputeStatus::OPEN->value,
+            'resolved_by' => null,
+        ]);
+    }
+
     public function test_employee_can_sign_after_dispute_resolved(): void
     {
         $employee = $this->createEmployee();
@@ -118,18 +175,18 @@ class TimesheetDisputeTest extends TestCase
 
     private function validSignPayload(): array
     {
-        $pngHeader = "\x89PNG\r\n\x1a\n" . str_repeat("\x00", 100);
+        $pngHeader = "\x89PNG\r\n\x1a\n".str_repeat("\x00", 100);
 
         return [
-            'signature_image' => 'data:image/png;base64,' . base64_encode($pngHeader),
+            'signature_image' => 'data:image/png;base64,'.base64_encode($pngHeader),
             'accepted_terms' => true,
             'password' => 'password',
         ];
     }
 
-    private function createAdmin(): User
+    private function createAdmin(?string $companyId = null): User
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(array_filter(['company_id' => $companyId]));
         $user->assignRole('admin');
 
         return $user;
