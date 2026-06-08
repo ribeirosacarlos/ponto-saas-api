@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.4](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.3...v1.8.4) (2026-06-08)
+
+
+### Correções de Bugs
+
+* Clarify absence status impact on point calculation ([d523527](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d5235276a8a1e27cdbff251c3cfe71a695d95b9f))
+* Enhance TimeEntryController for employee visibility ([5e8d996](https://github.com/ribeirosacarlos/ponto-saas-api/commit/5e8d99622bbb043a22c3b7de2166e6c72f664e25))
+* Improve absence calculation logic and remove debug logs ([b578ecc](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b578eccd3b49a5c1265ba75454226016466f5f3b))
+* Update time-entry API documentation for worked minutes ([9473b8f](https://github.com/ribeirosacarlos/ponto-saas-api/commit/9473b8feb24b4c92838b8b4df1daf0cf58771cea))
+
 ## [1.8.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.2...v1.8.3) (2026-06-08)
 
 
