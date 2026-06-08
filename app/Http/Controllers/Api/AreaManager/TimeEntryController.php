@@ -97,16 +97,14 @@ class TimeEntryController extends Controller
         $payloadEntries = collect(TimeEntryResource::collectionArray($entries->getCollection()));
         $virtualEntries = collect();
 
-        if ($this->sourceAllowsVirtualAbsence($request)) {
-            [$virtualFrom, $virtualTo] = $this->resolveFlatVirtualRange($user, $timezone, $fromLocal, $toLocal);
-            $virtualEntries = collect($virtualFrom && $virtualTo
-                ? $this->buildVisibleVirtualAbsenceEntries($user, $virtualFrom, $virtualTo, $timezone, $overtimeCalculator)
-                : []);
-            $payloadEntries = $payloadEntries
-                ->merge($virtualEntries)
-                ->sortByDesc('clocked_at')
-                ->values();
-        }
+        [$virtualFrom, $virtualTo] = $this->resolveFlatVirtualRange($user, $timezone, $fromLocal, $toLocal);
+        $virtualEntries = collect($virtualFrom && $virtualTo
+            ? $this->buildVisibleVirtualAbsenceEntries($user, $virtualFrom, $virtualTo, $timezone, $overtimeCalculator)
+            : []);
+        $payloadEntries = $payloadEntries
+            ->merge($virtualEntries)
+            ->sortByDesc('clocked_at')
+            ->values();
 
         $entries = new LengthAwarePaginator(
             $payloadEntries,
@@ -177,7 +175,7 @@ class TimeEntryController extends Controller
             })
             ->keyBy('date');
 
-        if ($requestedEmployee && $this->sourceAllowsVirtualAbsence($request)) {
+        if ($requestedEmployee) {
             foreach ($overtimeDaysByDate as $date => $day) {
                 $virtualEntries = $day['virtual_entries'] ?? [];
                 $summary = $day['summary'] ?? null;
@@ -225,15 +223,6 @@ class TimeEntryController extends Controller
             'total_days' => $groups->count(),
             'total_entries' => $groups->sum(fn (array $group) => count($group['entries'] ?? [])),
         ];
-    }
-
-    private function sourceAllowsVirtualAbsence(AreaManagerTeamEntriesRequest $request): bool
-    {
-        if (! $request->filled('source')) {
-            return true;
-        }
-
-        return in_array('absence_allowance', array_filter(explode(',', $request->source)), true);
     }
 
     /**
