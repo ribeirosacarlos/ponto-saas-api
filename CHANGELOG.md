@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.1...v1.8.2) (2026-06-08)
+
+
+### Correções de Bugs
+
+* Add check for finalized summaries in calculation ([1ebdfcc](https://github.com/ribeirosacarlos/ponto-saas-api/commit/1ebdfcc96578a0a6f9336d2aec2f10d8a2f3a4a8))
+* Add test for current day exclusion in overtime totals ([bfeb7d1](https://github.com/ribeirosacarlos/ponto-saas-api/commit/bfeb7d12cdca8a6afdf4d3f1c876324a7baa0803))
+
 ## [1.8.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.0...v1.8.1) (2026-06-08)
 
 
