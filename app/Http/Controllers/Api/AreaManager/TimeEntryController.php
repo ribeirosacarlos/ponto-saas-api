@@ -405,7 +405,7 @@ class TimeEntryController extends Controller
         foreach ($entriesByUser as $userEntries) {
             /** @var TimeEntry $firstEntry */
             $firstEntry = $userEntries->first();
-            /** @var User|null $employee */
+            /** @var User|null $employee  */
             $employee = $firstEntry->user;
 
             if (! $employee) {

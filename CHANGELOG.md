@@ -1,5 +1,51 @@
 # Changelog
 
+## [1.8.5](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.4...v1.8.5) (2026-06-08)
+
+
+### Correções de Bugs
+
+* Enhance TimeEntryController with virtual absence logic ([acea732](https://github.com/ribeirosacarlos/ponto-saas-api/commit/acea732e03b4c021b29d71c9ddf3a9584ecc5e7a))
+* Enhance TimeEntryController with virtual absence logic ([363bed3](https://github.com/ribeirosacarlos/ponto-saas-api/commit/363bed32981c81d023445b8d0b0037fcac31236c))
+* Refactor TimeEntryController to include virtual absence handling ([a70bf66](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a70bf6607aff3e2bf8a33afffef2b28970e46ea4))
+
+## [1.8.4](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.3...v1.8.4) (2026-06-08)
+
+
+### Correções de Bugs
+
+* Clarify absence status impact on point calculation ([d523527](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d5235276a8a1e27cdbff251c3cfe71a695d95b9f))
+* Enhance TimeEntryController for employee visibility ([5e8d996](https://github.com/ribeirosacarlos/ponto-saas-api/commit/5e8d99622bbb043a22c3b7de2166e6c72f664e25))
+* Improve absence calculation logic and remove debug logs ([b578ecc](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b578eccd3b49a5c1265ba75454226016466f5f3b))
+* Update time-entry API documentation for worked minutes ([9473b8f](https://github.com/ribeirosacarlos/ponto-saas-api/commit/9473b8feb24b4c92838b8b4df1daf0cf58771cea))
+
+## [1.8.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.2...v1.8.3) (2026-06-08)
+
+
+### Correções de Bugs
+
+* fix:  ([312fbdc](https://github.com/ribeirosacarlos/ponto-saas-api/commit/312fbdcb7a1d954bb40dc65932004b69c322b34b))
+* Add TYPE_EXCUSED_ABSENCE constant to Absence model ([c387f28](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c387f28afad530010f9b7810cd69d4df0ceb932f))
+* Update absence request validation rules ([efaa1b7](https://github.com/ribeirosacarlos/ponto-saas-api/commit/efaa1b7cefaaaa82fbd4449e613f0ae16efccef4))
+* Use AbsenceAllowanceService for absence creation ([7959902](https://github.com/ribeirosacarlos/ponto-saas-api/commit/79599022f61c2b84512d6807cf323b05cb99f37b))
+
+## [1.8.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.1...v1.8.2) (2026-06-08)
+
+
+### Correções de Bugs
+
+* Add check for finalized summaries in calculation ([1ebdfcc](https://github.com/ribeirosacarlos/ponto-saas-api/commit/1ebdfcc96578a0a6f9336d2aec2f10d8a2f3a4a8))
+* Add test for current day exclusion in overtime totals ([bfeb7d1](https://github.com/ribeirosacarlos/ponto-saas-api/commit/bfeb7d12cdca8a6afdf4d3f1c876324a7baa0803))
+
+## [1.8.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.0...v1.8.1) (2026-06-08)
+
+
+### Correções de Bugs
+
+* fix:  ([f4219da](https://github.com/ribeirosacarlos/ponto-saas-api/commit/f4219dab9875b39093f460ca6ec72cb44cc56de0))
+* formatting of PHPDoc summary in TimesheetCalculationServicefix ([a2ff5ce](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a2ff5ceb60035b17b4e8ac2083758a3d96b38747))
+* Rename test method and update assertions for balance ([a63f609](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a63f609eb08d51b92e462efb4565a368a5095c9b))
+
 ## [1.8.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.4...v1.8.0) (2026-06-07)
 
 
