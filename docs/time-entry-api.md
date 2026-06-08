@@ -58,7 +58,7 @@ Regra:
 - `summary` e o contrato canonico
 - aliases no nivel raiz existem para conveniencia e retrocompatibilidade
 - frontend deve preferir `summary`
-- `worked_minutes`, `worked_hhmm`, `raw_worked_minutes` e `actual_worked_minutes` representam a soma real dos pares `in`/`out`; pausa excedida nao reduz estes campos
+- `raw_worked_minutes` e `actual_worked_minutes` representam a soma real dos pares `in`/`out`; `worked_minutes` representa o total oficial considerado no saldo e pode incluir credito de ausencia/abono efetivo
 - pausa excedida e exposta em `exceeded_break_minutes`, mas nao reduz o saldo de banco de horas: `balance_minutes = worked_minutes - expected_minutes`
 - o dia atual nao entra nos totais de overtime; ele pode aparecer em `days` com `is_finalized=false`, mas so passa a contar depois que o dia termina
 
@@ -104,6 +104,7 @@ Exemplo de um item de `days[]`:
   - `day_summary`
   - `entries[]`
 - `day_summary` segue exatamente a mesma regra do overtime e, no formato agrupado, nao e repetido dentro de cada batida.
+- Dias com ausencia efetiva de dia inteiro podem aparecer com entradas virtuais (`source = absence_allowance`, `virtual = true`) quando a consulta agrupada por `user_id` usa periodo delimitado.
 - Para uma consulta orientada a periodo/dias, o endpoint canonico continua sendo `GET /v1/area-manager/team/{employee}/overtime?include_days=1`.
 
 Exemplo com `user_id` em `GET /v1/area-manager/team/entries`:
