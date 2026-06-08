@@ -183,6 +183,32 @@ class TimesheetNativeSignatureTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_employee_timesheet_list_ignores_rows_with_mismatched_company(): void
+    {
+        $employee = $this->createEmployee();
+        $ownTimesheet = $this->createTimesheet($employee, TimesheetStatus::PENDING_EMPLOYEE);
+        $mismatchedTimesheet = $this->createMismatchedCompanyTimesheet($employee);
+
+        $response = $this->actingAs($employee)->getJson('/v1/employee/timesheets');
+
+        $response->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id')->all();
+
+        $this->assertContains($ownTimesheet->id, $ids);
+        $this->assertNotContains($mismatchedTimesheet->id, $ids);
+    }
+
+    public function test_employee_cannot_sign_timesheet_with_mismatched_company(): void
+    {
+        $employee = $this->createEmployee();
+        $timesheet = $this->createMismatchedCompanyTimesheet($employee);
+
+        $this->actingAs($employee)
+            ->postJson("/v1/employee/timesheets/{$timesheet->id}/sign", $this->validSignPayload())
+            ->assertForbidden();
+    }
+
     public function test_pdf_endpoint_returns_404_when_not_generated(): void
     {
         $employee = $this->createEmployee();
@@ -208,9 +234,9 @@ class TimesheetNativeSignatureTest extends TestCase
 
     private function fakeBase64Image(): string
     {
-        $pngHeader = "\x89PNG\r\n\x1a\n" . str_repeat("\x00", 100);
+        $pngHeader = "\x89PNG\r\n\x1a\n".str_repeat("\x00", 100);
 
-        return 'data:image/png;base64,' . base64_encode($pngHeader);
+        return 'data:image/png;base64,'.base64_encode($pngHeader);
     }
 
     private function validSignPayload(): array
@@ -254,6 +280,28 @@ class TimesheetNativeSignatureTest extends TestCase
             'monthly_closure_id' => $closure->id,
             'employee_id' => $employee->id,
             'status' => $status->value,
+            'snapshot_generated_at' => now(),
+            'snapshot' => ['totals' => [], 'days' => []],
+        ]);
+    }
+
+    private function createMismatchedCompanyTimesheet(User $employee): EmployeeTimesheet
+    {
+        $otherCompanyUser = $this->createEmployee();
+        $closure = MonthlyClosure::create([
+            'company_id' => $otherCompanyUser->company_id,
+            'closed_by' => $otherCompanyUser->id,
+            'reference_year' => 2026,
+            'reference_month' => 3,
+            'status' => ClosureStatus::OPEN->value,
+            'closed_at' => now(),
+        ]);
+
+        return EmployeeTimesheet::create([
+            'company_id' => $otherCompanyUser->company_id,
+            'monthly_closure_id' => $closure->id,
+            'employee_id' => $employee->id,
+            'status' => TimesheetStatus::PENDING_EMPLOYEE->value,
             'snapshot_generated_at' => now(),
             'snapshot' => ['totals' => [], 'days' => []],
         ]);

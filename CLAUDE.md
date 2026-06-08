@@ -36,6 +36,13 @@ php artisan l5-swagger:generate
 
 Todos os models de negócio têm `company_id`. A trait `CompanyScoped` (`app/Traits/CompanyScoped.php`) aplica um global scope que filtra automaticamente por `company_id` baseado no usuário autenticado, via `TenantManager`. Ao criar models novos que pertencem a uma empresa, incluir essa trait. A trait `HasUuid` é usada em todos os models — PKs são UUIDs, nunca auto-increment.
 
+Regras obrigatórias para endpoints multi-tenant:
+- Roles não substituem isolamento de tenant. Toda listagem deve filtrar explicitamente por `company_id` do usuário autenticado ou usar helper equivalente que aplique esse filtro.
+- Toda policy ou ação por ID deve comparar `user.company_id` com o `company_id` do recurso antes de liberar acesso.
+- Rotas aninhadas devem validar o relacionamento entre os modelos da URL antes de executar ações.
+- Recursos associados a colaboradores devem respeitar `UserVisibilityService` para `manager` e `area_manager`.
+- Toda implementação ou revisão de endpoint com dados de empresa deve incluir teste com duas empresas quando houver risco de vazamento cross-company.
+
 ### RBAC e Autorização
 
 Cinco roles: `employee`, `manager`, `area_manager`, `admin`, `super_admin`. Armazenados na tabela `roles` com pivot `role_user`.

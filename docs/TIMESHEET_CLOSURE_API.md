@@ -8,6 +8,13 @@ Documentação completa dos endpoints para integração do frontend com o módul
 
 Todos os endpoints requerem `Authorization: Bearer {token}` (Sanctum).
 
+## Escopo multi-tenant
+
+- Todos os endpoints de fechamento mensal são escopados pela `company_id` do usuário autenticado.
+- `admin`, `manager` e `area_manager` nunca podem listar, detalhar ou alterar fechamentos/timesheets de outra empresa.
+- Listagens de timesheets respeitam a visibilidade por colaborador: `admin` vê colaboradores da empresa; `manager` e `area_manager` veem apenas colaboradores das áreas gerenciadas.
+- Rotas aninhadas validam os relacionamentos da URL, como fechamento -> timesheets e timesheet -> disputa.
+
 ---
 
 ## Fluxo Geral
