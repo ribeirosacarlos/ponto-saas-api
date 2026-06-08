@@ -57,6 +57,42 @@ class OvertimeCalculatorServiceTest extends TestCase
         return $shift;
     }
 
+    private function assignWeeklyShift(User $user, array $options = []): Shift
+    {
+        $shift = Shift::create([
+            'company_id' => $user->company_id,
+            'name' => $options['name'] ?? 'Weekly shift',
+            'start_time' => $options['start_time'] ?? '08:00',
+            'end_time' => $options['end_time'] ?? '14:00',
+            'is_flexible' => false,
+            'is_default' => false,
+        ]);
+
+        foreach (range(1, 5) as $weekday) {
+            ShiftDay::create([
+                'shift_id' => $shift->id,
+                'weekday' => $weekday,
+                'is_working_day' => true,
+                'start_time' => $shift->start_time,
+                'end_time' => $shift->end_time,
+                'scheduled_minutes' => $options['scheduled_minutes'] ?? 340,
+                'break_minutes' => $options['break_minutes'] ?? 0,
+                'break_start_time' => $options['break_start_time'] ?? null,
+                'break_end_time' => $options['break_end_time'] ?? null,
+            ]);
+        }
+
+        UserShift::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'shift_id' => $shift->id,
+            'start_date' => ($options['start_date'] ?? CarbonImmutable::parse('2025-12-01'))->toDateString(),
+            'end_date' => null,
+        ]);
+
+        return $shift;
+    }
+
     private function createTimeEntry(User $user, string $type, CarbonImmutable $clockedAt): TimeEntry
     {
         return TimeEntry::create([
@@ -66,6 +102,12 @@ class OvertimeCalculatorServiceTest extends TestCase
             'type' => $type,
             'source' => 'web',
         ]);
+    }
+
+    private function createSinglePairWorkday(User $user, CarbonImmutable $date, int $workedMinutes): void
+    {
+        $this->createTimeEntry($user, 'in', $date->setTime(8, 0));
+        $this->createTimeEntry($user, 'out', $date->setTime(8, 0)->addMinutes($workedMinutes));
     }
 
     public function test_day_with_multiple_pairs_accumulates_worked_minutes(): void
@@ -291,7 +333,7 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(25, $result['days'][0]['actual_break_minutes']);
         $this->assertSame(5, $result['days'][0]['exceeded_break_minutes']);
         $this->assertSame(335, $result['days'][0]['worked_minutes']);
-        $this->assertSame(-10, $result['days'][0]['balance_minutes']);
+        $this->assertSame(-5, $result['days'][0]['balance_minutes']);
         $this->assertSame('debt', $result['days'][0]['status']);
     }
 
@@ -349,7 +391,7 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(20, $result['days'][0]['counted_break_minutes']);
         $this->assertSame(10, $result['days'][0]['exceeded_break_minutes']);
         $this->assertSame(330, $result['days'][0]['worked_minutes']);
-        $this->assertSame(-20, $result['days'][0]['balance_minutes']);
+        $this->assertSame(-10, $result['days'][0]['balance_minutes']);
     }
 
     public function test_reported_exceeded_break_case_keeps_worked_time_as_pair_sum(): void
@@ -391,12 +433,12 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame('00:20', $result['days'][0]['allowed_break_hhmm']);
         $this->assertSame(112, $result['days'][0]['exceeded_break_minutes']);
         $this->assertSame('01:52', $result['days'][0]['exceeded_break_hhmm']);
-        $this->assertSame(-136, $result['days'][0]['balance_minutes']);
-        $this->assertSame('-02:16', $result['days'][0]['balance_hhmm']);
+        $this->assertSame(-24, $result['days'][0]['balance_minutes']);
+        $this->assertSame('-00:24', $result['days'][0]['balance_hhmm']);
         $this->assertSame(0, $result['days'][0]['extra_minutes']);
         $this->assertSame('00:00', $result['days'][0]['extra_hhmm']);
-        $this->assertSame(-136, $result['days'][0]['debt_minutes']);
-        $this->assertSame('02:16', $result['days'][0]['debt_hhmm']);
+        $this->assertSame(-24, $result['days'][0]['debt_minutes']);
+        $this->assertSame('00:24', $result['days'][0]['debt_hhmm']);
         $this->assertSame('debt', $result['days'][0]['status']);
     }
 
@@ -498,5 +540,106 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(0, $result['days'][0]['debt_minutes']);
         $this->assertSame('even', $result['days'][0]['status']);
         $this->assertFalse($result['days'][0]['is_finalized']);
+    }
+
+    public function test_period_balance_uses_total_worked_minus_expected_for_positive_reported_case(): void
+    {
+        $from = CarbonImmutable::parse('2025-12-01', 'UTC');
+        $to = CarbonImmutable::parse('2025-12-26', 'UTC');
+        $user = User::factory()->create();
+        $this->assignWeeklyShift($user, [
+            'scheduled_minutes' => 340,
+            'start_date' => $from,
+        ]);
+
+        $workedMinutesByDay = array_fill(0, 19, 348);
+        $workedMinutesByDay[] = 353;
+        $index = 0;
+
+        for ($date = $from; $date->lessThanOrEqualTo($to); $date = $date->addDay()) {
+            if ($date->isWeekend()) {
+                continue;
+            }
+
+            $this->createSinglePairWorkday($user, $date, $workedMinutesByDay[$index]);
+            $index++;
+        }
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $from, $to, true);
+
+        $this->assertSame(6965, $result['totals']['worked_minutes']);
+        $this->assertSame(6800, $result['totals']['expected_minutes']);
+        $this->assertSame(165, $result['totals']['balance_minutes']);
+        $this->assertSame(165, $result['totals']['extra_minutes']);
+        $this->assertSame(0, $result['totals']['debt_minutes']);
+        $this->assertSame('+02:45', $result['totals']['balance_hhmm']);
+        $this->assertSame(
+            $result['totals']['balance_minutes'],
+            $result['totals']['extra_minutes'] + $result['totals']['debt_minutes']
+        );
+    }
+
+    public function test_period_balance_uses_total_worked_minus_expected_for_negative_reported_case(): void
+    {
+        $from = CarbonImmutable::parse('2025-12-01', 'UTC');
+        $to = CarbonImmutable::parse('2025-12-26', 'UTC');
+        $user = User::factory()->create();
+        $this->assignWeeklyShift($user, [
+            'scheduled_minutes' => 340,
+            'start_date' => $from,
+        ]);
+
+        for ($date = $from; $date->lessThanOrEqualTo($to); $date = $date->addDay()) {
+            if ($date->isWeekend()) {
+                continue;
+            }
+
+            $this->createSinglePairWorkday($user, $date, 300);
+        }
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $from, $to, true);
+
+        $this->assertSame(6000, $result['totals']['worked_minutes']);
+        $this->assertSame(6800, $result['totals']['expected_minutes']);
+        $this->assertSame(-800, $result['totals']['balance_minutes']);
+        $this->assertSame(0, $result['totals']['extra_minutes']);
+        $this->assertSame(-800, $result['totals']['debt_minutes']);
+        $this->assertSame('-13:20', $result['totals']['balance_hhmm']);
+        $this->assertSame('13:20', $result['totals']['debt_hhmm']);
+        $this->assertSame(
+            $result['totals']['balance_minutes'],
+            $result['totals']['extra_minutes'] + $result['totals']['debt_minutes']
+        );
+    }
+
+    public function test_period_balance_consolidates_mixed_positive_and_negative_days(): void
+    {
+        $from = CarbonImmutable::parse('2025-12-01', 'UTC');
+        $to = CarbonImmutable::parse('2025-12-03', 'UTC');
+        $user = User::factory()->create();
+        $this->assignWeeklyShift($user, [
+            'scheduled_minutes' => 340,
+            'start_date' => $from,
+        ]);
+
+        $this->createSinglePairWorkday($user, $from, 360);
+        $this->createSinglePairWorkday($user, $from->addDay(), 300);
+        $this->createSinglePairWorkday($user, $from->addDays(2), 380);
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $from, $to, true);
+
+        $this->assertSame([20, -40, 40], array_column($result['days'], 'balance_minutes'));
+        $this->assertSame(1040, $result['totals']['worked_minutes']);
+        $this->assertSame(1020, $result['totals']['expected_minutes']);
+        $this->assertSame(20, $result['totals']['balance_minutes']);
+        $this->assertSame(20, $result['totals']['extra_minutes']);
+        $this->assertSame(0, $result['totals']['debt_minutes']);
+        $this->assertSame(
+            $result['totals']['balance_minutes'],
+            $result['totals']['extra_minutes'] + $result['totals']['debt_minutes']
+        );
     }
 }
