@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.2...v1.8.3) (2026-06-08)
+
+
+### Correções de Bugs
+
+* fix:  ([312fbdc](https://github.com/ribeirosacarlos/ponto-saas-api/commit/312fbdcb7a1d954bb40dc65932004b69c322b34b))
+* Add TYPE_EXCUSED_ABSENCE constant to Absence model ([c387f28](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c387f28afad530010f9b7810cd69d4df0ceb932f))
+* Update absence request validation rules ([efaa1b7](https://github.com/ribeirosacarlos/ponto-saas-api/commit/efaa1b7cefaaaa82fbd4449e613f0ae16efccef4))
+* Use AbsenceAllowanceService for absence creation ([7959902](https://github.com/ribeirosacarlos/ponto-saas-api/commit/79599022f61c2b84512d6807cf323b05cb99f37b))
+
 ## [1.8.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.1...v1.8.2) (2026-06-08)
 
 
