@@ -382,7 +382,7 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.day_summary.status', 'even');
     }
 
-    public function test_team_entries_day_summary_applies_exceeded_break_only_to_balance(): void
+    public function test_team_entries_day_summary_reports_exceeded_break_without_reducing_balance(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-16 09:00:00', 'America/Sao_Paulo'));
 
@@ -459,12 +459,12 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.day_summary.exceeded_break_minutes', 112)
             ->assertJsonPath('data.0.day_summary.exceeded_break_hhmm', '01:52')
             ->assertJsonPath('data.0.day_summary.expected_minutes', 340)
-            ->assertJsonPath('data.0.day_summary.balance_minutes', -136)
-            ->assertJsonPath('data.0.day_summary.balance_hhmm', '-02:16')
+            ->assertJsonPath('data.0.day_summary.balance_minutes', -24)
+            ->assertJsonPath('data.0.day_summary.balance_hhmm', '-00:24')
             ->assertJsonPath('data.0.day_summary.extra_minutes', 0)
             ->assertJsonPath('data.0.day_summary.extra_hhmm', '00:00')
-            ->assertJsonPath('data.0.day_summary.debt_minutes', -136)
-            ->assertJsonPath('data.0.day_summary.debt_hhmm', '02:16')
+            ->assertJsonPath('data.0.day_summary.debt_minutes', -24)
+            ->assertJsonPath('data.0.day_summary.debt_hhmm', '00:24')
             ->assertJsonPath('data.0.day_summary.status', 'debt');
     }
 
