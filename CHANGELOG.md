@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.7](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.6...v1.8.7) (2026-06-08)
+
+
+### Correções de Bugs
+
+* enforce tenant isolation for timesheet closures ([d60d693](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d60d69383f64e0c284fd5b49487ae32cde90ab16))
+
 ## [1.8.6](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.5...v1.8.6) (2026-06-08)
 
 
