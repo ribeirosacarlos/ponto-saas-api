@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.5](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.4...v1.8.5) (2026-06-08)
+
+
+### Correções de Bugs
+
+* Enhance TimeEntryController with virtual absence logic ([acea732](https://github.com/ribeirosacarlos/ponto-saas-api/commit/acea732e03b4c021b29d71c9ddf3a9584ecc5e7a))
+* Enhance TimeEntryController with virtual absence logic ([363bed3](https://github.com/ribeirosacarlos/ponto-saas-api/commit/363bed32981c81d023445b8d0b0037fcac31236c))
+* Refactor TimeEntryController to include virtual absence handling ([a70bf66](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a70bf6607aff3e2bf8a33afffef2b28970e46ea4))
+
 ## [1.8.4](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.3...v1.8.4) (2026-06-08)
 
 
