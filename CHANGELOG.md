@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.6](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.5...v1.8.6) (2026-06-08)
+
+
+### Correções de Bugs
+
+* Refactor TimeEntryController to include absence handling ([771b4be](https://github.com/ribeirosacarlos/ponto-saas-api/commit/771b4be72badd8bd683c6cf5615324e6bccee30d))
+* Refactor TimeEntryController to include absence handling ([7d8b4f8](https://github.com/ribeirosacarlos/ponto-saas-api/commit/7d8b4f8f87205c08d6e447ab0bb9e76d31a6c164))
+
 ## [1.8.5](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.4...v1.8.5) (2026-06-08)
 
 
