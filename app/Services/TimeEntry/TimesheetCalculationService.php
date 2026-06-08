@@ -596,6 +596,11 @@ class TimesheetCalculationService
 
         foreach ($days as $day) {
             $summary = $day['summary'];
+
+            if (! (bool) ($summary['is_finalized'] ?? true)) {
+                continue;
+            }
+
             $worked += (int) $summary['worked_minutes'];
             $expected += (int) $summary['expected_minutes'];
             $dailyBalance = (int) $summary['worked_minutes'] - (int) $summary['expected_minutes'];
