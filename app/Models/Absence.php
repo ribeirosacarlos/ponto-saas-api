@@ -12,6 +12,8 @@ class Absence extends Model
 
     public const TYPE_SICK_LEAVE = 'sick_leave';
 
+    public const TYPE_EXCUSED_ABSENCE = 'excused_absence';
+
     public const COVERAGE_FULL_DAY = 'full_day';
 
     public const COVERAGE_HOURS = 'hours';

@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAbsenceRequest;
 use App\Models\Absence;
 use App\Models\User;
+use App\Services\AbsenceAllowanceService;
 use App\Services\UserVisibilityService;
 use Illuminate\Http\Request;
 
 class AbsenceController extends Controller
 {
     public function __construct(
-        protected UserVisibilityService $userVisibilityService
+        protected UserVisibilityService $userVisibilityService,
+        protected AbsenceAllowanceService $absenceAllowanceService
     ) {
     }
 
@@ -62,20 +64,7 @@ class AbsenceController extends Controller
             : $this->userVisibilityService->visibleUsersQuery($admin);
         $user = $targetUserQuery->whereKey($request->user_id)->firstOrFail();
 
-        $start = $request->start_date;
-        $end = $request->end_date ?: $start;
-
-        $absence = Absence::create([
-            'company_id' => $admin->company_id,
-            'user_id' => $user->id,
-            'type' => $request->type,
-            'start_date' => $start,
-            'end_date' => $end,
-            'status' => $request->status ?? 'recorded',
-            'comment' => $request->comment,
-            'counts_for_accrual' => $request->counts_for_accrual ?? true,
-            'created_by' => $admin->id,
-        ]);
+        $absence = $this->absenceAllowanceService->createFromAdmin($admin, $user, $request->validated());
 
         return response()->json($absence, 201);
     }
