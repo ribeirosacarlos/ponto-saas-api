@@ -59,7 +59,7 @@ Regra:
 - aliases no nivel raiz existem para conveniencia e retrocompatibilidade
 - frontend deve preferir `summary`
 - `worked_minutes`, `worked_hhmm`, `raw_worked_minutes` e `actual_worked_minutes` representam a soma real dos pares `in`/`out`; pausa excedida nao reduz estes campos
-- pausa excedida entra apenas no saldo: `balance_minutes = worked_minutes - expected_minutes - exceeded_break_minutes`
+- pausa excedida e exposta em `exceeded_break_minutes`, mas nao reduz o saldo de banco de horas: `balance_minutes = worked_minutes - expected_minutes`
 
 Exemplo de um item de `days[]`:
 
