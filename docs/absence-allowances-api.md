@@ -12,7 +12,7 @@ Cria um abono geral para qualquer motivo. Por padrao, cria com:
 - `status = recorded`
 - `counts_for_accrual = true`
 
-Registros com `status = recorded` ou `approved` entram no calculo de ponto e reduzem os minutos esperados. Assim, um dia inteiro abonado nao gera debito de hora extra/banco de horas.
+Registros com `status = recorded` ou `approved` entram no calculo de ponto como trabalho abonado. A jornada esperada do shift continua sendo exibida, e o tempo abonado entra em `worked_minutes` oficial para nao gerar debito indevido de hora extra/banco de horas.
 
 ## Dia Inteiro
 

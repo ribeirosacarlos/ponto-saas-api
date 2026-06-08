@@ -31,7 +31,7 @@ class TimesheetCalculationService
      *     date: string,
      *     employee_id: string,
      *     entries: array<int, array<string, mixed>>,
-     *     summary: array<string, mixed> 
+     *     summary: array<string, mixed>
      *   }>
      * }
      */
@@ -251,14 +251,19 @@ class TimesheetCalculationService
         $shiftDay = $this->resolveShiftDayForDate($shift, $date);
         $isRegularDayOff = $shift !== null && $shiftDay === null;
         $isFullDayAbsence = $absence !== null && $absence->isFullDayCoverage();
-        $isFullLeaveDay = $vacationDay !== null || $isFullDayAbsence;
+        $isFullLeaveDay = $vacationDay !== null;
         $baseExpectedMinutes = ($isHoliday || $isRegularDayOff || $isFullLeaveDay)
             ? 0
             : $this->expectedMinutesForShiftDay($shiftDay);
-        $absenceMinutes = ($absence !== null && $absence->isHoursCoverage() && ! $isHoliday && ! $isRegularDayOff && $vacationDay === null)
-            ? $this->hourlyAbsenceMinutes($absence, $date, $shiftDay, $shift?->is_flexible ?? false, $baseExpectedMinutes, $timezone)
-            : 0;
-        $expectedMinutes = max(0, $baseExpectedMinutes - $absenceMinutes);
+        $absenceMinutes = 0;
+        if ($absence !== null && ! $isHoliday && ! $isRegularDayOff && $vacationDay === null) {
+            $absenceMinutes = $isFullDayAbsence
+                ? $baseExpectedMinutes
+                : ($absence->isHoursCoverage()
+                    ? $this->hourlyAbsenceMinutes($absence, $date, $shiftDay, $shift ? (bool) $shift->is_flexible : false, $baseExpectedMinutes, $timezone)
+                    : 0);
+        }
+        $expectedMinutes = $baseExpectedMinutes;
         $allowedBreakMinutes = ($isHoliday || $isRegularDayOff || $isFullLeaveDay)
             ? 0
             : $this->resolveBreakMinutes($shiftDay);
@@ -271,7 +276,10 @@ class TimesheetCalculationService
         $pairing = $this->pairWorkEntries($workEntries, $timezone, $allowedBreakMinutes);
         $workedMinutes = $this->resolveOfficialWorkedMinutes(
             $pairing['raw_worked_minutes'],
-            $pairing['exceeded_break_minutes']
+            $pairing['exceeded_break_minutes'],
+            $absence,
+            $absenceMinutes,
+            $expectedMinutes
         );
         $isFinalized = $dateKey < CarbonImmutable::now($timezone)->toDateString();
         $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes : 0;
@@ -284,6 +292,15 @@ class TimesheetCalculationService
             'entries' => array_map(
                 fn (TimeEntry $entry) => $this->formatEntry($entry, $timezone),
                 $entries
+            ),
+            'virtual_entries' => $this->buildVirtualAbsenceEntries(
+                $absence,
+                $date,
+                $shiftDay,
+                $expectedMinutes,
+                $employee->id,
+                $employee->company_id,
+                $timezone
             ),
             'summary' => [
                 'worked_minutes' => $workedMinutes,
@@ -569,13 +586,94 @@ class TimesheetCalculationService
 
     protected function resolveOfficialWorkedMinutes(
         int $rawWorkedMinutes,
-        int $exceededBreakMinutes
+        int $exceededBreakMinutes,
+        ?Absence $absence = null,
+        int $absenceMinutes = 0,
+        int $expectedMinutes = 0
     ): int {
+        if ($absence !== null && $absence->isFullDayCoverage()) {
+            return max($rawWorkedMinutes, $expectedMinutes);
+        }
+
+        if ($absence !== null && $absence->isHoursCoverage() && $absenceMinutes > 0) {
+            return max($rawWorkedMinutes, min($expectedMinutes, $rawWorkedMinutes + $absenceMinutes));
+        }
+
         if ($rawWorkedMinutes <= 0) {
             return 0;
         }
 
         return $rawWorkedMinutes;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function buildVirtualAbsenceEntries(
+        ?Absence $absence,
+        CarbonImmutable $date,
+        ?ShiftDay $definition,
+        int $expectedMinutes,
+        string $employeeId,
+        ?string $companyId,
+        string $timezone
+    ): array {
+        if ($absence === null || ! $absence->isFullDayCoverage() || $expectedMinutes <= 0 || ! $definition || ! $definition->start_time || ! $definition->end_time) {
+            return [];
+        }
+
+        $start = $this->dateTimeFromDateAndTime($date, $definition->start_time, $timezone);
+        $end = $this->dateTimeFromDateAndTime($date, $definition->end_time, $timezone);
+
+        if ($end->lessThanOrEqualTo($start)) {
+            $end = $end->addDay();
+        }
+
+        return [
+            $this->formatVirtualAbsenceEntry($absence, $start, 'in', 'work_start', $employeeId, $companyId),
+            $this->formatVirtualAbsenceEntry($absence, $end, 'out', 'work_end', $employeeId, $companyId),
+        ];
+    }
+
+    protected function formatVirtualAbsenceEntry(
+        Absence $absence,
+        CarbonImmutable $clockedAt,
+        string $type,
+        string $eventKind,
+        string $employeeId,
+        ?string $companyId
+    ): array {
+        return [
+            'id' => 'absence-'.$absence->id.'-'.$type,
+            'company_id' => $companyId,
+            'user_id' => $employeeId,
+            'user_shift_id' => null,
+            'clocked_at' => $this->formatIso8601ToMinute($clockedAt),
+            'type' => $type,
+            'event_kind' => $eventKind,
+            'latitude' => null,
+            'longitude' => null,
+            'source' => 'absence_allowance',
+            'device_type' => null,
+            'adjustment_status' => null,
+            'adjustment_reason' => null,
+            'adjustment_requested_by' => null,
+            'adjustment_requested_at' => null,
+            'proposed_clocked_at' => null,
+            'proposed_type' => null,
+            'proposed_latitude' => null,
+            'proposed_longitude' => null,
+            'proposed_source' => null,
+            'adjustment_reviewed_by' => null,
+            'adjustment_reviewed_at' => null,
+            'adjustment_review_reason' => null,
+            'virtual' => true,
+            'absence' => true,
+            'absence_id' => $absence->id,
+            'absence_type' => $absence->type,
+            'absence_coverage_type' => $absence->coverage_type ?? Absence::COVERAGE_FULL_DAY,
+            'work_date' => $clockedAt->toDateString(),
+        ];
     }
 
     protected function truncateToMinute(CarbonImmutable $date): CarbonImmutable
@@ -606,15 +704,6 @@ class TimesheetCalculationService
             $dailyBalance = (int) $summary['worked_minutes'] - (int) $summary['expected_minutes'];
             $extraAdded = max(0, $dailyBalance);
             $debtAdded = min(0, $dailyBalance);
-
-            Log::debug('overtime daily balance calculation', [
-                'date' => $day['date'] ?? null,
-                'worked_minutes' => (int) $summary['worked_minutes'],
-                'expected_minutes' => (int) $summary['expected_minutes'],
-                'daily_balance' => $dailyBalance,
-                'extra_added' => $extraAdded,
-                'debt_added' => $debtAdded,
-            ]);
 
             if ((int) $summary['worked_minutes'] > 0) {
                 $daysWorked++;
