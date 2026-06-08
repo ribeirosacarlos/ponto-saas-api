@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.0...v1.8.1) (2026-06-08)
+
+
+### Correções de Bugs
+
+* fix:  ([f4219da](https://github.com/ribeirosacarlos/ponto-saas-api/commit/f4219dab9875b39093f460ca6ec72cb44cc56de0))
+* formatting of PHPDoc summary in TimesheetCalculationServicefix ([a2ff5ce](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a2ff5ceb60035b17b4e8ac2083758a3d96b38747))
+* Rename test method and update assertions for balance ([a63f609](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a63f609eb08d51b92e462efb4565a368a5095c9b))
+
 ## [1.8.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.7.4...v1.8.0) (2026-06-07)
 
 
