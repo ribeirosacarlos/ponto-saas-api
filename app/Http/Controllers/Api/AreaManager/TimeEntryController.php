@@ -32,6 +32,11 @@ class TimeEntryController extends Controller
         $this->userVisibilityService->applyToUserOwnedQuery($query, $user);
 
         if ($request->filled('user_id')) {
+            $requestedEmployee = $this->userVisibilityService
+                ->visibleUsersQuery($user)
+                ->whereKey($request->user_id)
+                ->first();
+
             if ($user->hasRole('admin') || $this->userVisibilityService->canManageUserId($user, $request->user_id)) {
                 $query->where('user_id', $request->user_id);
             } else {
@@ -66,7 +71,7 @@ class TimeEntryController extends Controller
 
         if ($request->filled('user_id')) {
             return response()->json(
-                $this->groupUserEntriesByDay($query->get(), $timezone, $overtimeCalculator)
+                $this->groupUserEntriesByDay($query->get(), $timezone, $overtimeCalculator, $request, $requestedEmployee ?? null)
             );
         }
 
@@ -89,9 +94,30 @@ class TimeEntryController extends Controller
     private function groupUserEntriesByDay(
         Collection $collection,
         string $timezone,
-        OvertimeCalculatorService $overtimeCalculator
+        OvertimeCalculatorService $overtimeCalculator,
+        AreaManagerTeamEntriesRequest $request,
+        ?User $requestedEmployee
     ): array {
         $summariesByUser = $this->buildSummariesByUser($collection, $timezone, $overtimeCalculator);
+        $overtimeDaysByDate = [];
+
+        if ($requestedEmployee && $request->filled('date_from') && $request->filled('date_to')) {
+            $from = CarbonImmutable::parse(
+                CompanyTime::normalizeDateInput($request->date_from, $timezone),
+                $timezone
+            )->startOfDay();
+            $to = CarbonImmutable::parse(
+                CompanyTime::normalizeDateInput($request->date_to, $timezone),
+                $timezone
+            )->endOfDay();
+
+            $overtime = $overtimeCalculator->calculateForEmployee($requestedEmployee, $from, $to, true);
+            $overtimeDaysByDate = collect($overtime['days'] ?? [])->keyBy('date')->all();
+            $summariesByUser[$requestedEmployee->id] = collect($overtime['days'] ?? [])
+                ->keyBy('date')
+                ->map(fn (array $day) => $day['summary'] ?? null)
+                ->all();
+        }
 
         $groups = $collection
             ->groupBy(fn (TimeEntry $entry) => CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)->toDateString())
@@ -120,13 +146,65 @@ class TimeEntryController extends Controller
                     'entries' => TimeEntryResource::collectionArray($entries),
                 ];
             })
+            ->keyBy('date');
+
+        if ($requestedEmployee && $this->sourceAllowsVirtualAbsence($request)) {
+            foreach ($overtimeDaysByDate as $date => $day) {
+                $virtualEntries = $day['virtual_entries'] ?? [];
+                $summary = $day['summary'] ?? null;
+
+                if ($virtualEntries === [] || ! ($summary['is_absence'] ?? false)) {
+                    continue;
+                }
+
+                $virtualEntries = collect($virtualEntries)
+                    ->sortByDesc('clocked_at')
+                    ->values()
+                    ->all();
+
+                if ($groups->has($date)) {
+                    $group = $groups->get($date);
+                    $group['entries'] = collect(array_merge($group['entries'], $virtualEntries))
+                        ->sortByDesc('clocked_at')
+                        ->values()
+                        ->all();
+                    $groups->put($date, $group);
+
+                    continue;
+                }
+
+                $groups->put($date, [
+                    'date' => $date,
+                    'employee_id' => $requestedEmployee->id,
+                    'user' => [
+                        'id' => $requestedEmployee->id,
+                        'name' => $requestedEmployee->name,
+                        'email' => $requestedEmployee->email,
+                    ],
+                    'day_summary' => $summary,
+                    'entries' => $virtualEntries,
+                ]);
+            }
+        }
+
+        $groups = $groups
+            ->sortByDesc('date')
             ->values();
 
         return [
             'data' => $groups->all(),
             'total_days' => $groups->count(),
-            'total_entries' => $collection->count(),
+            'total_entries' => $groups->sum(fn (array $group) => count($group['entries'] ?? [])),
         ];
+    }
+
+    private function sourceAllowsVirtualAbsence(AreaManagerTeamEntriesRequest $request): bool
+    {
+        if (! $request->filled('source')) {
+            return true;
+        }
+
+        return in_array('absence_allowance', array_filter(explode(',', $request->source)), true);
     }
 
     private function attachDaySummaries(
