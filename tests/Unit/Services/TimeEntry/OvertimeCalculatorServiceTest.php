@@ -533,6 +533,11 @@ class OvertimeCalculatorServiceTest extends TestCase
         $service = app(OvertimeCalculatorService::class);
         $result = $service->calculateForEmployee($user, $date, $date, true);
 
+        $this->assertSame(0, $result['totals']['worked_minutes']);
+        $this->assertSame(0, $result['totals']['expected_minutes']);
+        $this->assertSame(0, $result['totals']['balance_minutes']);
+        $this->assertSame(0, $result['totals']['extra_minutes']);
+        $this->assertSame(0, $result['totals']['debt_minutes']);
         $this->assertSame(335, $result['days'][0]['worked_minutes']);
         $this->assertSame(5, $result['days'][0]['exceeded_break_minutes']);
         $this->assertSame(0, $result['days'][0]['balance_minutes']);
@@ -540,6 +545,35 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(0, $result['days'][0]['debt_minutes']);
         $this->assertSame('even', $result['days'][0]['status']);
         $this->assertFalse($result['days'][0]['is_finalized']);
+    }
+
+    public function test_current_day_is_excluded_from_overtime_totals_when_period_has_previous_days(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2025-12-19 15:00:00', 'UTC'));
+
+        $yesterday = CarbonImmutable::parse('2025-12-18', 'UTC');
+        $today = CarbonImmutable::parse('2025-12-19', 'UTC');
+        $user = User::factory()->create();
+        $this->assignWeeklyShift($user, [
+            'scheduled_minutes' => 340,
+            'start_date' => $yesterday,
+        ]);
+
+        $this->createSinglePairWorkday($user, $yesterday, 360);
+        $this->createSinglePairWorkday($user, $today, 480);
+
+        $service = app(OvertimeCalculatorService::class);
+        $result = $service->calculateForEmployee($user, $yesterday, $today, true);
+
+        $this->assertSame(360, $result['totals']['worked_minutes']);
+        $this->assertSame(340, $result['totals']['expected_minutes']);
+        $this->assertSame(20, $result['totals']['balance_minutes']);
+        $this->assertSame(20, $result['totals']['extra_minutes']);
+        $this->assertSame(0, $result['totals']['debt_minutes']);
+        $this->assertTrue($result['days'][0]['is_finalized']);
+        $this->assertFalse($result['days'][1]['is_finalized']);
+        $this->assertSame(480, $result['days'][1]['worked_minutes']);
+        $this->assertSame(0, $result['days'][1]['balance_minutes']);
     }
 
     public function test_period_balance_uses_total_worked_minus_expected_for_positive_reported_case(): void
