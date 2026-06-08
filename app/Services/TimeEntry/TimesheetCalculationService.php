@@ -13,6 +13,7 @@ use App\Models\VacationDay;
 use Carbon\CarbonImmutable;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class TimesheetCalculationService
 {
@@ -30,7 +31,7 @@ class TimesheetCalculationService
      *     date: string,
      *     employee_id: string,
      *     entries: array<int, array<string, mixed>>,
-     *     summary: array<string, mixed>
+     *     summary: array<string, mixed> 
      *   }>
      * }
      */
@@ -273,7 +274,7 @@ class TimesheetCalculationService
             $pairing['exceeded_break_minutes']
         );
         $isFinalized = $dateKey < CarbonImmutable::now($timezone)->toDateString();
-        $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes - $pairing['exceeded_break_minutes'] : 0;
+        $balanceMinutes = $isFinalized ? $workedMinutes - $expectedMinutes : 0;
         $extraMinutes = max(0, $balanceMinutes);
         $debtMinutes = min(0, $balanceMinutes);
 
@@ -590,9 +591,6 @@ class TimesheetCalculationService
     {
         $worked = 0;
         $expected = 0;
-        $balance = 0;
-        $extra = 0;
-        $debt = 0;
         $daysWorked = 0;
         $absencesCount = 0;
 
@@ -600,9 +598,18 @@ class TimesheetCalculationService
             $summary = $day['summary'];
             $worked += (int) $summary['worked_minutes'];
             $expected += (int) $summary['expected_minutes'];
-            $balance += (int) $summary['balance_minutes'];
-            $extra += (int) $summary['extra_minutes'];
-            $debt += (int) $summary['debt_minutes'];
+            $dailyBalance = (int) $summary['worked_minutes'] - (int) $summary['expected_minutes'];
+            $extraAdded = max(0, $dailyBalance);
+            $debtAdded = min(0, $dailyBalance);
+
+            Log::debug('overtime daily balance calculation', [
+                'date' => $day['date'] ?? null,
+                'worked_minutes' => (int) $summary['worked_minutes'],
+                'expected_minutes' => (int) $summary['expected_minutes'],
+                'daily_balance' => $dailyBalance,
+                'extra_added' => $extraAdded,
+                'debt_added' => $debtAdded,
+            ]);
 
             if ((int) $summary['worked_minutes'] > 0) {
                 $daysWorked++;
@@ -619,6 +626,10 @@ class TimesheetCalculationService
                 $absencesCount++;
             }
         }
+
+        $balance = $worked - $expected;
+        $extra = max(0, $balance);
+        $debt = min(0, $balance);
 
         return [
             'worked_minutes' => $worked,
