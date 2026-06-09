@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.0.0...v2.0.1) (2026-06-09)
+
+
+### Correções de Bugs
+
+* permitir fechamento mensal para qualquer role da empresa ([21643a4](https://github.com/ribeirosacarlos/ponto-saas-api/commit/21643a481afce16cf42eba08a6a6f366be8bd609))
+* permitir fechamento mensal para qualquer role da empresa ([343ba3d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/343ba3d6ac3ab22a2ce39bbae11f57d9f014cd47))
+
 ## [2.0.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.10.0...v2.0.0) (2026-06-09)
 
 
