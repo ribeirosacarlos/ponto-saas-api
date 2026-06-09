@@ -278,6 +278,7 @@ class MedicalCertificateTest extends TestCase
         MonthlyClosure::create([
             'company_id' => $admin->company_id,
             'closed_by' => $admin->id,
+            'employee_id' => $employee->id,
             'reference_year' => 2026,
             'reference_month' => 4,
             'status' => ClosureStatus::OPEN->value,
@@ -290,6 +291,32 @@ class MedicalCertificateTest extends TestCase
             'start_date' => '2026-04-10',
         ])->assertStatus(422)
             ->assertJsonValidationErrors('start_date');
+    }
+
+    public function test_other_employee_monthly_closure_does_not_block_medical_certificate(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $otherEmployee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+
+        MonthlyClosure::create([
+            'company_id' => $admin->company_id,
+            'closed_by' => $admin->id,
+            'employee_id' => $otherEmployee->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+            'status' => ClosureStatus::OPEN->value,
+            'closed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->postJson('/v1/admin/medical-certificates', [
+            'user_id' => $employee->id,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+        ])->assertCreated();
+
+        $this->assertDatabaseCount('time_entries', 2);
     }
 
     public function test_rejected_and_canceled_certificates_do_not_affect_calculation(): void

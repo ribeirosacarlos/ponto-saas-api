@@ -12,8 +12,8 @@ class CloseMonthAction
         protected MonthlyClosureService $closureService
     ) {}
 
-    public function execute(User $admin, int $year, int $month): MonthlyClosure
+    public function execute(User $admin, User $employee, int $year, int $month): MonthlyClosure
     {
-        return $this->closureService->close($admin, $year, $month);
+        return $this->closureService->close($admin, $employee, $year, $month);
     }
 }

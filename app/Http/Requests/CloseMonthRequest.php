@@ -14,6 +14,7 @@ class CloseMonthRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'employee_id' => ['required', 'uuid', 'exists:users,id'],
             'reference_year' => ['required', 'integer', 'min:2020', 'max:2100'],
             'reference_month' => ['required', 'integer', 'min:1', 'max:12'],
         ];

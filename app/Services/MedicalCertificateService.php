@@ -38,7 +38,7 @@ class MedicalCertificateService
     {
         $this->assertMedicalCertificate($absence);
         $this->assertPending($absence);
-        $this->assertNoClosedMonthlyClosure($absence->company_id, $absence->start_date->toDateString(), $absence->end_date?->toDateString() ?? $absence->start_date->toDateString());
+        $this->assertNoClosedMonthlyClosure($absence->company_id, $absence->user_id, $absence->start_date->toDateString(), $absence->end_date?->toDateString() ?? $absence->start_date->toDateString());
         $this->assertNoOverlappingAbsence($absence->company_id, $absence->user_id, $absence->start_date->toDateString(), $absence->end_date?->toDateString() ?? $absence->start_date->toDateString(), $absence->id);
         $this->assertNoOverlappingVacation($absence->company_id, $absence->user_id, $absence->start_date->toDateString(), $absence->end_date?->toDateString() ?? $absence->start_date->toDateString());
 
@@ -101,7 +101,7 @@ class MedicalCertificateService
     {
         $this->assertMedicalCertificate($absence);
         $this->assertPending($absence);
-        $this->assertNoClosedMonthlyClosure($absence->company_id, $absence->start_date->toDateString(), $absence->end_date?->toDateString() ?? $absence->start_date->toDateString());
+        $this->assertNoClosedMonthlyClosure($absence->company_id, $absence->user_id, $absence->start_date->toDateString(), $absence->end_date?->toDateString() ?? $absence->start_date->toDateString());
 
         $oldValues = $this->auditLogService->snapshot($absence);
 
@@ -128,7 +128,7 @@ class MedicalCertificateService
     {
         [$startDate, $endDate, $startTime, $endTime] = $this->normalizeCoverage($payload);
 
-        $this->assertNoClosedMonthlyClosure($employee->company_id, $startDate, $endDate);
+        $this->assertNoClosedMonthlyClosure($employee->company_id, $employee->id, $startDate, $endDate);
         $this->assertNoOverlappingAbsence($employee->company_id, $employee->id, $startDate, $endDate);
         $this->assertNoOverlappingVacation($employee->company_id, $employee->id, $startDate, $endDate);
 
@@ -260,11 +260,15 @@ class MedicalCertificateService
         ];
     }
 
-    private function assertNoClosedMonthlyClosure(string $companyId, string $startDate, string $endDate): void
+    private function assertNoClosedMonthlyClosure(string $companyId, string $userId, string $startDate, string $endDate): void
     {
         foreach ($this->yearMonthPairs($startDate, $endDate) as [$year, $month]) {
             $exists = MonthlyClosure::query()
                 ->where('company_id', $companyId)
+                ->where(function ($query) use ($userId) {
+                    $query->where('employee_id', $userId)
+                        ->orWhereNull('employee_id');
+                })
                 ->where('reference_year', $year)
                 ->where('reference_month', $month)
                 ->exists();

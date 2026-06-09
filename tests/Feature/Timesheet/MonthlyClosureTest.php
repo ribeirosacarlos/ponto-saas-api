@@ -39,8 +39,10 @@ class MonthlyClosureTest extends TestCase
         Queue::fake();
 
         $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
 
         $response = $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee->id,
             'reference_year' => 2026,
             'reference_month' => 4,
         ]);
@@ -48,10 +50,12 @@ class MonthlyClosureTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonPath('data.reference_year', 2026)
             ->assertJsonPath('data.reference_month', 4)
+            ->assertJsonPath('data.employee_id', (string) $employee->id)
             ->assertJsonPath('data.status', ClosureStatus::PROCESSING->value);
 
         $this->assertDatabaseHas('monthly_closures', [
             'company_id' => $admin->company_id,
+            'employee_id' => $employee->id,
             'reference_year' => 2026,
             'reference_month' => 4,
             'status' => ClosureStatus::PROCESSING->value,
@@ -63,9 +67,11 @@ class MonthlyClosureTest extends TestCase
         Queue::fake();
 
         $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
         $now = CarbonImmutable::now();
 
         $response = $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee->id,
             'reference_year' => $now->year,
             'reference_month' => $now->month,
         ]);
@@ -79,20 +85,23 @@ class MonthlyClosureTest extends TestCase
         Queue::fake();
 
         $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
 
         $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee->id,
             'reference_year' => 2026,
             'reference_month' => 3,
         ])->assertStatus(201);
 
         $this->actingAs($admin)->postJson('/api/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee->id,
             'reference_year' => 2026,
             'reference_month' => 3,
         ])->assertStatus(422)
             ->assertJsonValidationErrors('reference_month');
     }
 
-    public function test_closure_creates_timesheet_for_each_employee(): void
+    public function test_closure_creates_timesheet_only_for_requested_employee(): void
     {
         Queue::fake();
 
@@ -101,6 +110,7 @@ class MonthlyClosureTest extends TestCase
         $employee2 = $this->createEmployee($admin->company_id);
 
         $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee1->id,
             'reference_year' => 2026,
             'reference_month' => 4,
         ])->assertStatus(201);
@@ -113,13 +123,74 @@ class MonthlyClosureTest extends TestCase
             'status' => TimesheetStatus::PENDING_EMPLOYEE->value,
         ]);
 
-        $this->assertDatabaseHas('employee_timesheets', [
-            'monthly_closure_id' => $closure->id,
+        $this->assertDatabaseMissing('employee_timesheets', [
             'employee_id' => $employee2->id,
-            'status' => TimesheetStatus::PENDING_EMPLOYEE->value,
+        ]);
+
+        Queue::assertPushed(GenerateEmployeeTimesheetJob::class, 1);
+    }
+
+    public function test_same_month_can_be_closed_for_different_employees(): void
+    {
+        Queue::fake();
+
+        $admin = $this->createAdmin();
+        $employee1 = $this->createEmployee($admin->company_id);
+        $employee2 = $this->createEmployee($admin->company_id);
+
+        $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee1->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+        ])->assertStatus(201);
+
+        $secondResponse = $this->actingAs($admin)->postJson('/api/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee2->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+        ]);
+
+        $secondResponse->assertStatus(201);
+
+        $this->assertDatabaseHas('monthly_closures', [
+            'company_id' => $admin->company_id,
+            'employee_id' => $employee1->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+        ]);
+
+        $this->assertDatabaseHas('monthly_closures', [
+            'company_id' => $admin->company_id,
+            'employee_id' => $employee2->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
         ]);
 
         Queue::assertPushed(GenerateEmployeeTimesheetJob::class, 2);
+    }
+
+    public function test_legacy_company_monthly_closure_blocks_individual_closure(): void
+    {
+        Queue::fake();
+
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+
+        MonthlyClosure::create([
+            'company_id' => $admin->company_id,
+            'closed_by' => $admin->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+            'status' => ClosureStatus::OPEN->value,
+            'closed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors('reference_month');
     }
 
     public function test_closure_status_advances_to_open_after_all_snapshots_generated(): void
@@ -130,6 +201,7 @@ class MonthlyClosureTest extends TestCase
         $employee = $this->createEmployee($admin->company_id);
 
         $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
+            'employee_id' => (string) $employee->id,
             'reference_year' => 2026,
             'reference_month' => 4,
         ])->assertStatus(201);
@@ -199,7 +271,7 @@ class MonthlyClosureTest extends TestCase
         $areaManager = $this->createAreaManager($company->id, [$visibleArea]);
         $visibleEmployee = $this->createEmployee($company->id, $visibleArea->id);
         $hiddenEmployee = $this->createEmployee($company->id, $hiddenArea->id);
-        $closure = $this->createClosure($areaManager, 2026, 4);
+        $closure = $this->createClosure($areaManager, 2026, 4, $visibleEmployee);
 
         $visibleTimesheet = $this->createTimesheet($closure, $visibleEmployee);
         $hiddenTimesheet = $this->createTimesheet($closure, $hiddenEmployee);
@@ -251,11 +323,14 @@ class MonthlyClosureTest extends TestCase
         return $user;
     }
 
-    private function createClosure(User $closedBy, int $year, int $month): MonthlyClosure
+    private function createClosure(User $closedBy, int $year, int $month, ?User $employee = null): MonthlyClosure
     {
+        $employee ??= $this->createEmployee($closedBy->company_id);
+
         return MonthlyClosure::create([
             'company_id' => $closedBy->company_id,
             'closed_by' => $closedBy->id,
+            'employee_id' => $employee->id,
             'reference_year' => $year,
             'reference_month' => $month,
             'status' => ClosureStatus::OPEN->value,

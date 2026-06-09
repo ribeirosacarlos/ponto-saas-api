@@ -7,7 +7,6 @@ use App\Enums\TimesheetStatus;
 use App\Jobs\GenerateEmployeeTimesheetJob;
 use App\Models\EmployeeTimesheet;
 use App\Models\MonthlyClosure;
-use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditLogService;
 use Carbon\Carbon;
@@ -20,8 +19,15 @@ class MonthlyClosureService
         protected AuditLogService $auditLogService
     ) {}
 
-    public function close(User $admin, int $year, int $month): MonthlyClosure
+    public function close(User $admin, User $employee, int $year, int $month): MonthlyClosure
     {
+        if (
+            (string) $employee->company_id !== (string) $admin->company_id
+            || ! $employee->roles()->where('name', 'employee')->exists()
+        ) {
+            abort(404);
+        }
+
         $now = Carbon::now();
 
         if ($year > $now->year || ($year === $now->year && $month >= $now->month)) {
@@ -31,42 +37,39 @@ class MonthlyClosureService
         }
 
         $exists = MonthlyClosure::where('company_id', $admin->company_id)
+            ->where(function ($query) use ($employee) {
+                $query->where('employee_id', $employee->id)
+                    ->orWhereNull('employee_id');
+            })
             ->where('reference_year', $year)
             ->where('reference_month', $month)
             ->exists();
 
         if ($exists) {
             throw ValidationException::withMessages([
-                'reference_month' => 'Este mês já foi fechado para esta empresa.',
+                'reference_month' => 'Este mês já foi fechado para este funcionário.',
             ]);
         }
 
-        $closure = DB::transaction(function () use ($admin, $year, $month) {
+        $closure = DB::transaction(function () use ($admin, $employee, $year, $month) {
             $closure = MonthlyClosure::create([
                 'company_id' => $admin->company_id,
                 'closed_by' => $admin->id,
+                'employee_id' => $employee->id,
                 'reference_year' => $year,
                 'reference_month' => $month,
                 'status' => ClosureStatus::PROCESSING->value,
                 'closed_at' => now(),
             ]);
 
-            $employeeRoleId = Role::where('name', 'employee')->value('id');
+            $timesheet = EmployeeTimesheet::create([
+                'company_id' => $admin->company_id,
+                'monthly_closure_id' => $closure->id,
+                'employee_id' => $employee->id,
+                'status' => TimesheetStatus::PENDING_EMPLOYEE->value,
+            ]);
 
-            $employees = User::where('company_id', $admin->company_id)
-                ->whereHas('roles', fn ($q) => $q->where('roles.id', $employeeRoleId))
-                ->get();
-
-            foreach ($employees as $employee) {
-                $timesheet = EmployeeTimesheet::create([
-                    'company_id' => $admin->company_id,
-                    'monthly_closure_id' => $closure->id,
-                    'employee_id' => $employee->id,
-                    'status' => TimesheetStatus::PENDING_EMPLOYEE->value,
-                ]);
-
-                GenerateEmployeeTimesheetJob::dispatch($timesheet);
-            }
+            GenerateEmployeeTimesheetJob::dispatch($timesheet);
 
             return $closure;
         });
@@ -76,7 +79,7 @@ class MonthlyClosureService
             entityType: MonthlyClosure::class,
             entityId: $closure->id,
             description: "Fechamento mensal criado para {$year}/{$month}",
-            newValues: ['year' => $year, 'month' => $month, 'status' => ClosureStatus::PROCESSING->value],
+            newValues: ['year' => $year, 'month' => $month, 'employee_id' => $employee->id, 'status' => ClosureStatus::PROCESSING->value],
             companyId: $admin->company_id,
         );
 

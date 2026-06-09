@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MonthlyClosure extends Model
 {
-    use HasFactory, HasUuids, CompanyScoped;
+    use CompanyScoped, HasFactory, HasUuids;
 
     public $incrementing = false;
 
@@ -21,6 +21,7 @@ class MonthlyClosure extends Model
     protected $fillable = [
         'company_id',
         'closed_by',
+        'employee_id',
         'reference_year',
         'reference_month',
         'status',
@@ -42,6 +43,11 @@ class MonthlyClosure extends Model
     public function closedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'employee_id');
     }
 
     public function timesheets(): HasMany
