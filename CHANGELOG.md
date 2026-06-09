@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.9.0...v1.10.0) (2026-06-09)
+
+
+### Novas Funcionalidades
+
+* delete absence allowances ([40d2c95](https://github.com/ribeirosacarlos/ponto-saas-api/commit/40d2c950f68bbbbb5441ad9357829b60b9d8834a))
+* delete absence allowances ([b119ddc](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b119ddce87710293e32f3abc74f0c9b12ee6fa87))
+
 ## [1.9.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.7...v1.9.0) (2026-06-09)
 
 
