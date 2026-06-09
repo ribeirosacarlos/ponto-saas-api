@@ -15,8 +15,7 @@ class AbsenceController extends Controller
     public function __construct(
         protected UserVisibilityService $userVisibilityService,
         protected AbsenceAllowanceService $absenceAllowanceService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -67,5 +66,22 @@ class AbsenceController extends Controller
         $absence = $this->absenceAllowanceService->createFromAdmin($admin, $user, $request->validated());
 
         return response()->json($absence, 201);
+    }
+
+    public function destroy(Request $request, Absence $absence)
+    {
+        $admin = $request->user();
+
+        if ((string) $absence->company_id !== (string) $admin->company_id) {
+            abort(404);
+        }
+
+        if (! $admin->hasRole('admin') && ! $this->userVisibilityService->canManageUserId($admin, $absence->user_id)) {
+            abort(404);
+        }
+
+        $this->absenceAllowanceService->destroyFromAdmin($absence);
+
+        return response()->noContent();
     }
 }

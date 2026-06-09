@@ -51,6 +51,19 @@ class AbsenceAllowanceService
         });
     }
 
+    public function destroyFromAdmin(Absence $absence): void
+    {
+        $startDate = $absence->start_date->toDateString();
+        $endDate = $absence->end_date?->toDateString() ?? $startDate;
+
+        $this->assertNoClosedMonthlyClosure($absence->company_id, $startDate, $endDate);
+
+        DB::transaction(function () use ($absence) {
+            $this->absenceTimeEntryService->deleteGeneratedEntriesForAbsence($absence);
+            $absence->delete();
+        });
+    }
+
     private function normalizeCoverage(array $payload): array
     {
         if ($payload['coverage_type'] === Absence::COVERAGE_HOURS) {

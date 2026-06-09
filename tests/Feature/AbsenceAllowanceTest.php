@@ -158,6 +158,89 @@ class AbsenceAllowanceTest extends TestCase
             ->assertJsonValidationErrors('start_date');
     }
 
+    public function test_admin_deletes_allowance_and_generated_time_entries(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+
+        $response = $this->actingAs($admin)->postJson('/v1/admin/absences', [
+            'user_id' => $employee->id,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+        ]);
+
+        $response->assertCreated();
+        $absenceId = $response->json('id');
+
+        $this->assertDatabaseHas('absences', ['id' => $absenceId]);
+        $this->assertSame(2, TimeEntry::query()->where('absence_id', $absenceId)->count());
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/v1/admin/absences/{$absenceId}")
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('absences', ['id' => $absenceId]);
+        $this->assertSame(0, TimeEntry::withTrashed()->where('absence_id', $absenceId)->count());
+    }
+
+    public function test_admin_cannot_delete_allowance_in_monthly_closure_period(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+
+        $response = $this->actingAs($admin)->postJson('/v1/admin/absences', [
+            'user_id' => $employee->id,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+        ]);
+
+        $response->assertCreated();
+        $absenceId = $response->json('id');
+
+        MonthlyClosure::create([
+            'company_id' => $admin->company_id,
+            'closed_by' => $admin->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+            'status' => ClosureStatus::OPEN->value,
+            'closed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/v1/admin/absences/{$absenceId}")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('start_date');
+
+        $this->assertDatabaseHas('absences', ['id' => $absenceId]);
+        $this->assertSame(2, TimeEntry::query()->where('absence_id', $absenceId)->count());
+    }
+
+    public function test_admin_cannot_delete_allowance_from_another_company(): void
+    {
+        $admin = $this->createAdmin();
+        $otherAdmin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+
+        $response = $this->actingAs($admin)->postJson('/v1/admin/absences', [
+            'user_id' => $employee->id,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+        ]);
+
+        $response->assertCreated();
+        $absenceId = $response->json('id');
+
+        $this->actingAs($otherAdmin)
+            ->deleteJson("/api/v1/admin/absences/{$absenceId}")
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('absences', ['id' => $absenceId]);
+        $this->assertSame(2, TimeEntry::query()->where('absence_id', $absenceId)->count());
+    }
+
     private function createAdmin(?string $companyId = null): User
     {
         $admin = User::factory()->create($companyId ? ['company_id' => $companyId] : []);

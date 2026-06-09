@@ -24,7 +24,7 @@ class AbsenceTimeEntryService
                 return;
             }
 
-            $this->deleteGeneratedEntries($absence);
+            $this->deleteGeneratedEntriesForAbsence($absence);
 
             if (! in_array($absence->status, Absence::EFFECTIVE_STATUSES, true)) {
                 return;
@@ -58,7 +58,7 @@ class AbsenceTimeEntryService
         });
     }
 
-    private function deleteGeneratedEntries(Absence $absence): void
+    public function deleteGeneratedEntriesForAbsence(Absence $absence): void
     {
         TimeEntry::withTrashed()
             ->where('absence_id', $absence->id)
