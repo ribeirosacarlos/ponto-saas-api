@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.10.0...v2.0.0) (2026-06-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* `employee_id` is now required on POST /api/admin/monthly-closures
+
+### Novas Funcionalidades
+
+* monthly closure now scoped per employee instead of per company ([da6b78b](https://github.com/ribeirosacarlos/ponto-saas-api/commit/da6b78bfbac4d244cda9b08d723c2674c9707d81))
+
 ## [1.10.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.9.0...v1.10.0) (2026-06-09)
 
 
