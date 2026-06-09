@@ -124,6 +124,7 @@ Route::prefix('admin')->group(function () {
 
         Route::get('/absences', [AdminAbsenceController::class, 'index']);
         Route::post('/absences', [AdminAbsenceController::class, 'store']);
+        Route::delete('/absences/{absence}', [AdminAbsenceController::class, 'destroy']);
         Route::get('/medical-certificates', [AdminMedicalCertificateController::class, 'index']);
         Route::post('/medical-certificates', [AdminMedicalCertificateController::class, 'store']);
         Route::get('/medical-certificates/{absence}', [AdminMedicalCertificateController::class, 'show']);

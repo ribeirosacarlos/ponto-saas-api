@@ -16,6 +16,10 @@ Registros com `status = recorded` ou `approved` entram no calculo de ponto como 
 
 Quando ha shift valido, abonos efetivos tambem geram `time_entries` persistidos com `source=absence_allowance`, `device_type=system` e `absence_id`. Esses pontos aparecem nas listagens de ponto, mas nao entram em `raw_worked_minutes`; o calculo oficial usa `absence_minutes`/`worked_minutes` para evitar duplicidade.
 
+`DELETE /admin/absences/{absence}`
+
+Remove um abono/ausencia lancado incorretamente e tambem remove os `time_entries` gerados para ele (`source=absence_allowance`). A exclusao e bloqueada quando qualquer mes coberto pela absence ja possui fechamento mensal. Pontos manuais do usuario nao sao removidos.
+
 ## Dia Inteiro
 
 ```json
@@ -66,3 +70,4 @@ Quando ha shift valido, abonos efetivos tambem geram `time_entries` persistidos 
 - `pending`, `rejected` e `canceled` nao abonam no calculo.
 - `full_day` gera pontos de entrada/saida conforme o shift do dia.
 - `hours` gera pontos conforme o intervalo informado, limitado ao dia/shift valido.
+- Exclusao de absence remove apenas pontos gerados pelo sistema para aquela `absence_id`.
