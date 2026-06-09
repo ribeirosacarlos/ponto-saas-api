@@ -37,7 +37,6 @@ class MonthlyClosureController extends Controller
         $employee = User::query()
             ->where('company_id', $request->user()->company_id)
             ->whereKey($request->input('employee_id'))
-            ->whereHas('roles', fn ($query) => $query->where('name', 'employee'))
             ->firstOrFail();
 
         $closure = $this->closeMonthAction->execute(

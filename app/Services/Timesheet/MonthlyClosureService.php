@@ -21,10 +21,7 @@ class MonthlyClosureService
 
     public function close(User $admin, User $employee, int $year, int $month): MonthlyClosure
     {
-        if (
-            (string) $employee->company_id !== (string) $admin->company_id
-            || ! $employee->roles()->where('name', 'employee')->exists()
-        ) {
+        if ((string) $employee->company_id !== (string) $admin->company_id) {
             abort(404);
         }
 
