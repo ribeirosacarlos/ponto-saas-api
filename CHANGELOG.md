@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.7...v1.9.0) (2026-06-09)
+
+
+### Novas Funcionalidades
+
+* persist absence time entries ([2f82398](https://github.com/ribeirosacarlos/ponto-saas-api/commit/2f82398d2704961a98aa85206518fd0ca56c460c))
+* persist absence time entries ([f476645](https://github.com/ribeirosacarlos/ponto-saas-api/commit/f476645356b1e9b14dab3583d92f2962a3a26984))
+
 ## [1.8.7](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v1.8.6...v1.8.7) (2026-06-08)
 
 
