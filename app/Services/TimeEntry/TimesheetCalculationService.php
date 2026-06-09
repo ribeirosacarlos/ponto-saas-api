@@ -13,7 +13,6 @@ use App\Models\VacationDay;
 use Carbon\CarbonImmutable;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 
 class TimesheetCalculationService
 {
@@ -271,6 +270,8 @@ class TimesheetCalculationService
         $workEntries = array_values(array_filter(
             $entries,
             fn (TimeEntry $entry) => in_array($entry->type, self::WORK_ENTRY_TYPES, true)
+                && $entry->source !== 'absence_allowance'
+                && $entry->absence_id === null
                 && $entry->adjustment_status !== 'rejected'
         ));
         $pairing = $this->pairWorkEntries($workEntries, $timezone, $allowedBreakMinutes);

@@ -6,11 +6,17 @@ use App\Models\Absence;
 use App\Models\MonthlyClosure;
 use App\Models\User;
 use App\Models\VacationDay;
+use App\Services\TimeEntry\AbsenceTimeEntryService;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AbsenceAllowanceService
 {
+    public function __construct(
+        protected AbsenceTimeEntryService $absenceTimeEntryService
+    ) {}
+
     public function createFromAdmin(User $actor, User $employee, array $payload): Absence
     {
         [$startDate, $endDate, $startTime, $endTime] = $this->normalizeCoverage($payload);
@@ -21,22 +27,28 @@ class AbsenceAllowanceService
 
         $status = $payload['status'] ?? Absence::STATUS_RECORDED;
 
-        return Absence::create([
-            'company_id' => $employee->company_id,
-            'user_id' => $employee->id,
-            'type' => $payload['type'] ?? Absence::TYPE_EXCUSED_ABSENCE,
-            'coverage_type' => $payload['coverage_type'],
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'status' => $status,
-            'comment' => $payload['comment'] ?? null,
-            'counts_for_accrual' => $payload['counts_for_accrual'] ?? true,
-            'created_by' => $actor->id,
-            'approved_by' => $status === Absence::STATUS_APPROVED ? $actor->id : null,
-            'approved_at' => $status === Absence::STATUS_APPROVED ? now() : null,
-        ]);
+        return DB::transaction(function () use ($actor, $employee, $payload, $startDate, $endDate, $startTime, $endTime, $status) {
+            $absence = Absence::create([
+                'company_id' => $employee->company_id,
+                'user_id' => $employee->id,
+                'type' => $payload['type'] ?? Absence::TYPE_EXCUSED_ABSENCE,
+                'coverage_type' => $payload['coverage_type'],
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'status' => $status,
+                'comment' => $payload['comment'] ?? null,
+                'counts_for_accrual' => $payload['counts_for_accrual'] ?? true,
+                'created_by' => $actor->id,
+                'approved_by' => $status === Absence::STATUS_APPROVED ? $actor->id : null,
+                'approved_at' => $status === Absence::STATUS_APPROVED ? now() : null,
+            ]);
+
+            $this->absenceTimeEntryService->syncForAbsence($absence);
+
+            return $absence->fresh();
+        });
     }
 
     private function normalizeCoverage(array $payload): array

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\AreaManager;
 
+use App\Models\Absence;
 use App\Models\Company;
 use App\Models\Role;
 use App\Models\Shift;
@@ -9,6 +10,7 @@ use App\Models\ShiftDay;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\UserShift;
+use App\Services\TimeEntry\AbsenceTimeEntryService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -536,6 +538,160 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.day_summary.debt_minutes', 0)
             ->assertJsonPath('data.0.day_summary.status', 'even')
             ->assertJsonPath('data.0.day_summary.is_finalized', false);
+    }
+
+    public function test_team_entries_lists_persisted_full_day_absence_entries(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-04-10', 'UTC');
+        $this->assignShift($employee, $date);
+
+        $absence = Absence::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'type' => Absence::TYPE_EXCUSED_ABSENCE,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+            'end_date' => '2026-04-10',
+            'status' => Absence::STATUS_RECORDED,
+            'comment' => 'Abono administrativo',
+            'counts_for_accrual' => true,
+            'created_by' => $admin->id,
+        ]);
+        app(AbsenceTimeEntryService::class)->syncForAbsence($absence);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-04-10&date_to=2026-04-10");
+
+        $response->assertOk()
+            ->assertJsonPath('total_days', 1)
+            ->assertJsonPath('total_entries', 2)
+            ->assertJsonPath('data.0.day_summary.worked_minutes', 540)
+            ->assertJsonPath('data.0.day_summary.raw_worked_minutes', 0)
+            ->assertJsonPath('data.0.day_summary.expected_minutes', 540)
+            ->assertJsonPath('data.0.day_summary.balance_minutes', 0)
+            ->assertJsonPath('data.0.day_summary.is_absence', true)
+            ->assertJsonPath('data.0.entries.0.type', 'out')
+            ->assertJsonPath('data.0.entries.0.source', 'absence_allowance')
+            ->assertJsonPath('data.0.entries.0.device_type', 'system')
+            ->assertJsonPath('data.0.entries.0.absence', true)
+            ->assertJsonPath('data.0.entries.0.absence_id', (string) $absence->id)
+            ->assertJsonPath('data.0.entries.0.absence_type', Absence::TYPE_EXCUSED_ABSENCE)
+            ->assertJsonPath('data.0.entries.0.absence_coverage_type', Absence::COVERAGE_FULL_DAY)
+            ->assertJsonPath('data.0.entries.1.type', 'in')
+            ->assertJsonPath('data.0.entries.1.source', 'absence_allowance');
+    }
+
+    public function test_team_entries_lists_hourly_absence_entries_without_counting_them_as_raw_work(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-04-10', 'UTC');
+        $this->assignShift($employee, $date);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(8, 0),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(12, 0),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $absence = Absence::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'type' => 'personal_reason',
+            'coverage_type' => Absence::COVERAGE_HOURS,
+            'start_date' => '2026-04-10',
+            'end_date' => '2026-04-10',
+            'start_time' => '13:00',
+            'end_time' => '17:00',
+            'status' => Absence::STATUS_RECORDED,
+            'counts_for_accrual' => true,
+            'created_by' => $admin->id,
+        ]);
+        app(AbsenceTimeEntryService::class)->syncForAbsence($absence);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-04-10&date_to=2026-04-10");
+
+        $response->assertOk()
+            ->assertJsonPath('total_entries', 4)
+            ->assertJsonPath('data.0.day_summary.raw_worked_minutes', 240)
+            ->assertJsonPath('data.0.day_summary.worked_minutes', 480)
+            ->assertJsonPath('data.0.day_summary.absence_minutes', 240)
+            ->assertJsonPath('data.0.entries.0.type', 'out')
+            ->assertJsonPath('data.0.entries.0.source', 'absence_allowance')
+            ->assertJsonPath('data.0.entries.0.absence_coverage_type', Absence::COVERAGE_HOURS)
+            ->assertJsonPath('data.0.entries.1.type', 'in')
+            ->assertJsonPath('data.0.entries.1.source', 'absence_allowance')
+            ->assertJsonPath('data.0.entries.2.source', 'web')
+            ->assertJsonPath('data.0.entries.3.source', 'web');
+    }
+
+    public function test_team_entries_does_not_leak_persisted_absence_entries_to_other_company(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+        $otherCompany = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+        $otherAdmin = User::factory()->create(['company_id' => $otherCompany->id]);
+        $otherAdmin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-04-10', 'UTC');
+        $this->assignShift($employee, $date);
+
+        $absence = Absence::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'type' => Absence::TYPE_EXCUSED_ABSENCE,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+            'end_date' => '2026-04-10',
+            'status' => Absence::STATUS_RECORDED,
+            'counts_for_accrual' => true,
+            'created_by' => $admin->id,
+        ]);
+        app(AbsenceTimeEntryService::class)->syncForAbsence($absence);
+
+        $this->actingAs($otherAdmin)
+            ->getJson('/v1/area-manager/team/entries?date_from=2026-04-10&date_to=2026-04-10')
+            ->assertOk()
+            ->assertJsonPath('total', 0)
+            ->assertJsonCount(0, 'data');
     }
 
     private function assignShift(User $user, CarbonImmutable $date, array $options = []): void

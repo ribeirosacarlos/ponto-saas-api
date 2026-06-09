@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\MonthlyClosure;
 use App\Models\User;
 use App\Models\VacationDay;
+use App\Services\TimeEntry\AbsenceTimeEntryService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,8 @@ use Throwable;
 class MedicalCertificateService
 {
     public function __construct(
-        protected AuditLogService $auditLogService
+        protected AuditLogService $auditLogService,
+        protected AbsenceTimeEntryService $absenceTimeEntryService
     ) {}
 
     public function createFromEmployee(User $employee, array $payload, array $files = []): Absence
@@ -40,28 +42,32 @@ class MedicalCertificateService
         $this->assertNoOverlappingAbsence($absence->company_id, $absence->user_id, $absence->start_date->toDateString(), $absence->end_date?->toDateString() ?? $absence->start_date->toDateString(), $absence->id);
         $this->assertNoOverlappingVacation($absence->company_id, $absence->user_id, $absence->start_date->toDateString(), $absence->end_date?->toDateString() ?? $absence->start_date->toDateString());
 
-        $oldValues = $this->auditLogService->snapshot($absence);
+        return DB::transaction(function () use ($absence, $actor) {
+            $oldValues = $this->auditLogService->snapshot($absence);
 
-        $absence->update([
-            'status' => Absence::STATUS_APPROVED,
-            'approved_by' => $actor->id,
-            'approved_at' => now(),
-            'rejected_by' => null,
-            'rejected_at' => null,
-            'rejection_reason' => null,
-        ]);
+            $absence->update([
+                'status' => Absence::STATUS_APPROVED,
+                'approved_by' => $actor->id,
+                'approved_at' => now(),
+                'rejected_by' => null,
+                'rejected_at' => null,
+                'rejection_reason' => null,
+            ]);
 
-        $this->auditLogService->log(
-            action: 'medical_certificate.approved',
-            entityType: Absence::class,
-            entityId: $absence->id,
-            description: 'Atestado médico aprovado',
-            oldValues: $oldValues,
-            newValues: $this->auditLogService->snapshot($absence->fresh()),
-            companyId: $absence->company_id,
-        );
+            $this->absenceTimeEntryService->syncForAbsence($absence);
 
-        return $absence->fresh(['documents', 'user']);
+            $this->auditLogService->log(
+                action: 'medical_certificate.approved',
+                entityType: Absence::class,
+                entityId: $absence->id,
+                description: 'Atestado médico aprovado',
+                oldValues: $oldValues,
+                newValues: $this->auditLogService->snapshot($absence->fresh()),
+                companyId: $absence->company_id,
+            );
+
+            return $absence->fresh(['documents', 'user']);
+        });
     }
 
     public function reject(Absence $absence, User $actor, string $reason): Absence
@@ -185,6 +191,8 @@ class MedicalCertificateService
                     metadata: ['document_ids' => $documentIds],
                     companyId: $employee->company_id,
                 );
+
+                $this->absenceTimeEntryService->syncForAbsence($absence);
 
                 return $absence->fresh(['documents', 'user']);
             });

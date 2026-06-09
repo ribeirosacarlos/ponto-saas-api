@@ -3,24 +3,26 @@
 namespace App\Models;
 
 use App\Traits\CompanyScoped;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TimeEntry extends Model
 {
-    use HasFactory, HasUuids, CompanyScoped, SoftDeletes;
+    use CompanyScoped, HasFactory, HasUuids, SoftDeletes;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
         'company_id',
         'user_id',
         'user_shift_id',
+        'absence_id',
         'clocked_at',
         'type',
         'event_kind',
@@ -71,6 +73,11 @@ class TimeEntry extends Model
     public function userShift()
     {
         return $this->belongsTo(UserShift::class);
+    }
+
+    public function absence(): BelongsTo
+    {
+        return $this->belongsTo(Absence::class);
     }
 
     public function isAdjustmentPending(): bool

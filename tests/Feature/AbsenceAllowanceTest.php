@@ -9,8 +9,10 @@ use App\Models\MonthlyClosure;
 use App\Models\Role;
 use App\Models\Shift;
 use App\Models\ShiftDay;
+use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\UserShift;
+use App\Services\TimeEntry\AbsenceTimeEntryService;
 use App\Services\TimeEntry\OvertimeCalculatorService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,11 +54,26 @@ class AbsenceAllowanceTest extends TestCase
 
         $result = $this->calculateOvertime($employee, '2026-04-10');
 
-        $this->assertSame(0, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(540, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(540, $result['days'][0]['summary']['worked_minutes']);
+        $this->assertSame(0, $result['days'][0]['summary']['raw_worked_minutes']);
         $this->assertSame(0, $result['days'][0]['summary']['debt_minutes']);
         $this->assertSame(0, $result['totals']['debt_minutes']);
         $this->assertTrue($result['days'][0]['summary']['is_absence']);
         $this->assertSame(Absence::TYPE_EXCUSED_ABSENCE, $result['days'][0]['summary']['absence_type']);
+        $this->assertDatabaseCount('time_entries', 2);
+        $this->assertDatabaseHas('time_entries', [
+            'absence_id' => $response->json('id'),
+            'source' => 'absence_allowance',
+            'device_type' => 'system',
+            'type' => 'in',
+        ]);
+        $this->assertDatabaseHas('time_entries', [
+            'absence_id' => $response->json('id'),
+            'source' => 'absence_allowance',
+            'device_type' => 'system',
+            'type' => 'out',
+        ]);
     }
 
     public function test_admin_creates_hourly_allowance_that_reduces_expected_minutes(): void
@@ -81,9 +98,42 @@ class AbsenceAllowanceTest extends TestCase
 
         $result = $this->calculateOvertime($employee, '2026-04-10');
 
-        $this->assertSame(420, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(540, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(120, $result['days'][0]['summary']['worked_minutes']);
         $this->assertSame(120, $result['days'][0]['summary']['absence_minutes']);
         $this->assertSame(Absence::COVERAGE_HOURS, $result['days'][0]['summary']['absence_coverage_type']);
+        $this->assertDatabaseCount('time_entries', 2);
+    }
+
+    public function test_absence_time_entry_generation_is_idempotent(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+
+        $response = $this->actingAs($admin)->postJson('/v1/admin/absences', [
+            'user_id' => $employee->id,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+        ]);
+
+        $response->assertCreated();
+        $absence = Absence::query()->findOrFail($response->json('id'));
+
+        app(AbsenceTimeEntryService::class)->syncForAbsence($absence);
+        app(AbsenceTimeEntryService::class)->syncForAbsence($absence);
+
+        $this->assertSame(2, TimeEntry::query()
+            ->where('absence_id', $absence->id)
+            ->where('source', 'absence_allowance')
+            ->count());
+
+        $result = $this->calculateOvertime($employee, '2026-04-10');
+
+        $this->assertSame(540, $result['days'][0]['summary']['worked_minutes']);
+        $this->assertSame(0, $result['days'][0]['summary']['raw_worked_minutes']);
+        $this->assertSame(0, $result['totals']['extra_minutes']);
+        $this->assertSame(0, $result['totals']['debt_minutes']);
     }
 
     public function test_admin_cannot_create_allowance_in_monthly_closure_period(): void

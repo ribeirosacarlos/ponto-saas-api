@@ -29,6 +29,7 @@ class TimeEntryResource extends JsonResource
             'company_id' => $this->company_id,
             'user_id' => $this->user_id,
             'user_shift_id' => $this->user_shift_id,
+            'absence_id' => $this->absence_id,
             'clocked_at' => $this->clocked_at?->toIso8601String(),
             'type' => $this->type,
             'event_kind' => $this->event_kind,
@@ -54,6 +55,14 @@ class TimeEntryResource extends JsonResource
                 'email' => $this->user->email,
             ]),
         ];
+
+        if ($this->absence_id !== null || $this->source === 'absence_allowance') {
+            $absence = $this->resource->relationLoaded('absence') ? $this->absence : null;
+
+            $payload['absence'] = true;
+            $payload['absence_type'] = $absence?->type;
+            $payload['absence_coverage_type'] = $absence?->coverage_type;
+        }
 
         if ($this->resource->offsetExists('work_date')) {
             $payload['work_date'] = $this->resource->getAttribute('work_date');
