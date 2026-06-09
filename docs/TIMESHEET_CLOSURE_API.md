@@ -20,7 +20,7 @@ Todos os endpoints requerem `Authorization: Bearer {token}` (Sanctum).
 ## Fluxo Geral
 
 ```
-Admin fecha o mês
+Admin fecha o mês de um colaborador
         ↓
 status: "processing"  (sistema gera snapshots em background)
         ↓
@@ -79,6 +79,7 @@ POST /api/v1/admin/monthly-closures
 **Body:**
 ```json
 {
+  "employee_id": "uuid",
   "reference_year": 2026,
   "reference_month": 4
 }
@@ -94,11 +95,16 @@ POST /api/v1/admin/monthly-closures
       "id": "uuid",
       "name": "João Admin"
     },
+    "employee_id": "uuid",
+    "employee": {
+      "id": "uuid",
+      "name": "Maria Colaboradora"
+    },
     "reference_year": 2026,
     "reference_month": 4,
     "status": "processing",
     "closed_at": "2026-05-21T10:00:00+00:00",
-    "timesheets_count": 3,
+    "timesheets_count": 1,
     "created_at": "2026-05-21T10:00:00+00:00"
   }
 }
@@ -110,7 +116,7 @@ POST /api/v1/admin/monthly-closures
 {
   "message": "...",
   "errors": {
-    "reference_month": ["Este mês já foi fechado para esta empresa."]
+    "reference_month": ["Este mês já foi fechado para este funcionário."]
   }
 }
 ```
@@ -136,11 +142,13 @@ GET /api/v1/admin/monthly-closures
       "id": "uuid",
       "company_id": "uuid",
       "closed_by": { "id": "uuid", "name": "João Admin" },
+      "employee_id": "uuid",
+      "employee": { "id": "uuid", "name": "Maria Colaboradora" },
       "reference_year": 2026,
       "reference_month": 4,
       "status": "open",
       "closed_at": "2026-05-21T10:00:00+00:00",
-      "timesheets_count": 3,
+      "timesheets_count": 1,
       "created_at": "2026-05-21T10:00:00+00:00"
     }
   ],
@@ -477,9 +485,10 @@ O snapshot é um JSON imutável gerado no momento do fechamento, com os dados de
 ## Regras de Negócio Importantes
 
 1. **Só é possível fechar meses passados** — o mês atual e futuros retornam `422`.
-2. **Não é possível fechar o mesmo mês duas vezes** — retorna `422`.
-3. **O colaborador só assina quando não há contestação em aberto.**
-4. **O gestor só assina após o colaborador** — o timesheet precisa estar em `pending_manager`.
-5. **Ao resolver uma contestação**, o timesheet volta para `pending_employee` para o colaborador assinar novamente.
-6. **O fechamento avança para `completed` automaticamente** quando todos os timesheets estiverem em `completed`.
-7. **O snapshot é gerado de forma assíncrona** (via job em background). O fechamento fica em `processing` até todos os snapshots estarem prontos.
+2. **O fechamento é individual por colaborador** — `employee_id` é obrigatório e gera uma única `EmployeeTimesheet`.
+3. **Não é possível fechar o mesmo mês duas vezes para o mesmo colaborador** — retorna `422`; outro colaborador da mesma empresa pode ser fechado no mesmo mês.
+4. **O colaborador só assina quando não há contestação em aberto.**
+5. **O gestor só assina após o colaborador** — o timesheet precisa estar em `pending_manager`.
+6. **Ao resolver uma contestação**, o timesheet volta para `pending_employee` para o colaborador assinar novamente.
+7. **O fechamento avança para `completed` automaticamente** quando o timesheet estiver em `completed`.
+8. **O snapshot é gerado de forma assíncrona** (via job em background). O fechamento fica em `processing` até o snapshot estar pronto.

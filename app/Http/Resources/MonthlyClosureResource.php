@@ -16,6 +16,11 @@ class MonthlyClosureResource extends JsonResource
                 'id' => $this->closedBy->id,
                 'name' => $this->closedBy->name,
             ]),
+            'employee' => $this->whenLoaded('employee', fn () => [
+                'id' => $this->employee?->id,
+                'name' => $this->employee?->name,
+            ]),
+            'employee_id' => $this->employee_id,
             'reference_year' => $this->reference_year,
             'reference_month' => $this->reference_month,
             'status' => $this->status->value,

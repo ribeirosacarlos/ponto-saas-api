@@ -21,7 +21,7 @@ class AbsenceAllowanceService
     {
         [$startDate, $endDate, $startTime, $endTime] = $this->normalizeCoverage($payload);
 
-        $this->assertNoClosedMonthlyClosure($employee->company_id, $startDate, $endDate);
+        $this->assertNoClosedMonthlyClosure($employee->company_id, $employee->id, $startDate, $endDate);
         $this->assertNoOverlappingAbsence($employee->company_id, $employee->id, $startDate, $endDate);
         $this->assertNoOverlappingVacation($employee->company_id, $employee->id, $startDate, $endDate);
 
@@ -56,7 +56,7 @@ class AbsenceAllowanceService
         $startDate = $absence->start_date->toDateString();
         $endDate = $absence->end_date?->toDateString() ?? $startDate;
 
-        $this->assertNoClosedMonthlyClosure($absence->company_id, $startDate, $endDate);
+        $this->assertNoClosedMonthlyClosure($absence->company_id, $absence->user_id, $startDate, $endDate);
 
         DB::transaction(function () use ($absence) {
             $this->absenceTimeEntryService->deleteGeneratedEntriesForAbsence($absence);
@@ -83,11 +83,15 @@ class AbsenceAllowanceService
         ];
     }
 
-    private function assertNoClosedMonthlyClosure(string $companyId, string $startDate, string $endDate): void
+    private function assertNoClosedMonthlyClosure(string $companyId, string $userId, string $startDate, string $endDate): void
     {
         foreach ($this->yearMonthPairs($startDate, $endDate) as [$year, $month]) {
             $exists = MonthlyClosure::query()
                 ->where('company_id', $companyId)
+                ->where(function ($query) use ($userId) {
+                    $query->where('employee_id', $userId)
+                        ->orWhereNull('employee_id');
+                })
                 ->where('reference_year', $year)
                 ->where('reference_month', $month)
                 ->exists();

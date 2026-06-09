@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CloseMonthRequest;
 use App\Http\Resources\MonthlyClosureResource;
 use App\Models\MonthlyClosure;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class MonthlyClosureController extends Controller
@@ -20,7 +21,7 @@ class MonthlyClosureController extends Controller
         $this->authorize('viewAny', MonthlyClosure::class);
 
         $closures = MonthlyClosure::withCount('timesheets')
-            ->with('closedBy')
+            ->with(['closedBy', 'employee'])
             ->where('company_id', $request->user()->company_id)
             ->orderByDesc('reference_year')
             ->orderByDesc('reference_month')
@@ -33,13 +34,20 @@ class MonthlyClosureController extends Controller
     {
         $this->authorize('create', MonthlyClosure::class);
 
+        $employee = User::query()
+            ->where('company_id', $request->user()->company_id)
+            ->whereKey($request->input('employee_id'))
+            ->whereHas('roles', fn ($query) => $query->where('name', 'employee'))
+            ->firstOrFail();
+
         $closure = $this->closeMonthAction->execute(
             $request->user(),
+            $employee,
             $request->integer('reference_year'),
             $request->integer('reference_month')
         );
 
-        $closure->load('closedBy');
+        $closure->load(['closedBy', 'employee']);
         $closure->loadCount('timesheets');
 
         return (new MonthlyClosureResource($closure))->response()->setStatusCode(201);
@@ -49,7 +57,7 @@ class MonthlyClosureController extends Controller
     {
         $this->authorize('view', $closure);
 
-        $closure->load('closedBy')->loadCount(['timesheets']);
+        $closure->load(['closedBy', 'employee'])->loadCount(['timesheets']);
 
         return new MonthlyClosureResource($closure);
     }

@@ -18,7 +18,7 @@ Quando ha shift valido, abonos efetivos tambem geram `time_entries` persistidos 
 
 `DELETE /admin/absences/{absence}`
 
-Remove um abono/ausencia lancado incorretamente e tambem remove os `time_entries` gerados para ele (`source=absence_allowance`). A exclusao e bloqueada quando qualquer mes coberto pela absence ja possui fechamento mensal. Pontos manuais do usuario nao sao removidos.
+Remove um abono/ausencia lancado incorretamente e tambem remove os `time_entries` gerados para ele (`source=absence_allowance`). A exclusao e bloqueada quando qualquer mes coberto pela absence ja possui fechamento mensal para o funcionario alvo. Fechamento de outro funcionario no mesmo mes nao bloqueia. Pontos manuais do usuario nao sao removidos.
 
 ## Dia Inteiro
 
@@ -64,7 +64,7 @@ Remove um abono/ausencia lancado incorretamente e tambem remove os `time_entries
 
 ## Regras
 
-- Mes fechado bloqueia criacao.
+- Mes fechado do funcionario alvo bloqueia criacao.
 - Ferias no periodo bloqueiam criacao.
 - Ausencia, atestado ou abono pendente/efetivo no periodo bloqueia criacao.
 - `pending`, `rejected` e `canceled` nao abonam no calculo.

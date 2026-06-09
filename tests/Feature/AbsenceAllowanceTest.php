@@ -144,6 +144,7 @@ class AbsenceAllowanceTest extends TestCase
         MonthlyClosure::create([
             'company_id' => $admin->company_id,
             'closed_by' => $admin->id,
+            'employee_id' => $employee->id,
             'reference_year' => 2026,
             'reference_month' => 4,
             'status' => ClosureStatus::OPEN->value,
@@ -156,6 +157,32 @@ class AbsenceAllowanceTest extends TestCase
             'start_date' => '2026-04-10',
         ])->assertStatus(422)
             ->assertJsonValidationErrors('start_date');
+    }
+
+    public function test_other_employee_monthly_closure_does_not_block_allowance(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $otherEmployee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+
+        MonthlyClosure::create([
+            'company_id' => $admin->company_id,
+            'closed_by' => $admin->id,
+            'employee_id' => $otherEmployee->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+            'status' => ClosureStatus::OPEN->value,
+            'closed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->postJson('/v1/admin/absences', [
+            'user_id' => $employee->id,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+        ])->assertCreated();
+
+        $this->assertDatabaseCount('time_entries', 2);
     }
 
     public function test_admin_deletes_allowance_and_generated_time_entries(): void
@@ -202,6 +229,7 @@ class AbsenceAllowanceTest extends TestCase
         MonthlyClosure::create([
             'company_id' => $admin->company_id,
             'closed_by' => $admin->id,
+            'employee_id' => $employee->id,
             'reference_year' => 2026,
             'reference_month' => 4,
             'status' => ClosureStatus::OPEN->value,
@@ -215,6 +243,40 @@ class AbsenceAllowanceTest extends TestCase
 
         $this->assertDatabaseHas('absences', ['id' => $absenceId]);
         $this->assertSame(2, TimeEntry::query()->where('absence_id', $absenceId)->count());
+    }
+
+    public function test_other_employee_monthly_closure_does_not_block_allowance_delete(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $otherEmployee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+
+        $response = $this->actingAs($admin)->postJson('/v1/admin/absences', [
+            'user_id' => $employee->id,
+            'coverage_type' => Absence::COVERAGE_FULL_DAY,
+            'start_date' => '2026-04-10',
+        ]);
+
+        $response->assertCreated();
+        $absenceId = $response->json('id');
+
+        MonthlyClosure::create([
+            'company_id' => $admin->company_id,
+            'closed_by' => $admin->id,
+            'employee_id' => $otherEmployee->id,
+            'reference_year' => 2026,
+            'reference_month' => 4,
+            'status' => ClosureStatus::OPEN->value,
+            'closed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/v1/admin/absences/{$absenceId}")
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('absences', ['id' => $absenceId]);
+        $this->assertSame(0, TimeEntry::withTrashed()->where('absence_id', $absenceId)->count());
     }
 
     public function test_admin_cannot_delete_allowance_from_another_company(): void
