@@ -104,7 +104,7 @@ Ausencia efetiva de dia inteiro:
 - preserva `expected_minutes` da jornada, exceto em feriado, folga regular ou ferias;
 - credita `worked_minutes` oficial ate a jornada esperada;
 - nao remove batidas reais ja existentes;
-- pode gerar duas entradas virtuais (`in` e `out`) com `source=absence_allowance` para exibicao em consultas do gestor de area.
+- pode gerar entradas persistidas (`in` e `out`) com `source=absence_allowance`, `device_type=system` e `absence_id` para exibicao em consultas do gestor de area.
 
 ### Cobertura por horas
 
@@ -134,11 +134,11 @@ Cada batida pode trazer:
 - `work_date`;
 - `day_summary`.
 
-Quando ha periodo resolvido por filtro ou por ausencias visiveis, dias com ausencia efetiva de dia inteiro podem aparecer como entradas virtuais no mesmo formato de batida:
+Dias com absence efetiva e shift valido podem aparecer como entradas persistidas no mesmo formato de batida:
 
-- `virtual=true`;
 - `absence=true`;
 - `source=absence_allowance`;
+- `device_type=system`;
 - `absence_id`;
 - `absence_type`;
 - `absence_coverage_type`;

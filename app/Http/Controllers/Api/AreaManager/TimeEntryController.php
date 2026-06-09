@@ -30,7 +30,7 @@ class TimeEntryController extends Controller
         $toLocal = null;
 
         $query = TimeEntry::query()
-            ->with(['user:id,name,email,company_id'])
+            ->with(['user:id,name,email,company_id', 'absence:id,type,coverage_type'])
             ->excludeRejected()
             ->orderByDesc('clocked_at');
         $this->userVisibilityService->applyToUserOwnedQuery($query, $user);
@@ -405,7 +405,7 @@ class TimeEntryController extends Controller
         foreach ($entriesByUser as $userEntries) {
             /** @var TimeEntry $firstEntry */
             $firstEntry = $userEntries->first();
-            /** @var User|null $employee  */
+            /** @var User|null $employee */
             $employee = $firstEntry->user;
 
             if (! $employee) {

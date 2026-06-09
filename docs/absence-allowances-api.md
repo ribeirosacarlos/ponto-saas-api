@@ -14,6 +14,8 @@ Cria um abono geral para qualquer motivo. Por padrao, cria com:
 
 Registros com `status = recorded` ou `approved` entram no calculo de ponto como trabalho abonado. A jornada esperada do shift continua sendo exibida, e o tempo abonado entra em `worked_minutes` oficial para nao gerar debito indevido de hora extra/banco de horas.
 
+Quando ha shift valido, abonos efetivos tambem geram `time_entries` persistidos com `source=absence_allowance`, `device_type=system` e `absence_id`. Esses pontos aparecem nas listagens de ponto, mas nao entram em `raw_worked_minutes`; o calculo oficial usa `absence_minutes`/`worked_minutes` para evitar duplicidade.
+
 ## Dia Inteiro
 
 ```json
@@ -62,3 +64,5 @@ Registros com `status = recorded` ou `approved` entram no calculo de ponto como 
 - Ferias no periodo bloqueiam criacao.
 - Ausencia, atestado ou abono pendente/efetivo no periodo bloqueia criacao.
 - `pending`, `rejected` e `canceled` nao abonam no calculo.
+- `full_day` gera pontos de entrada/saida conforme o shift do dia.
+- `hours` gera pontos conforme o intervalo informado, limitado ao dia/shift valido.

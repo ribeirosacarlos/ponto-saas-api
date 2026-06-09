@@ -104,7 +104,8 @@ Exemplo de um item de `days[]`:
   - `day_summary`
   - `entries[]`
 - `day_summary` segue exatamente a mesma regra do overtime e, no formato agrupado, nao e repetido dentro de cada batida.
-- Dias com ausencia efetiva de dia inteiro podem aparecer com entradas virtuais (`source = absence_allowance`, `virtual = true`) quando a consulta agrupada por `user_id` usa periodo delimitado.
+- Dias com ausencia efetiva podem aparecer com entradas persistidas em `time_entries` (`source = absence_allowance`, `device_type = system`, `absence = true`, `absence_id`) quando a absence gerou pontos.
+- Pontos `source = absence_allowance` aparecem na listagem, mas nao entram em `raw_worked_minutes`; o credito oficial continua vindo da regra de absence em `worked_minutes`.
 - Para uma consulta orientada a periodo/dias, o endpoint canonico continua sendo `GET /v1/area-manager/team/{employee}/overtime?include_days=1`.
 
 Exemplo com `user_id` em `GET /v1/area-manager/team/entries`:

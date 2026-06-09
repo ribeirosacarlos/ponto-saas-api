@@ -44,6 +44,7 @@ class MedicalCertificateTest extends TestCase
     public function test_employee_creates_pending_medical_certificate_without_attachment(): void
     {
         $employee = $this->createEmployee();
+        $this->assignShift($employee, '2026-04-10');
 
         $response = $this->actingAs($employee)->postJson('/v1/employee/medical-certificates', [
             'coverage_type' => Absence::COVERAGE_FULL_DAY,
@@ -67,6 +68,8 @@ class MedicalCertificateTest extends TestCase
             'company_id' => $employee->company_id,
             'action' => 'medical_certificate.created',
         ]);
+
+        $this->assertDatabaseCount('time_entries', 0);
     }
 
     public function test_employee_creates_medical_certificate_with_attachment(): void
@@ -96,6 +99,7 @@ class MedicalCertificateTest extends TestCase
     {
         $admin = $this->createAdmin();
         $employee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
 
         $response = $this->actingAs($admin)->postJson('/v1/admin/medical-certificates', [
             'user_id' => $employee->id,
@@ -111,6 +115,14 @@ class MedicalCertificateTest extends TestCase
         $this->assertDatabaseHas('audit_logs', [
             'company_id' => $admin->company_id,
             'action' => 'medical_certificate.created_approved',
+        ]);
+
+        $this->assertDatabaseCount('time_entries', 2);
+        $this->assertDatabaseHas('time_entries', [
+            'absence_id' => $response->json('data.id'),
+            'source' => 'absence_allowance',
+            'device_type' => 'system',
+            'type' => 'in',
         ]);
     }
 
@@ -136,7 +148,7 @@ class MedicalCertificateTest extends TestCase
         ])->assertNotFound();
     }
 
-    public function test_approved_full_day_medical_certificate_zeros_expected_minutes(): void
+    public function test_approved_full_day_medical_certificate_fills_expected_minutes(): void
     {
         $admin = $this->createAdmin();
         $employee = $this->createEmployee($admin->company_id);
@@ -150,12 +162,14 @@ class MedicalCertificateTest extends TestCase
 
         $result = $this->calculateOvertime($employee, '2026-04-10');
 
-        $this->assertSame(0, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(540, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(540, $result['days'][0]['summary']['worked_minutes']);
+        $this->assertSame(0, $result['days'][0]['summary']['raw_worked_minutes']);
         $this->assertTrue($result['days'][0]['summary']['is_absence']);
         $this->assertSame(Absence::COVERAGE_FULL_DAY, $result['days'][0]['summary']['absence_coverage_type']);
     }
 
-    public function test_approved_hourly_medical_certificate_reduces_expected_minutes_partially(): void
+    public function test_approved_hourly_medical_certificate_adds_absence_minutes_partially(): void
     {
         $admin = $this->createAdmin();
         $employee = $this->createEmployee($admin->company_id);
@@ -171,9 +185,11 @@ class MedicalCertificateTest extends TestCase
 
         $result = $this->calculateOvertime($employee, '2026-04-10');
 
-        $this->assertSame(420, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(540, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(120, $result['days'][0]['summary']['worked_minutes']);
         $this->assertSame(120, $result['days'][0]['summary']['absence_minutes']);
         $this->assertSame(Absence::COVERAGE_HOURS, $result['days'][0]['summary']['absence_coverage_type']);
+        $this->assertDatabaseCount('time_entries', 2);
     }
 
     public function test_existing_time_entries_are_kept_and_counted_on_approved_certificate_day(): void
@@ -193,10 +209,12 @@ class MedicalCertificateTest extends TestCase
 
         $result = $this->calculateOvertime($employee, '2026-04-10');
 
-        $this->assertSame(0, $result['days'][0]['summary']['expected_minutes']);
-        $this->assertSame(240, $result['days'][0]['summary']['worked_minutes']);
+        $this->assertSame(540, $result['days'][0]['summary']['expected_minutes']);
+        $this->assertSame(240, $result['days'][0]['summary']['raw_worked_minutes']);
+        $this->assertSame(540, $result['days'][0]['summary']['worked_minutes']);
 
-        $this->assertDatabaseCount('time_entries', 2);
+        $this->assertDatabaseCount('time_entries', 4);
+        $this->assertSame(2, TimeEntry::query()->where('source', 'absence_allowance')->count());
     }
 
     public function test_overlap_with_existing_absence_returns_validation_error(): void
