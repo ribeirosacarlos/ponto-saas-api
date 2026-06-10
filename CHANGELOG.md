@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.0.1...v2.0.2) (2026-06-10)
+
+
+### Correções de Bugs
+
+* derive hourly absence allowance minutes from time entries only ([06e30ae](https://github.com/ribeirosacarlos/ponto-saas-api/commit/06e30aea50c862d2c4b9443032ae1daf18455dbb))
+
 ## [2.0.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.0.0...v2.0.1) (2026-06-09)
 
 
