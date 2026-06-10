@@ -256,11 +256,11 @@ class TimesheetCalculationService
             : $this->expectedMinutesForShiftDay($shiftDay);
         $absenceMinutes = 0;
         if ($absence !== null && ! $isHoliday && ! $isRegularDayOff && $vacationDay === null) {
-            $absenceMinutes = $isFullDayAbsence
-                ? $baseExpectedMinutes
-                : ($absence->isHoursCoverage()
-                    ? $this->hourlyAbsenceMinutes($absence, $date, $shiftDay, $shift ? (bool) $shift->is_flexible : false, $baseExpectedMinutes, $timezone)
-                    : 0);
+            if ($isFullDayAbsence) {
+                $absenceMinutes = $baseExpectedMinutes;
+            } elseif ($absence->isHoursCoverage()) {
+                $absenceMinutes = min($baseExpectedMinutes, $this->absenceAllowanceMinutesFromEntries($entries, $absence, $timezone));
+            }
         }
         $expectedMinutes = $baseExpectedMinutes;
         $allowedBreakMinutes = ($isHoliday || $isRegularDayOff || $isFullLeaveDay)
@@ -433,52 +433,6 @@ class TimesheetCalculationService
         return max(0, $breakEnd->diffInMinutes($breakStart, true));
     }
 
-    protected function hourlyAbsenceMinutes(
-        Absence $absence,
-        CarbonImmutable $date,
-        ?ShiftDay $definition,
-        bool $isFlexibleShift,
-        int $expectedMinutes,
-        string $timezone
-    ): int {
-        if (! $absence->start_time || ! $absence->end_time || $expectedMinutes <= 0) {
-            return 0;
-        }
-
-        $absenceStart = $this->dateTimeFromDateAndTime($date, $absence->start_time, $timezone);
-        $absenceEnd = $this->dateTimeFromDateAndTime($date, $absence->end_time, $timezone);
-
-        if ($absenceEnd->lessThanOrEqualTo($absenceStart)) {
-            return 0;
-        }
-
-        if ($isFlexibleShift || ! $definition || ! $definition->start_time || ! $definition->end_time) {
-            return min($expectedMinutes, (int) $absenceEnd->diffInMinutes($absenceStart, true));
-        }
-
-        $workStart = $this->dateTimeFromDateAndTime($date, $definition->start_time, $timezone);
-        $workEnd = $this->dateTimeFromDateAndTime($date, $definition->end_time, $timezone);
-
-        if ($workEnd->lessThanOrEqualTo($workStart)) {
-            $workEnd = $workEnd->addDay();
-        }
-
-        $minutes = $this->overlapMinutes($absenceStart, $absenceEnd, $workStart, $workEnd);
-
-        if ($definition->break_start_time && $definition->break_end_time) {
-            $breakStart = $this->dateTimeFromDateAndTime($date, $definition->break_start_time, $timezone);
-            $breakEnd = $this->dateTimeFromDateAndTime($date, $definition->break_end_time, $timezone);
-
-            if ($breakEnd->lessThanOrEqualTo($breakStart)) {
-                $breakEnd = $breakEnd->addDay();
-            }
-
-            $minutes -= $this->overlapMinutes($absenceStart, $absenceEnd, $breakStart, $breakEnd);
-        }
-
-        return min($expectedMinutes, max(0, $minutes));
-    }
-
     protected function dateTimeFromDateAndTime(CarbonImmutable $date, string $time, string $timezone): CarbonImmutable
     {
         $time = substr($time, 0, 5);
@@ -486,16 +440,24 @@ class TimesheetCalculationService
         return CarbonImmutable::parse(sprintf('%s %s', $date->toDateString(), $time), $timezone);
     }
 
-    protected function overlapMinutes(CarbonImmutable $leftStart, CarbonImmutable $leftEnd, CarbonImmutable $rightStart, CarbonImmutable $rightEnd): int
+    /**
+     * @param  array<int, TimeEntry>  $entries
+     */
+    protected function absenceAllowanceMinutesFromEntries(array $entries, Absence $absence, string $timezone): int
     {
-        $start = $leftStart->greaterThan($rightStart) ? $leftStart : $rightStart;
-        $end = $leftEnd->lessThan($rightEnd) ? $leftEnd : $rightEnd;
+        $allowanceEntries = array_values(array_filter(
+            $entries,
+            fn (TimeEntry $entry) => $entry->absence_id === $absence->id
+                && $entry->source === 'absence_allowance'
+                && in_array($entry->type, self::WORK_ENTRY_TYPES, true)
+                && $entry->adjustment_status !== 'rejected'
+        ));
 
-        if ($end->lessThanOrEqualTo($start)) {
+        if ($allowanceEntries === []) {
             return 0;
         }
 
-        return (int) $end->diffInMinutes($start, true);
+        return $this->pairWorkEntries($allowanceEntries, $timezone, 0)['raw_worked_minutes'];
     }
 
     /**
