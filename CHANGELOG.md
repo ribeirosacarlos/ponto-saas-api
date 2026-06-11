@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.0.2...v2.1.0) (2026-06-11)
+
+
+### Novas Funcionalidades
+
+* add seeder for Spanish blog posts about time tracking compliance ([840998f](https://github.com/ribeirosacarlos/ponto-saas-api/commit/840998f42f973c9259c827ffe266e5375b9358ef))
+* public leads endpoint for blog lead magnet capture ([54e39e8](https://github.com/ribeirosacarlos/ponto-saas-api/commit/54e39e8e6d2276e95f97ce099f33ba6fae627157))
+* refine public blog API contract and add blog sitemap ([4220f7e](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4220f7e70cfa4739545b6addd3dedcb7b1f6b43f))
+
 ## [2.0.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.0.1...v2.0.2) (2026-06-10)
 
 
