@@ -57,6 +57,18 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($ip);
         });
 
+        RateLimiter::for('public-leads', function (Request $request) {
+            $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'public-leads';
+
+            return Limit::perHour(3)->by($ip);
+        });
+
+        RateLimiter::for('public-leads-optout', function (Request $request) {
+            $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'public-leads-optout';
+
+            return Limit::perHour(5)->by($ip);
+        });
+
         RateLimiter::for('auth-login', function (Request $request) {
             $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'auth-login';
             $email = Str::lower((string) $request->input('email'));
