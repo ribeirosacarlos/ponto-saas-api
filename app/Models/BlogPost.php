@@ -11,7 +11,7 @@ use Spatie\Translatable\HasTranslations;
 
 class BlogPost extends Model
 {
-    use HasUuids, HasTranslations;
+    use HasTranslations, HasUuids;
 
     protected $table = 'blog_posts';
 
@@ -51,15 +51,16 @@ class BlogPost extends Model
     ];
 
     protected $casts = [
-        'featured'       => 'boolean',
-        'published_at'   => 'datetime',
+        'featured' => 'boolean',
+        'published_at' => 'datetime',
         'trending_score' => 'integer',
-        'toc'            => 'array',
+        'toc' => 'array',
     ];
 
     public function scopePublished(Builder $query): Builder
     {
-        return $query->where('status', 'published');
+        return $query->where('status', 'published')
+            ->where('published_at', '<=', now());
     }
 
     public function scopeFeatured(Builder $query): Builder

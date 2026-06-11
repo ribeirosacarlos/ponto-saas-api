@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\Api\V1\Public\PublicBlogController;
+use App\Http\Controllers\Api\V1\Public\PublicLeadController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('public/blog')->name('public.blog.')->group(function () {
@@ -25,6 +26,12 @@ Route::post('/public/companies/register', [CompanyRegistrationController::class,
 
 Route::post('/public/billing/checkout-session', [PublicCheckoutSessionController::class, 'store'])
     ->middleware(['throttle:public-billing-checkout-session']);
+
+Route::post('/public/leads', [PublicLeadController::class, 'store'])
+    ->middleware(['throttle:public-leads']);
+
+Route::post('/public/leads/optout', [PublicLeadController::class, 'optOut'])
+    ->middleware(['throttle:public-leads-optout']);
 
 Route::post('/invites/accept', [InviteController::class, 'accept']);
 Route::post('/auth/login', [AuthController::class, 'login'])
