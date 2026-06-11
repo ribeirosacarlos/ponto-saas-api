@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBlogPostRequest;
 use App\Http\Requests\UpdateBlogPostRequest;
 use App\Http\Resources\BlogPostAdminResource;
-use App\Http\Resources\BlogPostDetailResource;
 use App\Http\Resources\BlogPostListResource;
 use App\Models\BlogPost;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +17,7 @@ class AdminBlogPostController extends Controller
     public function index(Request $request): JsonResponse
     {
         $posts = BlogPost::query()
-            ->when($request->status,   fn ($q) => $q->where('status', $request->status))
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->category, fn ($q) => $q->where('category', $request->category))
             ->orderByDesc('updated_at')
             ->paginate($request->input('per_page', 20));
@@ -26,8 +25,8 @@ class AdminBlogPostController extends Controller
         return response()->json([
             'data' => BlogPostListResource::collection($posts->items()),
             'meta' => [
-                'total'    => $posts->total(),
-                'page'     => $posts->currentPage(),
+                'total' => $posts->total(),
+                'page' => $posts->currentPage(),
                 'per_page' => $posts->perPage(),
             ],
         ]);
@@ -83,7 +82,7 @@ class AdminBlogPostController extends Controller
     {
         $post = BlogPost::findOrFail($id);
         $post->update([
-            'status'       => 'published',
+            'status' => 'published',
             'published_at' => $post->published_at ?? now(),
         ]);
 
@@ -103,8 +102,8 @@ class AdminBlogPostController extends Controller
         $post->faqItems()->delete();
         foreach ($items as $index => $item) {
             $post->faqItems()->create([
-                'question'    => $item['question'],
-                'answer'      => $item['answer'],
+                'question' => $item['question'],
+                'answer' => $item['answer'],
                 'order_index' => $index,
             ]);
         }

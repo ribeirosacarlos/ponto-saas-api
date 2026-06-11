@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Web\BlogSitemapController;
 use App\Http\Controllers\Web\SuperAdminPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/sitemap-blog.xml', [BlogSitemapController::class, 'index']);
 
 Route::get('/health', function () {
     return response()->json([
