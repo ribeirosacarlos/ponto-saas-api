@@ -24,12 +24,18 @@ class BlogPostSeeder extends Seeder
                 'slug' => 'registro-horario-digital-en-espana-que-exige-la-ley',
                 'title' => [
                     'es' => 'Registro horario digital en España: qué exige la ley y cómo cumplirla',
+                    'pt' => 'Registro de ponto digital na Espanha: o que a lei exige e como cumprir',
+                    'en' => 'Digital time tracking in Spain: what the law requires and how to comply',
                 ],
                 'excerpt' => [
                     'es' => 'Desde 2019, todas las empresas en España deben registrar la jornada laboral de sus empleados. Descubre qué exige la ley, qué datos hay que guardar y cómo cumplir con un sistema de registro horario digital.',
+                    'pt' => 'Desde 2019, todas as empresas na Espanha devem registrar a jornada de trabalho dos seus funcionários. Descubra o que a lei exige, quais dados precisam ser guardados e como cumprir com um sistema de registro de ponto digital.',
+                    'en' => "Since 2019, all companies in Spain must record their employees' working hours. Find out what the law requires, what data needs to be kept, and how to comply with a digital time tracking system.",
                 ],
                 'content_html' => [
                     'es' => $this->postRegistroHorarioDigital(),
+                    'pt' => $this->postRegistroHorarioDigitalPt(),
+                    'en' => $this->postRegistroHorarioDigitalEn(),
                 ],
                 'toc' => [
                     'es' => [
@@ -39,6 +45,22 @@ class BlogPostSeeder extends Seeder
                         ['label' => 'Cómo digitalizar el registro horario de forma sencilla', 'href' => '#como-digitalizar'],
                         ['label' => 'Cómo Jornafy te ayuda a cumplir con la ley', 'href' => '#como-jornafy-ayuda'],
                         ['label' => 'Conclusión', 'href' => '#conclusion'],
+                    ],
+                    'pt' => [
+                        ['label' => 'O que diz a lei sobre o registro de ponto na Espanha?', 'href' => '#que-dice-la-ley'],
+                        ['label' => 'Quais dados sua empresa deve guardar?', 'href' => '#que-datos-debe-guardar'],
+                        ['label' => 'Riscos de não cumprir corretamente', 'href' => '#riesgos'],
+                        ['label' => 'Como digitalizar o registro de ponto de forma simples', 'href' => '#como-digitalizar'],
+                        ['label' => 'Como o Jornafy ajuda você a cumprir a lei', 'href' => '#como-jornafy-ayuda'],
+                        ['label' => 'Conclusão', 'href' => '#conclusion'],
+                    ],
+                    'en' => [
+                        ['label' => 'What does Spanish law say about time tracking?', 'href' => '#que-dice-la-ley'],
+                        ['label' => 'What data must your company keep?', 'href' => '#que-datos-debe-guardar'],
+                        ['label' => 'Risks of not complying correctly', 'href' => '#riesgos'],
+                        ['label' => 'How to digitize time tracking easily', 'href' => '#como-digitalizar'],
+                        ['label' => 'How Jornafy helps you comply with the law', 'href' => '#como-jornafy-ayuda'],
+                        ['label' => 'Conclusion', 'href' => '#conclusion'],
                     ],
                 ],
                 'author' => 'Equipo Jornafy',
@@ -50,21 +72,31 @@ class BlogPostSeeder extends Seeder
                 'published_at' => now()->subDays(5),
                 'seo_title' => [
                     'es' => 'Registro horario digital en España: qué exige la ley y cómo cumplirla | Jornafy',
+                    'pt' => 'Registro de ponto digital na Espanha: o que a lei exige e como cumprir | Jornafy',
+                    'en' => 'Digital time tracking in Spain: what the law requires and how to comply | Jornafy',
                 ],
                 'seo_description' => [
                     'es' => 'Descubre qué exige la normativa española sobre registro horario, qué datos debe guardar tu empresa y cómo cumplir con un sistema digital seguro.',
+                    'pt' => 'Descubra o que a legislação espanhola exige sobre o registro de ponto, quais dados sua empresa deve guardar e como cumprir com um sistema digital seguro.',
+                    'en' => 'Find out what Spanish regulations require regarding time tracking, what data your company must keep, and how to comply with a secure digital system.',
                 ],
             ],
             [
                 'slug' => 'multas-por-no-registrar-la-jornada-laboral-espana',
                 'title' => [
                     'es' => 'Multas por no registrar la jornada laboral: riesgos para empresas en España',
+                    'pt' => 'Multas por não registrar a jornada de trabalho: riscos para empresas na Espanha',
+                    'en' => 'Fines for not recording working hours: risks for companies in Spain',
                 ],
                 'excerpt' => [
                     'es' => 'No registrar correctamente la jornada laboral puede suponer sanciones para tu empresa. Conoce los riesgos más habituales y cómo evitarlos con un sistema de control horario digital.',
+                    'pt' => 'Não registrar corretamente a jornada de trabalho pode resultar em sanções para sua empresa. Conheça os riscos mais comuns e como evitá-los com um sistema de controle de ponto digital.',
+                    'en' => 'Failing to properly record working hours can lead to penalties for your company. Learn about the most common risks and how to avoid them with a digital time tracking system.',
                 ],
                 'content_html' => [
                     'es' => $this->postMultasRegistroJornada(),
+                    'pt' => $this->postMultasRegistroJornadaPt(),
+                    'en' => $this->postMultasRegistroJornadaEn(),
                 ],
                 'toc' => [
                     'es' => [
@@ -76,6 +108,24 @@ class BlogPostSeeder extends Seeder
                         ['label' => 'Cómo Jornafy ayuda a tu empresa a evitar sanciones', 'href' => '#como-jornafy-ayuda'],
                         ['label' => 'Conclusión', 'href' => '#conclusion'],
                     ],
+                    'pt' => [
+                        ['label' => 'Por que existem sanções por não registrar a jornada?', 'href' => '#por-que-existen-multas'],
+                        ['label' => 'Quais são as sanções mais comuns?', 'href' => '#sanciones-comunes'],
+                        ['label' => 'Situações frequentes que geram sanções', 'href' => '#casos-frecuentes'],
+                        ['label' => 'Como evitar essas sanções', 'href' => '#como-evitar'],
+                        ['label' => 'O papel do controle de ponto digital na prevenção', 'href' => '#control-horario-digital'],
+                        ['label' => 'Como o Jornafy ajuda sua empresa a evitar sanções', 'href' => '#como-jornafy-ayuda'],
+                        ['label' => 'Conclusão', 'href' => '#conclusion'],
+                    ],
+                    'en' => [
+                        ['label' => 'Why do fines exist for not recording working hours?', 'href' => '#por-que-existen-multas'],
+                        ['label' => 'What are the most common penalties?', 'href' => '#sanciones-comunes'],
+                        ['label' => 'Common situations that lead to penalties', 'href' => '#casos-frecuentes'],
+                        ['label' => 'How to avoid these penalties', 'href' => '#como-evitar'],
+                        ['label' => 'The role of digital time tracking in prevention', 'href' => '#control-horario-digital'],
+                        ['label' => 'How Jornafy helps your company avoid penalties', 'href' => '#como-jornafy-ayuda'],
+                        ['label' => 'Conclusion', 'href' => '#conclusion'],
+                    ],
                 ],
                 'author' => 'Equipo Jornafy',
                 'category' => 'compliance',
@@ -86,9 +136,13 @@ class BlogPostSeeder extends Seeder
                 'published_at' => now()->subDays(4),
                 'seo_title' => [
                     'es' => 'Multas por no registrar la jornada laboral en España | Jornafy',
+                    'pt' => 'Multas por não registrar a jornada de trabalho na Espanha | Jornafy',
+                    'en' => 'Fines for not recording working hours in Spain | Jornafy',
                 ],
                 'seo_description' => [
                     'es' => 'No registrar correctamente la jornada laboral puede generar sanciones. Conoce los principales riesgos y cómo evitarlos con control horario digital.',
+                    'pt' => 'Não registrar corretamente a jornada de trabalho pode gerar sanções. Conheça os principais riscos e como evitá-los com controle de ponto digital.',
+                    'en' => 'Failing to properly record working hours can lead to penalties. Learn about the main risks and how to avoid them with digital time tracking.',
                 ],
             ],
             [
@@ -255,6 +309,122 @@ class BlogPostSeeder extends Seeder
 <h2 id="conclusion">Conclusión</h2>
 <p>El registro horario digital en España ya no es opcional: es una obligación legal que afecta a cualquier empresa con personas contratadas. Cumplir correctamente no solo evita sanciones, sino que aporta orden, trazabilidad y datos fiables para la gestión diaria del equipo.</p>
 <p>Si quieres ver cómo Jornafy puede ayudarte a digitalizar el registro horario de tu empresa de forma rápida y sin complicaciones, <strong>solicita una demostración gratuita</strong> y descubre lo sencillo que puede ser cumplir con la ley.</p>
+HTML;
+    }
+
+    private function postRegistroHorarioDigitalPt(): string
+    {
+        return <<<'HTML'
+<p>Desde a entrada em vigor do Real Decreto-ley 8/2019, todas as empresas na Espanha, independentemente do seu tamanho ou setor, são obrigadas a manter um <strong>registro de ponto digital</strong> da jornada de trabalho de cada colaborador. Essa obrigação, longe de ser um simples trâmite burocrático, tornou-se uma das áreas em que a Inspeção do Trabalho e Seguridade Social presta mais atenção durante suas visitas às empresas.</p>
+
+<p>Para muitas pequenas e médias empresas, no entanto, ainda existe confusão sobre quais dados devem ser registrados exatamente, por quanto tempo precisam ser conservados e quais ferramentas são válidas. Neste artigo, revisamos o que a lei realmente exige sobre o <strong>registro de ponto digital na Espanha</strong> e como você pode cumprir a normativa sem adicionar mais carga administrativa à sua equipe.</p>
+
+<h2 id="que-dice-la-ley">O que diz a lei sobre o registro de ponto na Espanha?</h2>
+<p>O artigo 34.9 do Estatuto dos Trabalhadores estabelece que a empresa é obrigada a garantir o registro diário da jornada, que deve incluir o horário exato de início e término da jornada de cada colaborador, sem prejuízo da flexibilidade de horário que possa existir.</p>
+<p>Essa obrigação se aplica a todas as empresas, independentemente da sua atividade ou do número de pessoas no quadro de funcionários, e afeta tanto colaboradores com jornada completa quanto aqueles com jornada parcial, contratos temporários ou que trabalham remotamente.</p>
+<p>O objetivo principal da norma é duplo: por um lado, permitir o controle das horas extras realizadas e, por outro, facilitar o trabalho da Inspeção do Trabalho na hora de detectar descumprimentos relacionados à jornada e a horas extras não pagas nem compensadas.</p>
+
+<h2 id="que-datos-debe-guardar">Quais dados sua empresa deve guardar?</h2>
+<p>Embora a lei não imponha um formato único, ela estabelece quais informações mínimas devem ficar registradas para cada colaborador:</p>
+<ul>
+<li>Horário exato de início da jornada.</li>
+<li>Horário exato de término da jornada.</li>
+<li>Totais diários e semanais de horas trabalhadas.</li>
+<li>Identificação clara do colaborador a quem corresponde cada registro.</li>
+</ul>
+<p>Além disso, os registros devem ser conservados por no mínimo <strong>quatro anos</strong> e permanecer à disposição dos colaboradores, seus representantes legais e da Inspeção do Trabalho a qualquer momento.</p>
+
+<h3>Quais métodos são válidos?</h3>
+<p>A normativa não obriga o uso de um sistema específico, o que levou muitas empresas a tentar cumprir a exigência com planilhas de Excel, controles em papel ou aplicativos de mensagens. O problema é que esses métodos, embora tecnicamente possam ser considerados um "registro", apresentam fragilidades importantes: são fáceis de alterar posteriormente, não geram um histórico confiável e dificultam enormemente a tarefa de apresentar as informações de forma organizada diante de uma fiscalização.</p>
+<p>Por isso, cada vez mais empresas optam por sistemas de <strong>registro de ponto digital</strong>, em que cada entrada e saída fica registrada automaticamente com data e hora, sem possibilidade de manipulação posterior.</p>
+
+<h2 id="riesgos">Riscos de não cumprir corretamente</h2>
+<p>Não dispor de um sistema de registro de ponto adequado — ou tê-lo, mas de forma incompleta ou pouco confiável — pode resultar em sanções econômicas para a empresa, classificadas como infrações graves em matéria trabalhista. Além do impacto financeiro, um registro deficiente dificulta a defesa da empresa em caso de reclamações por horas extras não pagas, já que o ônus da prova recai principalmente sobre o empregador.</p>
+<p>Além da sanção pontual, a falta de controle de ponto costuma vir acompanhada de outros problemas: dificuldade para calcular corretamente a folha de pagamento, descompassos nos saldos de horas extras e uma sensação de desorganização que pode afetar o clima de trabalho.</p>
+
+<h2 id="como-digitalizar">Como digitalizar o registro de ponto de forma simples</h2>
+<p>Migrar de um sistema manual para um digital não precisa ser complicado. Os passos habituais são:</p>
+<ul>
+<li><strong>Escolher uma ferramenta adaptada</strong> ao tamanho da sua empresa, que permita registrar o ponto pelo computador, celular ou um terminal físico.</li>
+<li><strong>Configurar os horários e turnos</strong> de cada equipe ou departamento.</li>
+<li><strong>Comunicar a mudança</strong> a todo o time, explicando como e quando devem registrar o ponto.</li>
+<li><strong>Definir alertas</strong> para detectar registros esquecidos ou jornadas que ultrapassem os limites estabelecidos.</li>
+<li><strong>Gerar relatórios</strong> periódicos que sirvam tanto para a gestão interna quanto para uma possível fiscalização.</li>
+</ul>
+<p>Uma vez implementado, o sistema digital trabalha de forma silenciosa em segundo plano, gerando automaticamente o histórico que a lei exige conservar.</p>
+
+<h2 id="como-jornafy-ayuda">Como o Jornafy ajuda você a cumprir a lei</h2>
+<p><strong>Jornafy</strong> é uma plataforma de controle de presença e gestão de pessoas pensada para que cumprir o registro de ponto na Espanha deixe de ser uma preocupação. Com o Jornafy, cada pessoa da sua equipe pode registrar a entrada e a saída pelo celular ou pelo computador, enquanto você mantém um histórico organizado, exportável e sempre disponível.</p>
+<p>Entre as funcionalidades mais relevantes para a conformidade normativa, destacam-se:</p>
+<ul>
+<li>Registro automático de pontos com data, hora e totais diários e semanais.</li>
+<li>Conservação do histórico de jornada de forma segura, acessível sempre que precisar.</li>
+<li>Alertas para registros incompletos ou jornadas fora do habitual.</li>
+<li>Relatórios prontos para compartilhar com sua assessoria trabalhista ou apresentar em uma fiscalização.</li>
+</ul>
+<p>Se você ainda gerencia o registro de ponto com planilhas ou papel, este é um bom momento para dar o salto para um sistema digital e deixar de se preocupar com a conformidade legal.</p>
+
+<h2 id="conclusion">Conclusão</h2>
+<p>O registro de ponto digital na Espanha já não é opcional: é uma obrigação legal que afeta qualquer empresa com pessoas contratadas. Cumprir corretamente não apenas evita sanções, como também traz ordem, rastreabilidade e dados confiáveis para a gestão diária da equipe.</p>
+<p>Se você quiser ver como o Jornafy pode ajudar a digitalizar o registro de ponto da sua empresa de forma rápida e sem complicações, <strong>solicite uma demonstração gratuita</strong> e descubra como pode ser simples cumprir a lei.</p>
+HTML;
+    }
+
+    private function postRegistroHorarioDigitalEn(): string
+    {
+        return <<<'HTML'
+<p>Since the entry into force of Royal Decree-Law 8/2019, all companies in Spain, regardless of their size or sector, are required to keep a <strong>digital time tracking record</strong> of each employee's working hours. Far from being a simple bureaucratic formality, this requirement has become one of the areas the Labor and Social Security Inspectorate pays closest attention to during company visits.</p>
+
+<p>For many small and medium-sized businesses, however, there is still confusion about exactly what data must be recorded, how long it must be kept, and which tools are valid. In this article, we review what the law actually requires regarding <strong>digital time tracking in Spain</strong> and how you can comply with the regulation without adding more administrative burden to your team.</p>
+
+<h2 id="que-dice-la-ley">What does Spanish law say about time tracking?</h2>
+<p>Article 34.9 of the Workers' Statute establishes that companies must guarantee a daily record of working hours, which must include the exact start and end time of each employee's working day, regardless of any flexible scheduling that may exist.</p>
+<p>This requirement applies to all companies, regardless of their activity or number of employees, and covers both full-time staff and those with part-time schedules, temporary contracts, or remote work arrangements.</p>
+<p>The main purpose of the regulation is twofold: on one hand, to enable control over overtime worked, and on the other, to help the Labor Inspectorate detect violations related to working hours and unpaid or uncompensated overtime.</p>
+
+<h2 id="que-datos-debe-guardar">What data must your company keep?</h2>
+<p>While the law doesn't impose a single format, it does establish the minimum information that must be recorded for each employee:</p>
+<ul>
+<li>Exact clock-in time at the start of the shift.</li>
+<li>Exact clock-out time at the end of the shift.</li>
+<li>Daily and weekly totals of hours worked.</li>
+<li>Clear identification of the employee each record belongs to.</li>
+</ul>
+<p>In addition, records must be kept for at least <strong>four years</strong> and must remain available to employees, their legal representatives, and the Labor Inspectorate at any time.</p>
+
+<h3>What methods are valid?</h3>
+<p>The regulation doesn't require a specific system, which has led many companies to try to comply using Excel spreadsheets, paper timesheets, or messaging apps. The problem is that, while these methods can technically be considered a "record," they have significant weaknesses: they're easy to alter after the fact, they don't generate a reliable history, and they make it extremely difficult to present information in an organized way during an inspection.</p>
+<p>That's why more and more companies are choosing <strong>digital time clock</strong> systems, where every clock-in and clock-out is automatically recorded with a date and time, with no possibility of later manipulation.</p>
+
+<h2 id="riesgos">Risks of not complying correctly</h2>
+<p>Not having an adequate time tracking system — or having one that's incomplete or unreliable — can lead to financial penalties for the company, classified as serious labor relations violations. Beyond the financial impact, a deficient record makes it harder for the company to defend itself in claims for unpaid overtime, since the burden of proof falls mainly on the employer.</p>
+<p>Beyond the specific penalty, a lack of time tracking is often accompanied by other problems: difficulty calculating payroll correctly, mismatches in overtime balances, and a sense of disorganization that can affect the work environment.</p>
+
+<h2 id="como-digitalizar">How to digitize time tracking easily</h2>
+<p>Moving from a manual system to a digital one doesn't have to be complicated. The usual steps are:</p>
+<ul>
+<li><strong>Choose a tool suited</strong> to the size of your company, allowing employees to clock in from a computer, phone, or a physical terminal.</li>
+<li><strong>Set up schedules and shifts</strong> for each team or department.</li>
+<li><strong>Communicate the change</strong> to the whole team, explaining how and when they should clock in and out.</li>
+<li><strong>Set up alerts</strong> to detect missed clock-ins or shifts that exceed established limits.</li>
+<li><strong>Generate periodic reports</strong> useful both for internal management and for a potential inspection.</li>
+</ul>
+<p>Once implemented, the digital system works quietly in the background, automatically generating the history the law requires you to keep.</p>
+
+<h2 id="como-jornafy-ayuda">How Jornafy helps you comply with the law</h2>
+<p><strong>Jornafy</strong> is an attendance control and people management platform designed so that complying with time tracking requirements in Spain stops being a worry. With Jornafy, every member of your team can clock in and out from their phone or computer, while you keep an organized, exportable, and always-available history.</p>
+<p>Among the most relevant features for regulatory compliance are:</p>
+<ul>
+<li>Automatic clock-in/out records with date, time, and daily and weekly totals.</li>
+<li>Secure storage of the working-hours history, accessible whenever you need it.</li>
+<li>Alerts for incomplete clock-ins or unusual shifts.</li>
+<li>Reports ready to share with your labor advisor or to present during an inspection.</li>
+</ul>
+<p>If you're still managing time tracking with spreadsheets or paper, now is a great time to switch to a digital system and stop worrying about legal compliance.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>Digital time tracking in Spain is no longer optional: it's a legal requirement that applies to any company with employees. Complying correctly not only avoids penalties, but also brings order, traceability, and reliable data to your team's day-to-day management.</p>
+<p>If you'd like to see how Jornafy can help you digitize your company's time tracking quickly and without complications, <strong>request a free demo</strong> and discover how simple complying with the law can be.</p>
 HTML;
     }
 
