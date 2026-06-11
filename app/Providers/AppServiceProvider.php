@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Stripe\StripeClient;
 use Illuminate\Support\Facades\URL;
+use Spatie\Translatable\Facades\Translatable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Blog posts are seeded in Spanish first; fall back to 'es' (then any
+        // available locale) so pt/en requests don't return empty translatable fields.
+        Translatable::fallback(fallbackLocale: 'es', fallbackAny: true);
+
         Company::observe(CompanyObserver::class);
         TimeEntry::observe(TimeEntryObserver::class);
         User::observe(UserObserver::class);
