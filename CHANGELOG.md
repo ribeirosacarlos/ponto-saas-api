@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.1.0...v2.2.0) (2026-06-11)
+
+
+### Novas Funcionalidades
+
+* add pt/en translations for the Spain time-tracking blog post ([ef1fa94](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ef1fa947dada307b955ad2b77ce99105a131c2e2))
+
 ## [2.1.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.0.2...v2.1.0) (2026-06-11)
 
 
