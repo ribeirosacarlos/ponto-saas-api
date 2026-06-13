@@ -241,8 +241,11 @@ class OvertimeCalculatorServiceTest extends TestCase
         $user->company->update(['timezone' => 'America/Sao_Paulo']);
         $this->assignShift($user, $date->isoWeekday());
 
-        $this->createTimeEntry($user, 'in', CarbonImmutable::parse('2025-12-19 00:30:00', 'UTC'));
-        $this->createTimeEntry($user, 'out', CarbonImmutable::parse('2025-12-19 02:30:00', 'UTC'));
+        // clocked_at é armazenado como horário local da empresa (sem timezone),
+        // então 21:30-23:30 representa o período dentro do dia 2025-12-18
+        // em America/Sao_Paulo.
+        $this->createTimeEntry($user, 'in', CarbonImmutable::parse('2025-12-18 21:30:00', 'UTC'));
+        $this->createTimeEntry($user, 'out', CarbonImmutable::parse('2025-12-18 23:30:00', 'UTC'));
 
         $service = app(OvertimeCalculatorService::class);
         $result = $service->calculateForEmployee($user, $date, $date, true);

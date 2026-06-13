@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\UserShift;
 use App\Models\VacationDay;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Support\Collection;
 
@@ -104,7 +105,7 @@ class TimesheetCalculationService
         $grouped = [];
 
         foreach ($entries as $entry) {
-            $local = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone);
+            $local = $this->localizeClockedAt($entry->clocked_at, $timezone);
             $grouped[$local->toDateString()][] = $entry;
         }
 
@@ -485,7 +486,7 @@ class TimesheetCalculationService
 
         foreach ($entries as $entry) {
             $clockedAt = $this->truncateToMinute(
-                CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)
+                $this->localizeClockedAt($entry->clocked_at, $timezone)
             );
 
             if ($entry->type === 'in') {
@@ -645,6 +646,28 @@ class TimesheetCalculationService
     }
 
     /**
+     * Reinterpreta o horário "wall-clock" de clocked_at no timezone informado.
+     *
+     * A coluna clocked_at é salva sem timezone, representando o horário local
+     * da empresa. O cast `datetime` do Eloquent, porém, monta o Carbon usando
+     * date_default_timezone_get() no momento do cast — que só reflete o
+     * timezone da empresa dentro de requests HTTP (via SetCompanyTimezone).
+     * Em contexto de queue (ex.: GenerateEmployeeTimesheetJob) esse valor
+     * global permanece no timezone padrão da aplicação, fazendo o Carbon
+     * representar um instante UTC incorreto. Por isso, extraímos o horário
+     * "naive" e o reconstruímos diretamente no timezone da empresa, em vez
+     * de confiar no timezone já associado à instância.
+     */
+    protected function localizeClockedAt(CarbonInterface|string $clockedAt, string $timezone): CarbonImmutable
+    {
+        $naive = $clockedAt instanceof CarbonInterface
+            ? $clockedAt->format('Y-m-d H:i:s.u')
+            : $clockedAt;
+
+        return CarbonImmutable::parse($naive, $timezone);
+    }
+
+    /**
      * @param  array<int, array{summary: array<string, mixed>}>  $days
      * @return array<string, int|string>
      */
@@ -724,7 +747,7 @@ class TimesheetCalculationService
             return null;
         }
 
-        return CarbonImmutable::parse($first)->setTimezone($timezone)->startOfDay();
+        return $this->localizeClockedAt($first, $timezone)->startOfDay();
     }
 
     protected function normalizeToLocalStart(CarbonImmutable $date, string $timezone): CarbonImmutable
@@ -776,7 +799,7 @@ class TimesheetCalculationService
             'id' => $entry->id,
             'type' => $entry->type,
             'clocked_at' => $this->formatIso8601ToMinute(
-                CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone)
+                $this->localizeClockedAt($entry->clocked_at, $timezone)
             ),
             'event_kind' => $entry->event_kind,
             'adjustment_status' => $entry->adjustment_status,
