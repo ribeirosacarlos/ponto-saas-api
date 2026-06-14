@@ -12,6 +12,7 @@ use App\Models\Role;
 use App\Models\TimeEntry;
 use App\Models\TimesheetSignature;
 use App\Models\User;
+use App\Services\Timesheet\TimesheetSnapshotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -86,6 +87,24 @@ class RegenerateTimesheetSnapshotTest extends TestCase
         $this->assertSame('2026-05-24T04:00-03:00', $this->firstEntryClockedAt($signed->refresh()));
     }
 
+    public function test_scan_fixes_signed_timesheet_without_invalidating_signature(): void
+    {
+        [$timesheet, $realSnapshot] = $this->createSignedTimesheetWithStaleDisplay();
+
+        $this->artisan('timesheets:regenerate-snapshot', ['--scan' => true])
+            ->assertExitCode(0);
+
+        $timesheet->refresh();
+
+        $this->assertSame('2026-05-24T09:00-03:00', $this->firstEntryClockedAt($timesheet));
+        $this->assertSame($realSnapshot['totals'], $timesheet->snapshot['totals']);
+        $this->assertEquals(TimesheetStatus::PENDING_MANAGER, $timesheet->status);
+        $this->assertEquals(
+            1,
+            TimesheetSignature::where('employee_timesheet_id', $timesheet->id)->whereNull('superseded_at')->count()
+        );
+    }
+
     public function test_scan_handles_timesheets_from_different_companies(): void
     {
         $first = $this->createTimesheetWithStaleSnapshot();
@@ -143,6 +162,71 @@ class RegenerateTimesheetSnapshotTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Cria um timesheet assinado cujo snapshot é estruturalmente igual ao que
+     * seria gerado hoje, exceto pelos horários exibidos (clocked_at e os
+     * horários de pareamento in/out), simulando o bug de timezone corrigido
+     * em bb1b84e: os totais/duração permanecem corretos, só o horário exibido
+     * fica deslocado.
+     *
+     * @return array{0: EmployeeTimesheet, 1: array<string, mixed>}
+     */
+    private function createSignedTimesheetWithStaleDisplay(): array
+    {
+        $company = Company::factory()->create(['timezone' => 'America/Sao_Paulo']);
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => '2026-05-24 09:00:00',
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => '2026-05-24 17:00:00',
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $closure = MonthlyClosure::create([
+            'company_id' => $company->id,
+            'closed_by' => $employee->id,
+            'reference_year' => 2026,
+            'reference_month' => 5,
+            'status' => ClosureStatus::OPEN->value,
+            'closed_at' => now(),
+        ]);
+
+        $timesheet = EmployeeTimesheet::create([
+            'company_id' => $company->id,
+            'monthly_closure_id' => $closure->id,
+            'employee_id' => $employee->id,
+            'status' => TimesheetStatus::PENDING_MANAGER->value,
+        ]);
+
+        app(TimesheetSnapshotService::class)->generate($timesheet);
+        $timesheet->refresh();
+
+        $realSnapshot = $timesheet->snapshot;
+
+        $staleSnapshotJson = str_replace(
+            ['2026-05-24T09:00-03:00', '2026-05-24T17:00-03:00'],
+            ['2026-05-24T04:00-03:00', '2026-05-24T12:00-03:00'],
+            json_encode($realSnapshot)
+        );
+
+        $timesheet->update(['snapshot' => json_decode($staleSnapshotJson, true)]);
+
+        $this->createActiveSignature($timesheet);
+
+        return [$timesheet, $realSnapshot];
     }
 
     private function createActiveSignature(EmployeeTimesheet $timesheet): TimesheetSignature
