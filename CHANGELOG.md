@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.2.1...v2.2.2) (2026-06-14)
+
+
+### Correções de Bugs
+
+* considera feriados no fechamento de ponto e exibe como entrada n… ([38d9f31](https://github.com/ribeirosacarlos/ponto-saas-api/commit/38d9f31391781b1a90b3e950357e7533fe8684d0))
+* considera feriados no fechamento de ponto e exibe como entrada na listagem ([18ab850](https://github.com/ribeirosacarlos/ponto-saas-api/commit/18ab85093740bbc25277f559cfe795ca9df0631a))
+
 ## [2.2.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.2.0...v2.2.1) (2026-06-14)
 
 
