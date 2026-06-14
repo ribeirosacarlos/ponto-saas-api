@@ -86,6 +86,20 @@ class RegenerateTimesheetSnapshotTest extends TestCase
         $this->assertSame('2026-05-24T04:00-03:00', $this->firstEntryClockedAt($signed->refresh()));
     }
 
+    public function test_scan_handles_timesheets_from_different_companies(): void
+    {
+        $first = $this->createTimesheetWithStaleSnapshot();
+        $second = $this->createTimesheetWithStaleSnapshot();
+
+        $this->assertNotEquals($first->company_id, $second->company_id);
+
+        $this->artisan('timesheets:regenerate-snapshot', ['--scan' => true])
+            ->assertExitCode(0);
+
+        $this->assertSame('2026-05-24T09:00-03:00', $this->firstEntryClockedAt($first->refresh()));
+        $this->assertSame('2026-05-24T09:00-03:00', $this->firstEntryClockedAt($second->refresh()));
+    }
+
     private function createTimesheetWithStaleSnapshot(): EmployeeTimesheet
     {
         $company = Company::factory()->create(['timezone' => 'America/Sao_Paulo']);

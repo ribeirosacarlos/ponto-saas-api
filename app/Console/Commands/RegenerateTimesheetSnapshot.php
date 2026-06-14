@@ -102,34 +102,43 @@ class RegenerateTimesheetSnapshot extends Command
      */
     protected function regenerateOne(EmployeeTimesheet $timesheet): string
     {
-        $timesheet->loadMissing(['employee.company', 'activeSignatures']);
+        // Reseta o tenant antes de carregar relações com CompanyScoped (User, EmployeeTimesheet):
+        // o tenant pode ter ficado setado para a empresa do timesheet anterior em um --scan
+        // que percorre múltiplas empresas, o que faria employee.company vir null aqui.
+        $this->tenantManager->setTenant(null);
 
-        if ($timesheet->activeSignatures->isNotEmpty() && ! $this->option('force')) {
-            $this->warn("Timesheet {$timesheet->id}: possui assinatura ativa, ignorado (use --force para sobrescrever).");
+        try {
+            $timesheet->loadMissing(['employee.company', 'activeSignatures']);
 
-            return 'skipped';
+            if ($timesheet->activeSignatures->isNotEmpty() && ! $this->option('force')) {
+                $this->warn("Timesheet {$timesheet->id}: possui assinatura ativa, ignorado (use --force para sobrescrever).");
+
+                return 'skipped';
+            }
+
+            if ($timesheet->activeSignatures->isNotEmpty()) {
+                $this->warn("Timesheet {$timesheet->id}: regenerando com --force, assinaturas existentes serão invalidadas.");
+            }
+
+            $this->tenantManager->setTenant($timesheet->employee->company);
+
+            $before = json_encode($timesheet->snapshot);
+
+            $this->snapshotService->generate($timesheet);
+
+            $after = json_encode($timesheet->refresh()->snapshot);
+
+            if ($before === $after) {
+                $this->line("Timesheet {$timesheet->id}: sem alteração.");
+
+                return 'unchanged';
+            }
+
+            $this->info("Timesheet {$timesheet->id}: snapshot atualizado.");
+
+            return 'changed';
+        } finally {
+            $this->tenantManager->setTenant(null);
         }
-
-        if ($timesheet->activeSignatures->isNotEmpty()) {
-            $this->warn("Timesheet {$timesheet->id}: regenerando com --force, assinaturas existentes serão invalidadas.");
-        }
-
-        $this->tenantManager->setTenant($timesheet->employee->company);
-
-        $before = json_encode($timesheet->snapshot);
-
-        $this->snapshotService->generate($timesheet);
-
-        $after = json_encode($timesheet->refresh()->snapshot);
-
-        if ($before === $after) {
-            $this->line("Timesheet {$timesheet->id}: sem alteração.");
-
-            return 'unchanged';
-        }
-
-        $this->info("Timesheet {$timesheet->id}: snapshot atualizado.");
-
-        return 'changed';
     }
 }
