@@ -260,8 +260,9 @@ class TeamEntriesTest extends TestCase
         $response = $this->actingAs($admin)
             ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2025-12-19&date_to=2025-12-19");
 
-        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 13:00:00', config('app.timezone'))
-            ->setTimezone('UTC')
+        // clocked_at é o horário local da empresa; "13:00:00" naive já representa
+        // 13:00 em $company->timezone (UTC), sem conversão adicional.
+        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 13:00:00', $company->timezone)
             ->toIso8601String();
 
         $response->assertOk()

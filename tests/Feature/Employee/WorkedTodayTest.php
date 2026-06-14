@@ -80,8 +80,9 @@ class WorkedTodayTest extends TestCase
 
         $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
-        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 08:00:00', 'UTC')
-            ->setTimezone(config('app.timezone') ?? 'UTC')
+        // clocked_at é o horário local da empresa; "08:00:00" naive já representa
+        // 08:00 em config('app.timezone') (timezone da empresa), sem conversão adicional.
+        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 08:00:00', config('app.timezone') ?? 'UTC')
             ->toIso8601String();
 
         $response->assertStatus(200)
@@ -116,8 +117,9 @@ class WorkedTodayTest extends TestCase
 
         $response = $this->actingAs($user)->getJson('/v1/employee/worked-today');
 
-        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 13:00:00', 'UTC')
-            ->setTimezone(config('app.timezone') ?? 'UTC')
+        // clocked_at é o horário local da empresa; "13:00:00" naive já representa
+        // 13:00 em config('app.timezone') (timezone da empresa), sem conversão adicional.
+        $expectedOpenPairIn = CarbonImmutable::parse('2025-12-19 13:00:00', config('app.timezone') ?? 'UTC')
             ->toIso8601String();
 
         $response->assertStatus(200)
