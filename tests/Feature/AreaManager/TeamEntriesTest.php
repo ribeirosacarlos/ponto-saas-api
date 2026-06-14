@@ -4,6 +4,7 @@ namespace Tests\Feature\AreaManager;
 
 use App\Models\Absence;
 use App\Models\Company;
+use App\Models\Holiday;
 use App\Models\Role;
 use App\Models\Shift;
 use App\Models\ShiftDay;
@@ -653,6 +654,105 @@ class TeamEntriesTest extends TestCase
             ->assertJsonPath('data.0.entries.1.source', 'absence_allowance')
             ->assertJsonPath('data.0.entries.2.source', 'web')
             ->assertJsonPath('data.0.entries.3.source', 'web');
+    }
+
+    public function test_team_entries_lists_holiday_as_virtual_entry_when_employee_has_no_clock_ins(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-04-21', 'UTC');
+        $this->assignShift($employee, $date);
+
+        Holiday::create([
+            'company_id' => $company->id,
+            'date' => $date->toDateString(),
+            'name' => 'Tiradentes',
+            'scope' => 'national',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-04-21&date_to=2026-04-21");
+
+        $response->assertOk()
+            ->assertJsonPath('total_days', 1)
+            ->assertJsonPath('total_entries', 1)
+            ->assertJsonPath('data.0.date', '2026-04-21')
+            ->assertJsonPath('data.0.day_summary.is_holiday', true)
+            ->assertJsonPath('data.0.day_summary.holiday_name', 'Tiradentes')
+            ->assertJsonPath('data.0.day_summary.expected_minutes', 0)
+            ->assertJsonPath('data.0.day_summary.status', 'even')
+            ->assertJsonPath('data.0.entries.0.type', 'holiday')
+            ->assertJsonPath('data.0.entries.0.source', 'holiday')
+            ->assertJsonPath('data.0.entries.0.holiday', true)
+            ->assertJsonPath('data.0.entries.0.holiday_name', 'Tiradentes')
+            ->assertJsonPath('data.0.entries.0.work_date', '2026-04-21');
+    }
+
+    public function test_team_entries_lists_holiday_marker_alongside_worked_entries_as_overtime(): void
+    {
+        $company = Company::factory()->create([
+            'timezone' => 'UTC',
+        ]);
+
+        $admin = User::factory()->create(['company_id' => $company->id]);
+        $admin->assignRole('admin');
+
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+
+        $date = CarbonImmutable::parse('2026-04-21', 'UTC');
+        $this->assignShift($employee, $date);
+
+        Holiday::create([
+            'company_id' => $company->id,
+            'date' => $date->toDateString(),
+            'name' => 'Tiradentes',
+            'scope' => 'national',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(8, 0),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(12, 0),
+            'type' => 'out',
+            'source' => 'web',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/v1/area-manager/team/entries?user_id={$employee->id}&date_from=2026-04-21&date_to=2026-04-21");
+
+        $response->assertOk()
+            ->assertJsonPath('total_days', 1)
+            ->assertJsonPath('total_entries', 3)
+            ->assertJsonPath('data.0.day_summary.is_holiday', true)
+            ->assertJsonPath('data.0.day_summary.holiday_name', 'Tiradentes')
+            ->assertJsonPath('data.0.day_summary.expected_minutes', 0)
+            ->assertJsonPath('data.0.day_summary.worked_minutes', 240)
+            ->assertJsonPath('data.0.day_summary.extra_minutes', 240)
+            ->assertJsonPath('data.0.day_summary.status', 'extra')
+            ->assertJsonPath('data.0.entries.0.type', 'out')
+            ->assertJsonPath('data.0.entries.0.source', 'web')
+            ->assertJsonPath('data.0.entries.1.type', 'in')
+            ->assertJsonPath('data.0.entries.1.source', 'web')
+            ->assertJsonPath('data.0.entries.2.type', 'holiday')
+            ->assertJsonPath('data.0.entries.2.holiday', true)
+            ->assertJsonPath('data.0.entries.2.holiday_name', 'Tiradentes');
     }
 
     public function test_team_entries_does_not_leak_persisted_absence_entries_to_other_company(): void

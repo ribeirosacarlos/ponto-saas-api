@@ -180,18 +180,31 @@ class TimeEntryController extends Controller
                 $virtualEntries = $day['virtual_entries'] ?? [];
                 $summary = $day['summary'] ?? null;
 
-                if ($virtualEntries === [] || ! ($summary['is_absence'] ?? false)) {
+                $extraEntries = ($virtualEntries !== [] && ($summary['is_absence'] ?? false))
+                    ? $virtualEntries
+                    : [];
+
+                if ($summary['is_holiday'] ?? false) {
+                    $extraEntries[] = $this->formatHolidayEntry(
+                        $requestedEmployee,
+                        $date,
+                        $summary['holiday_name'] ?? null,
+                        $timezone
+                    );
+                }
+
+                if ($extraEntries === []) {
                     continue;
                 }
 
-                $virtualEntries = collect($virtualEntries)
+                $extraEntries = collect($extraEntries)
                     ->sortByDesc('clocked_at')
                     ->values()
                     ->all();
 
                 if ($groups->has($date)) {
                     $group = $groups->get($date);
-                    $group['entries'] = collect(array_merge($group['entries'], $virtualEntries))
+                    $group['entries'] = collect(array_merge($group['entries'], $extraEntries))
                         ->sortByDesc('clocked_at')
                         ->values()
                         ->all();
@@ -209,7 +222,7 @@ class TimeEntryController extends Controller
                         'email' => $requestedEmployee->email,
                     ],
                     'day_summary' => $summary,
-                    'entries' => $virtualEntries,
+                    'entries' => $extraEntries,
                 ]);
             }
         }
@@ -222,6 +235,43 @@ class TimeEntryController extends Controller
             'data' => $groups->all(),
             'total_days' => $groups->count(),
             'total_entries' => $groups->sum(fn (array $group) => count($group['entries'] ?? [])),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatHolidayEntry(User $employee, string $date, ?string $holidayName, string $timezone): array
+    {
+        return [
+            'id' => "holiday-{$employee->id}-{$date}",
+            'company_id' => $employee->company_id,
+            'user_id' => $employee->id,
+            'user_shift_id' => null,
+            'absence_id' => null,
+            'clocked_at' => CarbonImmutable::parse($date, $timezone)->startOfDay()->toIso8601String(),
+            'type' => 'holiday',
+            'event_kind' => 'holiday',
+            'latitude' => null,
+            'longitude' => null,
+            'source' => 'holiday',
+            'device_type' => null,
+            'adjustment_status' => null,
+            'adjustment_reason' => null,
+            'adjustment_requested_by' => null,
+            'adjustment_requested_at' => null,
+            'proposed_clocked_at' => null,
+            'proposed_type' => null,
+            'proposed_latitude' => null,
+            'proposed_longitude' => null,
+            'proposed_source' => null,
+            'adjustment_reviewed_by' => null,
+            'adjustment_reviewed_at' => null,
+            'adjustment_review_reason' => null,
+            'virtual' => true,
+            'holiday' => true,
+            'holiday_name' => $holidayName,
+            'work_date' => $date,
         ];
     }
 
