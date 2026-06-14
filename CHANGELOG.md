@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.3.0...v2.3.1) (2026-06-14)
+
+
+### Correções de Bugs
+
+* corrige scoping cross-company no comando --scan de regenerate-sn… ([1c6a29d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/1c6a29d67b2156b69cb7d5ddb91524322b3f97b8))
+* corrige scoping cross-company no comando --scan de regenerate-snapshot ([8abb408](https://github.com/ribeirosacarlos/ponto-saas-api/commit/8abb408441b653a59612ce813b9dbb1f7bdd86ef))
+
 ## [2.3.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.2.2...v2.3.0) (2026-06-14)
 
 
