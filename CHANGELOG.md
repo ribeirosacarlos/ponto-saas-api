@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.4.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.3.1...v2.4.0) (2026-06-14)
+
+
+### Novas Funcionalidades
+
+* corrige clocked_at de timesheets assinados sem invalidar assina… ([7ea5f9a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/7ea5f9a9b8a40ed812dd3c1e8cfdbf2ae0c22238))
+* corrige clocked_at de timesheets assinados sem invalidar assinatura ([b8b94aa](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b8b94aa21d45c8dea69497df05b2fd03f314c19e))
+
 ## [2.3.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.3.0...v2.3.1) (2026-06-14)
 
 
