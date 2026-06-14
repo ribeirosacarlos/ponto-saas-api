@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.2.2...v2.3.0) (2026-06-14)
+
+
+### Novas Funcionalidades
+
+* comando para regenerar snapshot de timesheets com timezone corr… ([eb3eb61](https://github.com/ribeirosacarlos/ponto-saas-api/commit/eb3eb61e01eb83e6bf873e29107e8f178beaabd1))
+* comando para regenerar snapshot de timesheets com timezone corrigido ([42cbebd](https://github.com/ribeirosacarlos/ponto-saas-api/commit/42cbebd8cb85859bcac33177ab06f17972dfd463))
+
 ## [2.2.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.2.1...v2.2.2) (2026-06-14)
 
 
