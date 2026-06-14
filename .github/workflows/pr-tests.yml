@@ -1,0 +1,108 @@
+name: PR Tests & Coverage
+
+on:
+    pull_request:
+        branches:
+            - main
+
+permissions:
+    contents: read
+    pull-requests: write
+
+concurrency:
+    group: pr-tests-${{ github.event.pull_request.number }}
+    cancel-in-progress: true
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.2"
+                  extensions: mbstring, dom, fileinfo, filter, gd, intl, bcmath, zip, pdo, sqlite3, pdo_sqlite, pcov
+                  coverage: pcov
+                  tools: composer:v2
+
+            - name: Cache Composer dependencies
+              uses: actions/cache@v4
+              with:
+                  path: vendor
+                  key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+                  restore-keys: |
+                      composer-${{ runner.os }}-
+
+            - name: Install dependencies
+              run: composer install --no-interaction --prefer-dist --no-progress
+
+            - name: Prepare application
+              run: |
+                  cp .env.example .env
+                  php artisan key:generate
+
+            - name: Run test suite
+              run: |
+                  php artisan config:clear --ansi
+                  php artisan test --coverage --coverage-clover=coverage.xml
+
+            - name: Upload coverage report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: coverage.xml
+                  retention-days: 14
+
+            - name: List app/ files changed in this PR
+              if: always()
+              id: changed
+              run: |
+                  git fetch origin "${{ github.base_ref }}" --depth=1
+                  files=$(git diff --name-only --diff-filter=ACMR "origin/${{ github.base_ref }}...HEAD" -- app/ | tr '\n' ',')
+                  echo "files=${files}" >> "$GITHUB_OUTPUT"
+
+            - name: Build coverage analysis
+              if: always()
+              run: |
+                  php .github/scripts/coverage-report.php coverage.xml "${{ steps.changed.outputs.files }}" > coverage-summary.md
+
+            - name: Comment coverage analysis on PR
+              if: always()
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const fs = require('fs');
+                      const body = fs.readFileSync('coverage-summary.md', 'utf8');
+                      const marker = '<!-- pr-test-coverage-report -->';
+                      const content = `${marker}\n${body}`;
+
+                      const { data: comments } = await github.rest.issues.listComments({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: context.issue.number,
+                      });
+
+                      const existing = comments.find((c) => c.body && c.body.includes(marker));
+
+                      if (existing) {
+                        await github.rest.issues.updateComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          comment_id: existing.id,
+                          body: content,
+                        });
+                      } else {
+                        await github.rest.issues.createComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                          body: content,
+                        });
+                      }
