@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.2.0...v2.2.1) (2026-06-14)
+
+
+### Correções de Bugs
+
+* reinterpreta clocked_at no timezone da empresa fora de requests HTTP ([bb1b84e](https://github.com/ribeirosacarlos/ponto-saas-api/commit/bb1b84ecd2b2a6a3dab5b2eee3b3445c9770d350))
+
 ## [2.2.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.1.0...v2.2.0) (2026-06-11)
 
 
