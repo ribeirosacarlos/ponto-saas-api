@@ -176,7 +176,8 @@ class TimesheetCalculationService
 
         return Holiday::query()
             ->where('company_id', $companyId)
-            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+            ->whereDate('date', '>=', $from->toDateString())
+            ->whereDate('date', '<=', $to->toDateString())
             ->get()
             ->mapWithKeys(fn (Holiday $holiday) => [$holiday->date->toDateString() => $holiday->name])
             ->all();
