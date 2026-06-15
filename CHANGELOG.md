@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.5.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.4.0...v2.5.0) (2026-06-15)
+
+
+### Novas Funcionalidades
+
+* inclui folhas de ponto pendentes e contexto de ausência em /admin/documents/pending ([e81d0b1](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e81d0b1388ab1ee45e42a3d6785706a973eb678d))
+
+
+### Correções de Bugs
+
+* restringe GET /v1/documents aos documentos do proprio usuario ([c152e72](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c152e7294ed70e53f4e7589923a982da0fd58e52))
+
 ## [2.4.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.3.1...v2.4.0) (2026-06-14)
 
 
