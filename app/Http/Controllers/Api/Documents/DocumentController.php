@@ -9,8 +9,6 @@ use App\Http\Requests\DocumentStoreRequest;
 use App\Http\Requests\DocumentUpdateRequest;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
-use App\Models\User;
-use App\Services\UserVisibilityService;
 use App\Support\DocumentStoragePath;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -23,8 +21,6 @@ class DocumentController extends Controller
 {
     use LogsDocumentAudits;
 
-    private const PRIVILEGED_ROLES = ['admin', 'manager', 'area_manager'];
-
     private const SORT_FIELDS = ['updated_at'];
 
     private const DEFAULT_SORT_FIELD = 'updated_at';
@@ -35,27 +31,12 @@ class DocumentController extends Controller
 
     private const MAX_PER_PAGE = 100;
 
-    public function __construct(
-        protected UserVisibilityService $userVisibilityService
-    ) {}
-
     public function index(Request $request)
     {
         $user = $request->user();
         $query = Document::query()
-            ->where('company_id', $user->company_id);
-
-        if ($this->isPrivileged($user) && $request->filled('user_id')) {
-            if ($this->userVisibilityService->canManageUserId($user, $request->input('user_id'))) {
-                $query->where('user_id', $request->input('user_id'));
-            } else {
-                $query->whereRaw('1 = 0');
-            }
-        } elseif ($this->isPrivileged($user)) {
-            $this->userVisibilityService->applyToUserOwnedQuery($query, $user);
-        } else {
-            $query->where('user_id', $user->id);
-        }
+            ->where('company_id', $user->company_id)
+            ->where('user_id', $user->id);
 
         $query->when($request->filled('category'), fn ($builder) => $builder->where('category', $request->input('category')));
         $query->when($request->filled('status'), fn ($builder) => $builder->where('status', $request->input('status')));
@@ -384,10 +365,5 @@ class DocumentController extends Controller
             $extension,
             $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
         ];
-    }
-
-    private function isPrivileged(User $user): bool
-    {
-        return $user->hasRole(self::PRIVILEGED_ROLES);
     }
 }

@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Enums\TimesheetStatus;
 use App\Http\Controllers\Api\Documents\Traits\LogsDocumentAudits;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminDocumentStoreRequest;
 use App\Http\Requests\AdminPendingIndexRequest;
 use App\Http\Requests\DocumentRejectRequest;
 use App\Http\Resources\DocumentAdminResource;
+use App\Http\Resources\PendingDocumentItemResource;
+use App\Http\Resources\TimesheetSignaturePendingResource;
 use App\Models\Document;
 use App\Models\DocumentNotification;
+use App\Models\EmployeeTimesheet;
 use App\Models\User;
 use App\Services\UserVisibilityService;
 use App\Support\DocumentStoragePath;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -30,12 +35,59 @@ class DocumentReviewController extends Controller
     {
         $this->authorize('adminList', Document::class);
 
+        $items = $this->pendingDocumentItems($request)
+            ->concat($this->pendingTimesheetSignatureItems($request));
+
+        [$sortField, $sortDirection] = $this->parseSort($request->input('sort'));
+        $items = $items->sortBy($sortField, SORT_REGULAR, $sortDirection === 'desc')->values();
+
+        $perPage = (int) $request->input('per_page', 20);
+        $page = (int) $request->input('page', 1);
+
+        $paginator = new LengthAwarePaginator(
+            $items->forPage($page, $perPage)->values(),
+            $items->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url()]
+        );
+        $paginator->appends($request->query());
+
+        return PendingDocumentItemResource::collection($paginator);
+    }
+
+    private function pendingDocumentItems(AdminPendingIndexRequest $request)
+    {
         $documents = $this->buildQuery($request)
             ->where('status', Document::STATUS_PENDING)
-            ->paginate($request->input('per_page', 20))
-            ->appends($request->query());
+            ->get();
 
-        return DocumentAdminResource::collection($documents);
+        return $documents->map(fn (Document $document) => (new DocumentAdminResource($document))->toArray($request));
+    }
+
+    private function pendingTimesheetSignatureItems(AdminPendingIndexRequest $request)
+    {
+        // Filtros de documento (category/search) não se aplicam a folhas de ponto.
+        if ($request->filled('category') || $request->filled('search')) {
+            return collect();
+        }
+
+        $query = EmployeeTimesheet::query()
+            ->where('company_id', $request->user()->company_id)
+            ->where('status', TimesheetStatus::PENDING_MANAGER->value)
+            ->with(['employee:id,name,email,area_id', 'monthlyClosure']);
+
+        $this->userVisibilityService->applyToUserOwnedQuery($query, $request->user(), 'employee_id', null);
+
+        if ($request->filled('employee_id')) {
+            if ($request->user()->hasRole('admin') || $this->userVisibilityService->canManageUserId($request->user(), $request->input('employee_id'))) {
+                $query->where('employee_id', $request->input('employee_id'));
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        }
+
+        return $query->get()->map(fn (EmployeeTimesheet $timesheet) => (new TimesheetSignaturePendingResource($timesheet))->toArray($request));
     }
 
     public function review(AdminPendingIndexRequest $request)
@@ -54,7 +106,7 @@ class DocumentReviewController extends Controller
     {
         $this->authorize('adminShow', $document);
 
-        return new DocumentAdminResource($document->load('user'));
+        return new DocumentAdminResource($document->load(['user', 'absences']));
     }
 
     public function approve(Document $document)
@@ -76,7 +128,7 @@ class DocumentReviewController extends Controller
 
         $this->createNotification($document, 'approved', 'Documento aprovado');
 
-        return new DocumentAdminResource($document->fresh()->load('user'));
+        return new DocumentAdminResource($document->fresh()->load(['user', 'absences']));
     }
 
     public function reject(DocumentRejectRequest $request, Document $document)
@@ -103,7 +155,7 @@ class DocumentReviewController extends Controller
 
         $this->createNotification($document, 'rejected', $comment);
 
-        return new DocumentAdminResource($document->fresh()->load('user'));
+        return new DocumentAdminResource($document->fresh()->load(['user', 'absences']));
     }
 
     public function uploadForEmployee(AdminDocumentStoreRequest $request)
@@ -180,7 +232,7 @@ class DocumentReviewController extends Controller
 
     private function buildQuery(AdminPendingIndexRequest $request)
     {
-        $query = Document::with('user:id,name,email,area_id');
+        $query = Document::with(['user:id,name,email,area_id', 'absences']);
         $this->userVisibilityService->applyToUserOwnedQuery($query, $request->user());
 
         if ($request->filled('category')) {

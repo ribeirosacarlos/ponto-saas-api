@@ -8,6 +8,8 @@ class DocumentAdminResource extends DocumentResource
     {
         $data = parent::toArray($request);
 
+        $data['type'] = 'document';
+
         $data['employee'] = [
             'id' => $this->user?->id,
             'name' => $this->user?->name,
@@ -17,6 +19,7 @@ class DocumentAdminResource extends DocumentResource
         $data['rejected_comment'] = $this->rejected_comment;
         $data['rejected_by'] = $this->rejected_by;
         $data['rejected_at'] = $this->rejected_at?->toDateTimeString();
+        $data['absence'] = $this->absenceContext();
 
         if (! isset($data['view_url'])) {
             $data['view_url'] = route('documents.view', $this->id);
@@ -24,5 +27,23 @@ class DocumentAdminResource extends DocumentResource
         }
 
         return $data;
+    }
+
+    private function absenceContext(): ?array
+    {
+        if (! $this->relationLoaded('absences') || $this->absences->isEmpty()) {
+            return null;
+        }
+
+        $absence = $this->absences->first();
+
+        return [
+            'id' => $absence->id,
+            'type' => $absence->type,
+            'status' => $absence->status,
+            'coverage_type' => $absence->coverage_type,
+            'start_date' => $absence->start_date?->toDateString(),
+            'end_date' => $absence->end_date?->toDateString(),
+        ];
     }
 }
