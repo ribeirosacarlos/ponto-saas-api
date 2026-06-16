@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.6.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.5.0...v2.6.0) (2026-06-16)
+
+
+### Novas Funcionalidades
+
+* cancela assinatura na Stripe ao setar status=canceled via plata… ([4874920](https://github.com/ribeirosacarlos/ponto-saas-api/commit/487492036acfdc1765a2eed8897462116bf40e78))
+* cancela assinatura na Stripe ao setar status=canceled via plataforma ([76f76ad](https://github.com/ribeirosacarlos/ponto-saas-api/commit/76f76ada1ccf4d2f11f405fbc8737f10363791ad))
+
 ## [2.5.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.4.0...v2.5.0) (2026-06-15)
 
 
