@@ -43,8 +43,6 @@ class UpdateBlogPostRequest extends FormRequest
             'trending_score'     => ['nullable', 'integer', 'min:0', 'max:100'],
             'featured'           => ['nullable', 'boolean'],
             'published_at'       => ['nullable', 'date'],
-            'seo_title'          => ['nullable', 'string', 'max:255'],
-            'seo_description'    => ['nullable', 'string', 'max:500'],
             'og_image_url'       => ['nullable', 'url', 'max:2048'],
             'canonical_url'      => ['nullable', 'url', 'max:2048'],
             'faq'                => ['nullable', 'array'],
