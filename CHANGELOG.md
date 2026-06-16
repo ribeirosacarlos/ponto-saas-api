@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.7.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.0...v2.7.1) (2026-06-16)
+
+
+### Correções de Bugs
+
+* Add ForceJsonResponse middleware to API group ([b3ffb8a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b3ffb8a31ffbb01d4724ae802f8156e7b7ac5f6b))
+* force response json ([caaf786](https://github.com/ribeirosacarlos/ponto-saas-api/commit/caaf786e80ddcccfd8a585ff18feba276bdf6447))
+
 ## [2.7.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.6.0...v2.7.0) (2026-06-16)
 
 
