@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.7.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.1...v2.7.2) (2026-06-16)
+
+
+### Correções de Bugs
+
+* Remove SEO title and description from validation ([1109b28](https://github.com/ribeirosacarlos/ponto-saas-api/commit/1109b280a1b1bec0c30a5757868ea5319a6dd868))
+* Remove SEO title and description from validation ([e94f3c4](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e94f3c447b5d82adf61c76509d3f89cf1645880a))
+
 ## [2.7.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.0...v2.7.1) (2026-06-16)
 
 
