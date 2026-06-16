@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.7.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.6.0...v2.7.0) (2026-06-16)
+
+
+### Novas Funcionalidades
+
+* add blog doc ([e930249](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e9302495e6c4c8bcc917270f20877feb176abc3f))
+* add blog doc ([3a2483e](https://github.com/ribeirosacarlos/ponto-saas-api/commit/3a2483e0d438ac79de9d8797e7f7108c74140968))
+* add doc blog admin ([05c3ac2](https://github.com/ribeirosacarlos/ponto-saas-api/commit/05c3ac266f035e1d6a82a25eaf0a281cf209e067))
+
 ## [2.6.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.5.0...v2.6.0) (2026-06-16)
 
 
