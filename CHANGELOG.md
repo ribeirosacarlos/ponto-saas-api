@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.7.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.2...v2.7.3) (2026-06-16)
+
+
+### Correções de Bugs
+
+* Refactor presign method to use Storage facade ([e59ec82](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e59ec82f999a29d4eb55cb91e7a6cc8c6f52467c))
+* Refactor presign method to use Storage facade ([57c7fc4](https://github.com/ribeirosacarlos/ponto-saas-api/commit/57c7fc4f54ef994d1e48d780f443dd99022773df))
+
 ## [2.7.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.1...v2.7.2) (2026-06-16)
 
 
