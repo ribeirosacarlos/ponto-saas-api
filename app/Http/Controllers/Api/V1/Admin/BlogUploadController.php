@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use Aws\S3\S3Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BlogUploadController extends Controller
 {
@@ -30,24 +30,14 @@ class BlogUploadController extends Controller
             $extension
         );
 
-        $client = new S3Client([
-            'region'      => config('filesystems.disks.s3.region'),
-            'version'     => 'latest',
-            'credentials' => [
-                'key'    => config('filesystems.disks.s3.key'),
-                'secret' => config('filesystems.disks.s3.secret'),
-            ],
-        ]);
+        $disk = Storage::disk('s3');
 
-        $command = $client->getCommand('PutObject', [
-            'Bucket'       => config('filesystems.disks.s3.bucket'),
-            'Key'          => $key,
+        $presignedUrl = $disk->temporaryUploadUrl($key, now()->addMinutes(5), [
             'ContentType'  => $request->mime_type,
             'CacheControl' => 'public, max-age=31536000',
         ]);
 
-        $presignedUrl = (string) $client->createPresignedRequest($command, '+5 minutes')->getUri();
-        $publicUrl    = config('filesystems.disks.s3.url').'/'.$key;
+        $publicUrl = $disk->url($key);
 
         return response()->json([
             'upload_url' => $presignedUrl,
