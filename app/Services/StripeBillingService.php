@@ -80,6 +80,19 @@ class StripeBillingService
         return $this->syncStripeSubscription($company->fresh(['subscription.plan']), $stripeSubscription);
     }
 
+    public function cancelImmediately(Company $company): Subscription
+    {
+        $subscription = $company->subscription;
+
+        if (! $subscription?->stripe_subscription_id) {
+            throw new \LogicException('Assinatura Stripe não encontrada para esta empresa.');
+        }
+
+        $stripeSubscription = $this->stripe->subscriptions->cancel($subscription->stripe_subscription_id);
+
+        return $this->syncStripeSubscription($company->fresh(['subscription.plan']), $stripeSubscription);
+    }
+
     public function createExtraEmployeeCheckoutSession(
         Company $company,
         Plan $plan,
