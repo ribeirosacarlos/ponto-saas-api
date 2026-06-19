@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.8.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.3...v2.8.0) (2026-06-19)
+
+
+### Novas Funcionalidades
+
+* add swagger docs for blog endpoints (admin + public) ([3e93e98](https://github.com/ribeirosacarlos/ponto-saas-api/commit/3e93e983e20b09afcee8086c9969a6b65bce8e85))
+* add swagger docs for blog endpoints (admin + public) ([ce9dfe0](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ce9dfe0081d76c051b470772f8a5e813440e2578))
+
 ## [2.7.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.2...v2.7.3) (2026-06-16)
 
 
