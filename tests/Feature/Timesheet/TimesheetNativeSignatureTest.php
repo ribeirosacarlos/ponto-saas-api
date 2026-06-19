@@ -11,6 +11,7 @@ use App\Models\Role;
 use App\Models\TimesheetSignature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TimesheetNativeSignatureTest extends TestCase
@@ -20,6 +21,8 @@ class TimesheetNativeSignatureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Storage::fake('s3');
 
         $this->withoutMiddleware(EnsureCompanyHasAccess::class);
 

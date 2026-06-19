@@ -12,6 +12,7 @@ use App\Models\Role;
 use App\Models\TimesheetDispute;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TimesheetDisputeTest extends TestCase
@@ -21,6 +22,8 @@ class TimesheetDisputeTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Storage::fake('s3');
 
         $this->withoutMiddleware(EnsureCompanyHasAccess::class);
 

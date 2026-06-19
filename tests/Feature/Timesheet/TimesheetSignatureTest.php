@@ -10,6 +10,7 @@ use App\Models\MonthlyClosure;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TimesheetSignatureTest extends TestCase
@@ -19,6 +20,8 @@ class TimesheetSignatureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Storage::fake('s3');
 
         $this->withoutMiddleware(EnsureCompanyHasAccess::class);
 
