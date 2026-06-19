@@ -97,5 +97,8 @@ jobs:
                       # Rodar migrations
                       docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
 
+                      # Regenerar documentação Swagger/OpenAPI
+                      docker compose -f docker-compose.prod.yml exec -T app php artisan l5-swagger:generate
+
                       # Limpar imagens antigas
                       docker image prune -f
