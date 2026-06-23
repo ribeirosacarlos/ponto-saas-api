@@ -15,8 +15,8 @@ class BlogPostDetailResource extends JsonResource
             'title' => $this->title,
             'excerpt' => $this->excerpt,
             'content_html' => $this->content_html,
-            'cover_url' => $this->cover_url,
-            'hero_image_url' => $this->hero_image_url,
+            'cover_url' => $this->cover_url ?: config('blog.default_image_url'),
+            'hero_image_url' => $this->hero_image_url ?: config('blog.default_image_url'),
             'hero_image_alt' => $this->hero_image_alt,
             'hero_caption' => $this->hero_caption,
             'author' => $this->author,
@@ -29,7 +29,7 @@ class BlogPostDetailResource extends JsonResource
 
             'seo_title' => $this->seo_title,
             'seo_description' => $this->seo_description,
-            'og_image_url' => $this->og_image_url,
+            'og_image_url' => $this->og_image_url ?: config('blog.default_image_url'),
             'canonical_url' => $this->canonical_url,
 
             'toc' => $this->toc ?? [],
@@ -49,7 +49,7 @@ class BlogPostDetailResource extends JsonResource
                 'author' => $post->author,
                 'published_at' => $post->published_at?->toIso8601String(),
                 'reading_time' => $post->reading_time,
-                'cover_url' => $post->cover_url,
+                'cover_url' => $post->cover_url ?: config('blog.default_image_url'),
             ]),
         ];
     }
