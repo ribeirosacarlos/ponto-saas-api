@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.8.0...v2.9.0) (2026-06-23)
+
+
+### Novas Funcionalidades
+
+* add n8n service for blog automation and lock down admin blog API ([6813c92](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6813c92492ab5e6a2591445a4cc2e8b9696fc861))
+* add n8n service for blog automation and lock down admin blog API ([b5705ad](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b5705ade68f140b17e9ad870b4d8a8087ba6ece3))
+
 ## [2.8.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.3...v2.8.0) (2026-06-19)
 
 
