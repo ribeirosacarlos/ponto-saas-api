@@ -67,6 +67,18 @@ N8N_ENCRYPTION_KEY=<resultado do openssl rand -hex 32>
 
 **Importante:** guardar esse `N8N_ENCRYPTION_KEY` em um cofre (1Password, Bitwarden, etc.). Se for perdido, as credenciais salvas dentro do n8n (ex.: chave da OpenAI) ficam ilegíveis e precisam ser recriadas.
 
+### Erro "TypeError: Invalid URL" em appendResumeToken (qualquer node, ex. Code "Normalizar Entrada")
+
+Bug conhecido do n8n self-hosted em versões acima da 2.13.4 (ainda presente na 2.26.9): sem `N8N_EDITOR_BASE_URL` configurado, o motor de execução quebra ao montar a resume URL interna (`getAdditionalKeys`/`appendResumeToken`) e **qualquer** node falha, mesmo um Code node trivial sem nenhuma URL no próprio código — não é bug no workflow. Refs: [n8n-io/n8n#28346](https://github.com/n8n-io/n8n/issues/28346), [n8n-io/n8n#29533](https://github.com/n8n-io/n8n/issues/29533).
+
+Correção: definir `N8N_EDITOR_BASE_URL` com o mesmo valor de `WEBHOOK_URL` (já aplicado em `docker-compose.yml` e `docker-compose.prod.yml`, este último via `${N8N_WEBHOOK_URL}`). Depois de atualizar o `.env` em `/opt/jornafy-api`, recriar o container:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d n8n
+```
+
+Em dev local basta `docker compose up -d n8n` (a var já está fixa no compose). Se o erro persistir mesmo com `N8N_EDITOR_BASE_URL` setado, confirmar nos issues acima se já existe correção em versão mais nova do n8n.
+
 ## 5. Sincronizar os arquivos editados com o servidor
 
 Os arquivos `docker-compose.prod.yml` e `.docker/nginx/default.conf` foram editados aqui no repo, mas o deploy automático (`deploy.yml` / `release-please.yml`) **não copia esses arquivos para a EC2** — ele só faz build/push da imagem do Laravel e roda `docker compose up` usando o que já está em `/opt/jornafy-api`. É preciso atualizar manualmente:
