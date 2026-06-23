@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.10.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.9.0...v2.10.0) (2026-06-23)
+
+
+### Novas Funcionalidades
+
+* fallback para imagem padrão no blog público quando cover/hero/og não cadastradas ([6fc527b](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6fc527b6e10c41f16641a5fb6a21c99c6e324d0f))
+* workflow n8n de geração diária de posts e categorias de blog novas ([b0a5441](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b0a54417072b9f4e1b2e117f3a3e3e77d60c8613))
+
+
+### Correções de Bugs
+
+* definir N8N_EDITOR_BASE_URL para evitar erro Invalid URL no n8n ([486bb64](https://github.com/ribeirosacarlos/ponto-saas-api/commit/486bb64ec9f236e5a21249b65ef989f23dc567fa))
+* definir N8N_EDITOR_BASE_URL para evitar erro Invalid URL no n8n ([4780744](https://github.com/ribeirosacarlos/ponto-saas-api/commit/478074461838d73a6b7c888ba83fb18c34bd1b1e))
+
 ## [2.9.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.8.0...v2.9.0) (2026-06-23)
 
 
