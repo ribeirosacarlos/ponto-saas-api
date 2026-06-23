@@ -43,6 +43,7 @@ class BlogPost extends Model
         'trending_score',
         'featured',
         'status',
+        'source',
         'published_at',
         'seo_title',
         'seo_description',
