@@ -144,6 +144,26 @@ echo $token->plainTextToken;
 
 Colar o token gerado na credencial de Header Auth do node HTTP Request no n8n (não em texto plano dentro do JSON do node).
 
+### Flow pronto para importar
+
+O workflow já está montado em `docs/n8n-workflows/blog-post-diario.json`. Para subir:
+
+1. No n8n: **Workflows → Import from File** → selecionar esse JSON (ou colar o conteúdo em **Import from URL/Clipboard**).
+2. Abrir os nodes **"Pesquisar Tema (OpenAI Web Search)"** e **"Gerar Conteúdo do Post (OpenAI)"** e selecionar/criar a mesma credential do tipo **OpenAi API** (Settings → Credentials → já mencionado no passo 8 acima). O node de pesquisa usa o tool `web_search_preview`, exige um modelo da OpenAI com suporte a Responses API (ex.: `gpt-4o`) — se a conta não tiver acesso, troque o `model` no node "Montar Pesquisa de Tema" por um que tenha.
+3. Abrir os nodes **"Buscar Posts Recentes"** e **"Criar Post (platform, draft)"** e selecionar/criar uma credential do tipo **Header Auth**: nome do header `Authorization`, valor `Bearer <token gerado no passo acima>`.
+4. Ativar o workflow (toggle "Active"). Isso ativa tanto o Schedule Trigger quanto o Form Trigger.
+
+**Pipeline (execução automática diária, 08:00 America/Sao_Paulo):**
+`Schedule Trigger` → `Normalizar Entrada` → `IF: tema foi sugerido manualmente?` (não, no caminho automático) → `Buscar Posts Recentes` (últimos 8 posts, pra IA não repetir tema) → `Montar Pesquisa de Tema` → `HTTP: OpenAI Responses API com web_search_preview` (pesquisa notícias/tendências reais e decide tema + keyword + categoria + intenção de busca) → `Montar Variáveis (Pesquisa)` → `Montar Prompt do Artigo` (substitui os placeholders no prompt grande de SEO/copywriting) → `HTTP: OpenAI chat/completions` (gera o artigo completo em pt/es/en) → `Montar Body do Post` (mapeia para o schema real da API) → `HTTP: POST /v1/platform/blog/posts`.
+
+**Sugestão manual de tema:** o node **"Sugestão manual de tema"** é um Form Trigger — após importar e ativar o workflow, abra o node para copiar a URL do formulário (production URL) e guarde-a. Sempre que você tiver uma pauta específica, acesse essa URL e preencha "Tema sugerido" (e opcionalmente "Keyword sugerida" / "Categoria sugerida"); isso dispara o mesmo pipeline mas pula a etapa de pesquisa na web e usa direto o que você escreveu. Deixar o formulário em branco equivale a não usá-lo — o fluxo automático diário continua pesquisando por conta própria.
+
+Sai sempre como **status: draft** de propósito — alguém precisa revisar e publicar manualmente no painel admin (ou via `PATCH /v1/platform/blog/posts/{id}/publish`) antes de ir ao ar.
+
+**Mapeamento de campos:** o node "Montar Prompt do Artigo" reaproveita o prompt de SEO/copywriting fornecido (com placeholders de tema/keyword/categoria/intenção substituídos dinamicamente), que devolve `translations.{pt,es,en}.{title,excerpt,content,meta_title,meta_description,og_title,og_description}`. O node "Montar Body do Post" converte isso para o schema real esperado por `StoreBlogPostRequest`: `title`/`excerpt`/`content_html`/`seo_title`/`seo_description` (cada um como objeto `{pt,es,en}`), define `author: "Equipe Jornafy"` (fixo, a IA não gera esse campo) e `source: "n8n"`, e anexa a data ao slug para nunca colidir com um post de outro dia. Os campos `og_title`/`og_description` que a IA gera são descartados de propósito — a API não tem essas colunas (só existe `og_image_url`, que é uma URL).
+
+**Categorias:** o prompt usa 6 categorias (`produto`, `controle-ponto`, `gestao-rh`, `compliance`, `produtividade`, `folha-ponto`). As 4 que não existiam foram adicionadas ao `BlogCategorySeeder` (ver seção de migrations abaixo) para aparecerem corretamente no filtro do blog público — rodar o seeder em produção depois do deploy.
+
 ### Marcando a origem do post (campo `source`)
 
 Foi adicionada a coluna `source` em `blog_posts` (migration `2026_06_22_000001_add_source_to_blog_posts_table.php`, default `manual`). Para identificar posts gerados pelo n8n, envie `"source": "n8n"` no body do `POST`. O campo aparece em `BlogPostAdminResource` (painel admin) — **não** é exposto no endpoint público do blog (`BlogPostListResource`), de propósito, para não vazar detalhe interno no site.
@@ -152,6 +172,14 @@ Lembrar de rodar a migration em produção:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+```
+
+### Seed das categorias novas
+
+`BlogCategorySeeder` ganhou 5 categorias novas (`produto`, `controle-ponto`, `gestao-rh`, `produtividade`, `folha-ponto` — só `compliance` já existia das 6 usadas pelo prompt; `registroHorario` continua existindo mas não é usada pelo prompt). Rodar em produção depois do deploy (é idempotente, usa `updateOrCreate`):
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T app php artisan db:seed --class=BlogCategorySeeder --force
 ```
 
 ## Resumo de status
@@ -163,6 +191,8 @@ docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --forc
 | docker-compose.yml local (n8n para dev) | Código (feito neste repo) | ✅ |
 | Rota /admin/blog travada para `role:super_admin` | Código (feito neste repo, testado E2E) | ✅ |
 | Campo `source` (manual/n8n) em blog_posts | Código (feito neste repo, migration + testado E2E) | ✅ |
+| Categorias novas no `BlogCategorySeeder` | Código (feito neste repo) | ✅ |
+| Workflow n8n pronto (`docs/n8n-workflows/blog-post-diario.json`) | Código (feito neste repo) | ✅ |
 | DNS n8n.jornafy.com | Infra (você) | ⬜ |
 | Security Group AWS | Infra (você) | ⬜ verificar |
 | Certificado n8n.pem/n8n.key | Infra (você) | ⬜ |
@@ -170,6 +200,7 @@ docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --forc
 | Sync dos arquivos para a EC2 | Infra (você) | ⬜ |
 | `docker compose up -d n8n` | Infra (você) | ⬜ |
 | Migration `add_source_to_blog_posts_table` em produção | Infra (você) | ⬜ |
+| Seed do `BlogCategorySeeder` em produção | Infra (você) | ⬜ |
 | Criar conta de serviço `automacao@jornafy.com` (super_admin) em produção | Infra (você) | ⬜ |
-| Credential OpenAI no n8n | Infra (você) | ⬜ |
+| Importar o workflow no n8n + credential OpenAI + credential Header Auth | Infra (você) | ⬜ |
 | Token Sanctum para o workflow | Infra (você) | ⬜ |

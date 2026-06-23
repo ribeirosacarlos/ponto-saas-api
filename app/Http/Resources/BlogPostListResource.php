@@ -14,7 +14,7 @@ class BlogPostListResource extends JsonResource
             'slug' => $this->slug,
             'title' => $this->title,
             'excerpt' => $this->excerpt,
-            'cover_url' => $this->cover_url,
+            'cover_url' => $this->cover_url ?: config('blog.default_image_url'),
             'category' => $this->category,
             'audience_tag' => $this->audience_tag,
             'author' => $this->author,
