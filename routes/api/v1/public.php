@@ -4,17 +4,18 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Billing\PublicCheckoutSessionController;
 use App\Http\Controllers\Api\Billing\PublicPlanController;
 use App\Http\Controllers\Api\Billing\StripeWebhookController;
-use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
+use App\Http\Controllers\Api\Commercial\CommercialAffiliateTrackingController;
 use App\Http\Controllers\Api\PasswordResetController;
-use App\Http\Controllers\InviteController;
+use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 use App\Http\Controllers\Api\V1\Public\PublicBlogController;
 use App\Http\Controllers\Api\V1\Public\PublicLeadController;
+use App\Http\Controllers\InviteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('public/blog')->name('public.blog.')->group(function () {
-    Route::get('posts',        [PublicBlogController::class, 'index'])->name('posts.index');
+    Route::get('posts', [PublicBlogController::class, 'index'])->name('posts.index');
     Route::get('posts/{slug}', [PublicBlogController::class, 'show'])->name('posts.show');
-    Route::get('categories',   [PublicBlogController::class, 'categories'])->name('categories');
+    Route::get('categories', [PublicBlogController::class, 'categories'])->name('categories');
 });
 
 Route::post('/billing/stripe/webhook', [StripeWebhookController::class, 'handle']);
@@ -36,6 +37,9 @@ Route::post('/public/leads/optout', [PublicLeadController::class, 'optOut'])
 Route::post('/invites/accept', [InviteController::class, 'accept']);
 Route::post('/auth/login', [AuthController::class, 'login'])
     ->middleware(['throttle:auth-login']);
+
+Route::post('/commercial/track-affiliate-click', [CommercialAffiliateTrackingController::class, 'track'])
+    ->middleware(['throttle:public-affiliate-click']);
 
 Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])
     ->middleware('throttle:5,1');

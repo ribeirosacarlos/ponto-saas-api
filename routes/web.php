@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Commercial\CommercialAffiliateTrackingController;
 use App\Http\Controllers\Web\BlogSitemapController;
 use App\Http\Controllers\Web\SuperAdminPageController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,9 @@ Route::get('/debug/health', function () {
         'timestamp' => now()->toISOString(),
     ]);
 });
+
+Route::get('/r/{slug}', [CommercialAffiliateTrackingController::class, 'redirect'])
+    ->middleware(['throttle:public-affiliate-click']);
 
 Route::middleware(['auth:sanctum', 'super_admin'])->group(function () {
     Route::get('/super-admin', [SuperAdminPageController::class, 'index']);
