@@ -24,13 +24,19 @@ class CommercialAffiliateRequest extends FormRequest
             $slugRule = $slugRule->ignore($this->route('affiliate'));
         }
 
+        $emailUnique = Rule::unique(CommercialAffiliate::class, 'email');
+
+        if ($this->route('affiliate')) {
+            $emailUnique = $emailUnique->ignore($this->route('affiliate'));
+        }
+
         return [
-            'name' => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'slug' => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255', 'alpha_dash', $slugRule],
+            'name'               => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255'],
+            'email'              => [$isCreate ? 'required' : 'sometimes', 'email', 'max:255', $emailUnique],
+            'phone'              => ['nullable', 'string', 'max:50'],
+            'slug'               => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255', 'alpha_dash', $slugRule],
             'commission_plan_id' => ['nullable', 'uuid', Rule::exists(CommercialCommissionPlan::class, 'id')],
-            'status' => ['sometimes', 'string', Rule::in(['active', 'inactive'])],
+            'status'             => ['sometimes', 'string', Rule::in(['active', 'inactive'])],
         ];
     }
 }

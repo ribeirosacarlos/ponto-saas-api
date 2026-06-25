@@ -5,13 +5,15 @@ namespace App\Models;
 use App\Support\Commercial\CommercialSchema;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-class CommercialAffiliate extends Model
+class CommercialAffiliate extends Authenticatable
 {
-    use HasFactory, HasUuid;
+    use HasApiTokens, HasFactory, HasUuid, Notifiable;
 
     public $incrementing = false;
 
@@ -24,6 +26,15 @@ class CommercialAffiliate extends Model
         'slug',
         'commission_plan_id',
         'status',
+        'password',
+        'invite_code_hash',
+        'invite_expires_at',
+    ];
+
+    protected $hidden = ['password', 'invite_code_hash'];
+
+    protected $casts = [
+        'invite_expires_at' => 'datetime',
     ];
 
     public function getTable(): string

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Commercial;
 
+use App\Actions\Commercial\InviteAffiliateAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Commercial\CommercialAffiliateRequest;
 use App\Http\Resources\Commercial\CommercialAffiliateResource;
@@ -26,20 +27,23 @@ class CommercialAffiliateController extends Controller
         return CommercialAffiliateResource::collection($affiliates);
     }
 
-    public function store(CommercialAffiliateRequest $request)
+    public function store(CommercialAffiliateRequest $request, InviteAffiliateAction $action)
     {
         $this->authorize('create', CommercialAffiliate::class);
 
-        $affiliate = CommercialAffiliate::create($request->validated());
-
-        $this->auditLogService->log(
-            action: 'affiliate.created',
-            entityType: CommercialAffiliate::class,
-            entityId: $affiliate->id,
-            description: "Afiliado criado: {$affiliate->name}",
-        );
+        $affiliate = $action->execute($request->validated());
 
         return (new CommercialAffiliateResource($affiliate))->response()->setStatusCode(201);
+    }
+
+    public function resendInvite(string $id, InviteAffiliateAction $action)
+    {
+        $this->authorize('update', CommercialAffiliate::class);
+
+        $affiliate = CommercialAffiliate::findOrFail($id);
+        $action->resend($affiliate);
+
+        return response()->json(['message' => 'Convite reenviado com sucesso.']);
     }
 
     public function show(string $id)

@@ -7,6 +7,13 @@ use App\Http\Controllers\Api\Commercial\CommercialLeadController;
 use App\Http\Controllers\Api\Commercial\CommercialLeadStepController;
 use Illuminate\Support\Facades\Route;
 
+Route::prefix('affiliate')
+    ->middleware(['auth:sanctum', 'affiliate'])
+    ->group(function () {
+        Route::get('me', [\App\Http\Controllers\Api\Commercial\CommercialAffiliateAuthController::class, 'me']);
+        Route::post('logout', [\App\Http\Controllers\Api\Commercial\CommercialAffiliateAuthController::class, 'logout']);
+    });
+
 Route::prefix('admin/commercial')
     ->middleware(['role:super_admin|commercial_manager|commercial_agent'])
     ->group(function () {
@@ -34,6 +41,7 @@ Route::prefix('admin/commercial')
 
             Route::apiResource('affiliates', CommercialAffiliateController::class);
             Route::get('affiliates/{id}/metrics', [CommercialAffiliateController::class, 'metrics']);
+            Route::post('affiliates/{id}/resend-invite', [CommercialAffiliateController::class, 'resendInvite']);
 
             Route::get('commissions', [CommercialCommissionController::class, 'index']);
             Route::post('commissions/{id}/approve', [CommercialCommissionController::class, 'approve']);

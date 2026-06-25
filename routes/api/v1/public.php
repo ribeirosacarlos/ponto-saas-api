@@ -41,6 +41,12 @@ Route::post('/auth/login', [AuthController::class, 'login'])
 Route::post('/commercial/track-affiliate-click', [CommercialAffiliateTrackingController::class, 'track'])
     ->middleware(['throttle:public-affiliate-click']);
 
+Route::post('/auth/affiliate/login', [\App\Http\Controllers\Api\Commercial\CommercialAffiliateAuthController::class, 'login'])
+    ->middleware(['throttle:auth-login']);
+
+Route::post('/invites/affiliate/accept', [\App\Http\Controllers\Api\Commercial\AffiliateInviteController::class, 'accept'])
+    ->middleware(['throttle:5,1']);
+
 Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])
     ->middleware('throttle:5,1');
 Route::post('/reset-password', [PasswordResetController::class, 'reset'])
