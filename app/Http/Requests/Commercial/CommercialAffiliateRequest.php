@@ -17,6 +17,7 @@ class CommercialAffiliateRequest extends FormRequest
     public function rules(): array
     {
         $isCreate = $this->isMethod('POST');
+        $createAccount = (bool) $this->input('create_account', false);
 
         $slugRule = Rule::unique(CommercialAffiliate::class, 'slug');
 
@@ -24,19 +25,20 @@ class CommercialAffiliateRequest extends FormRequest
             $slugRule = $slugRule->ignore($this->route('affiliate'));
         }
 
-        $emailUnique = Rule::unique(CommercialAffiliate::class, 'email');
+        $emailAffiliate = Rule::unique(CommercialAffiliate::class, 'email');
 
         if ($this->route('affiliate')) {
-            $emailUnique = $emailUnique->ignore($this->route('affiliate'));
+            $emailAffiliate = $emailAffiliate->ignore($this->route('affiliate'));
         }
 
         return [
             'name'               => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255'],
-            'email'              => [$isCreate ? 'required' : 'sometimes', 'email', 'max:255', $emailUnique],
+            'email'              => [$isCreate ? 'required' : 'sometimes', 'email', 'max:255', $emailAffiliate],
             'phone'              => ['nullable', 'string', 'max:50'],
             'slug'               => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255', 'alpha_dash', $slugRule],
             'commission_plan_id' => ['nullable', 'uuid', Rule::exists(CommercialCommissionPlan::class, 'id')],
             'status'             => ['sometimes', 'string', Rule::in(['active', 'inactive'])],
+            'create_account'     => ['sometimes', 'boolean'],
         ];
     }
 }

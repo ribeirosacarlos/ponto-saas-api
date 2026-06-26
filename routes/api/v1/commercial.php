@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\AffiliatePortal\AffiliatePortalCommissionController;
+use App\Http\Controllers\Api\AffiliatePortal\AffiliatePortalController;
+use App\Http\Controllers\Api\AffiliatePortal\AffiliatePortalLeadController;
 use App\Http\Controllers\Api\Commercial\CommercialAffiliateController;
 use App\Http\Controllers\Api\Commercial\CommercialCommissionController;
 use App\Http\Controllers\Api\Commercial\CommercialDashboardController;
@@ -12,6 +15,26 @@ Route::prefix('affiliate')
     ->group(function () {
         Route::get('me', [\App\Http\Controllers\Api\Commercial\CommercialAffiliateAuthController::class, 'me']);
         Route::post('logout', [\App\Http\Controllers\Api\Commercial\CommercialAffiliateAuthController::class, 'logout']);
+    });
+
+Route::prefix('affiliate-portal')
+    ->middleware(['auth:sanctum', 'role:affiliate'])
+    ->group(function () {
+        Route::get('me', [AffiliatePortalController::class, 'me']);
+        Route::get('dashboard', [AffiliatePortalController::class, 'dashboard']);
+
+        Route::get('leads', [AffiliatePortalLeadController::class, 'index']);
+        Route::post('leads', [AffiliatePortalLeadController::class, 'store']);
+        Route::get('leads/{id}', [AffiliatePortalLeadController::class, 'show']);
+        Route::put('leads/{id}', [AffiliatePortalLeadController::class, 'update']);
+        Route::post('leads/{id}/notes', [AffiliatePortalLeadController::class, 'addNote']);
+        Route::post('leads/{id}/next-action', [AffiliatePortalLeadController::class, 'nextAction']);
+        Route::post('leads/{id}/move-step', [AffiliatePortalLeadController::class, 'moveStep']);
+        Route::post('leads/{id}/mark-won', [AffiliatePortalLeadController::class, 'markWon']);
+        Route::post('leads/{id}/mark-lost', [AffiliatePortalLeadController::class, 'markLost']);
+
+        Route::get('commissions', [AffiliatePortalCommissionController::class, 'commissions']);
+        Route::get('bonuses', [AffiliatePortalCommissionController::class, 'bonuses']);
     });
 
 Route::prefix('admin/commercial')
