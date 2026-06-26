@@ -27,7 +27,9 @@ class DatabaseSeeder extends Seeder
             AbsenceSeeder::class,
             VacationExampleSeeder::class,
             AnnouncementSeeder::class,
+            CommercialLeadStepsSeeder::class,
+            CommercialCommissionPlanSeeder::class,
+            CommercialDevUsersSeeder::class,
         ]);
     }
-
 }

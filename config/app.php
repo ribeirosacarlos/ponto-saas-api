@@ -66,6 +66,7 @@ return [
     */
 
     'invite_url' => env('APP_INVITE_URL'),
+    'affiliate_invite_url' => env('AFFILIATE_INVITE_URL'),
 
     /*
     |--------------------------------------------------------------------------

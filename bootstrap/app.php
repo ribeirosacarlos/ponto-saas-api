@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'plan.feature' => \App\Http\Middleware\EnsurePlanFeature::class,
                 'company.timezone' => SetCompanyTimezone::class,
                 'company.audit_logs_enabled' => \App\Http\Middleware\EnsureCompanyAuditLogsEnabled::class,
+                'affiliate' => \App\Http\Middleware\EnsureIsAffiliate::class,
             ]);
             $middleware->prepend(HandleCors::class);
         })

@@ -10,12 +10,12 @@ use App\Observers\TimeEntryObserver;
 use App\Observers\UserObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\ServiceProvider;
-use Stripe\StripeClient;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Spatie\Translatable\Facades\Translatable;
+use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(\App\Services\TenantManager::class, function ($app) {
-            return new \App\Services\TenantManager();
+            return new \App\Services\TenantManager;
         });
         $this->app->singleton(
             \Illuminate\Contracts\Debug\ExceptionHandler::class,
@@ -35,7 +35,6 @@ class AppServiceProvider extends ServiceProvider
             return new StripeClient(config('services.stripe.secret'));
         });
     }
-
 
     /**
      * Bootstrap any application services.
@@ -72,6 +71,12 @@ class AppServiceProvider extends ServiceProvider
             $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'public-leads-optout';
 
             return Limit::perHour(5)->by($ip);
+        });
+
+        RateLimiter::for('public-affiliate-click', function (Request $request) {
+            $ip = $request->ip() ?? $request->header('CF-Connecting-IP') ?? 'public-affiliate-click';
+
+            return Limit::perMinute(30)->by($ip);
         });
 
         RateLimiter::for('auth-login', function (Request $request) {
