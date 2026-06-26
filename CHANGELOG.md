@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.11.0...v2.12.0) (2026-06-26)
+
+
+### Novas Funcionalidades
+
+* add affiliate portal with user account and commission access ([5ded1da](https://github.com/ribeirosacarlos/ponto-saas-api/commit/5ded1da236573f6fc5d3e858d87523f8f586cd43))
+* add affiliate portal with user account and commission access ([0f5e252](https://github.com/ribeirosacarlos/ponto-saas-api/commit/0f5e2527657338fa5c419a62faa6dd040377d1f6))
+
 ## [2.11.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.10.0...v2.11.0) (2026-06-26)
 
 
