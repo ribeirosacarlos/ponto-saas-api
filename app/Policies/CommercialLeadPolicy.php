@@ -9,7 +9,7 @@ class CommercialLeadPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent']);
+        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent', 'affiliate']);
     }
 
     public function view(User $user, CommercialLead $lead): bool
@@ -18,14 +18,24 @@ class CommercialLeadPolicy
             return true;
         }
 
-        return $user->hasRole('commercial_agent')
+        if ($user->hasRole('commercial_agent')
             && $lead->assigned_to_user_id !== null
-            && (string) $lead->assigned_to_user_id === (string) $user->id;
+            && (string) $lead->assigned_to_user_id === (string) $user->id) {
+            return true;
+        }
+
+        if ($user->hasRole('affiliate')) {
+            $affiliateId = $user->commercialAffiliate?->id;
+
+            return $affiliateId !== null && (string) $lead->affiliate_id === (string) $affiliateId;
+        }
+
+        return false;
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent']);
+        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent', 'affiliate']);
     }
 
     public function update(User $user, CommercialLead $lead): bool

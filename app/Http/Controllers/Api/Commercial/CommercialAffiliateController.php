@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Commercial;
 
 use App\Actions\Commercial\InviteAffiliateAction;
+use App\Actions\Commercial\InviteAffiliateUserAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Commercial\CommercialAffiliateRequest;
 use App\Http\Resources\Commercial\CommercialAffiliateResource;
@@ -27,13 +28,22 @@ class CommercialAffiliateController extends Controller
         return CommercialAffiliateResource::collection($affiliates);
     }
 
-    public function store(CommercialAffiliateRequest $request, InviteAffiliateAction $action)
+    public function store(CommercialAffiliateRequest $request, InviteAffiliateAction $inviteAction, InviteAffiliateUserAction $userInviteAction)
     {
         $this->authorize('create', CommercialAffiliate::class);
 
-        $affiliate = $action->execute($request->validated());
+        $data = $request->validated();
+        $createAccount = (bool) ($data['create_account'] ?? false);
 
-        return (new CommercialAffiliateResource($affiliate))->response()->setStatusCode(201);
+        unset($data['create_account'], $data['password'], $data['password_confirmation']);
+
+        $affiliate = $inviteAction->execute($data);
+
+        if ($createAccount) {
+            $userInviteAction->execute($affiliate);
+        }
+
+        return (new CommercialAffiliateResource($affiliate->load('user')))->response()->setStatusCode(201);
     }
 
     public function resendInvite(string $id, InviteAffiliateAction $action)
