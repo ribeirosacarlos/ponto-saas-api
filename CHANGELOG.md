@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.11.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.10.0...v2.11.0) (2026-06-26)
+
+
+### Novas Funcionalidades
+
+* add affiliate authentication and invite flow ([ec5c48d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ec5c48dd87fdf82842aa1b418efd9611797fa6ca))
+* add commercial module (leads, affiliates, commissions, bonuses) ([f7570ab](https://github.com/ribeirosacarlos/ponto-saas-api/commit/f7570abd9967dc692c67d824cfae2c8ad373db2b))
+* add commercial module (leads, affiliates, commissions, bonuses) ([abdc320](https://github.com/ribeirosacarlos/ponto-saas-api/commit/abdc320d13bb9a3bc01feacb9c5a361de03fc027))
+
 ## [2.10.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.9.0...v2.10.0) (2026-06-23)
 
 
