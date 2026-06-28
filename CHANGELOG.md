@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.12.0...v2.12.1) (2026-06-28)
+
+
+### Correções de Bugs
+
+* stop sending duplicate invite email when create_account is true ([4162702](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4162702206aee97ce2401e5ad1dcf057188b0ed9))
+* validate email uniqueness in users table when create_account is true ([6ed4eed](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6ed4eedaca7eed2ac289ace3b84618faca5f557f))
+
 ## [2.12.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.11.0...v2.12.0) (2026-06-26)
 
 
