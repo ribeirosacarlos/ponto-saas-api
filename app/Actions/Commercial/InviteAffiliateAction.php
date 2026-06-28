@@ -10,7 +10,7 @@ class InviteAffiliateAction
 {
     public function __construct(protected AuditLogService $auditLogService) {}
 
-    public function execute(array $data): CommercialAffiliate
+    public function execute(array $data, bool $sendEmail = true): CommercialAffiliate
     {
         $inviteCodePlain = $this->generateInviteCode();
 
@@ -21,10 +21,12 @@ class InviteAffiliateAction
             'invite_expires_at' => now()->addDays(7),
         ]);
 
-        SendAffiliateInviteJob::dispatch($affiliate->id, [
-            'inviteUrl'  => $this->resolveInviteUrl($affiliate->email),
-            'inviteCode' => $inviteCodePlain,
-        ]);
+        if ($sendEmail) {
+            SendAffiliateInviteJob::dispatch($affiliate->id, [
+                'inviteUrl'  => $this->resolveInviteUrl($affiliate->email),
+                'inviteCode' => $inviteCodePlain,
+            ]);
+        }
 
         $this->auditLogService->log(
             action: 'affiliate.invited',

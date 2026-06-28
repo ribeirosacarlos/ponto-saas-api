@@ -4,6 +4,7 @@ namespace App\Http\Requests\Commercial;
 
 use App\Models\CommercialAffiliate;
 use App\Models\CommercialCommissionPlan;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,9 +32,15 @@ class CommercialAffiliateRequest extends FormRequest
             $emailAffiliate = $emailAffiliate->ignore($this->route('affiliate'));
         }
 
+        $emailRules = [$isCreate ? 'required' : 'sometimes', 'email', 'max:255', $emailAffiliate];
+
+        if ($isCreate && $createAccount) {
+            $emailRules[] = Rule::unique(User::class, 'email');
+        }
+
         return [
             'name'               => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255'],
-            'email'              => [$isCreate ? 'required' : 'sometimes', 'email', 'max:255', $emailAffiliate],
+            'email'              => $emailRules,
             'phone'              => ['nullable', 'string', 'max:50'],
             'slug'               => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255', 'alpha_dash', $slugRule],
             'commission_plan_id' => ['nullable', 'uuid', Rule::exists(CommercialCommissionPlan::class, 'id')],
