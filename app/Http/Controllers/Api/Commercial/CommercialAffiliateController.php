@@ -37,7 +37,7 @@ class CommercialAffiliateController extends Controller
 
         unset($data['create_account'], $data['password'], $data['password_confirmation']);
 
-        $affiliate = $inviteAction->execute($data);
+        $affiliate = $inviteAction->execute($data, sendEmail: ! $createAccount);
 
         if ($createAccount) {
             $userInviteAction->execute($affiliate);
