@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.13.4](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.3...v2.13.4) (2026-06-30)
+
+
+### Correções de Bugs
+
+* fix:  ([66de067](https://github.com/ribeirosacarlos/ponto-saas-api/commit/66de067910b0f78d237339f7b4ccf1a3fedcd386))
+* Add affiliate password reset routes ([9e2c32d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/9e2c32d374978e9672566e0fe5f289bc659ef44e))
+* Add affiliates configuration to auth.php ([baca1c1](https://github.com/ribeirosacarlos/ponto-saas-api/commit/baca1c13ae6e904a2fde51d32fce16271cdd27e6))
+* Delete app/Actions/Commercial/InviteAffiliateUserAction.php ([77901da](https://github.com/ribeirosacarlos/ponto-saas-api/commit/77901dac76ce0a0a93dc01d017df1d420d2772f2))
+* Update middleware for affiliate-portal routes ([805213f](https://github.com/ribeirosacarlos/ponto-saas-api/commit/805213f2cd466056362f71a2775752e6ae7f208c))
+
 ## [2.13.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.2...v2.13.3) (2026-06-30)
 
 
