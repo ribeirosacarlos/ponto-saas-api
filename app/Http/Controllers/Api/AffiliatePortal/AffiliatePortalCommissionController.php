@@ -11,7 +11,7 @@ class AffiliatePortalCommissionController extends Controller
 {
     public function commissions(Request $request)
     {
-        $affiliateId = $request->user()->commercialAffiliate()->firstOrFail()->id;
+        $affiliateId = $request->user()->id;
 
         $commissions = CommercialCommission::where('affiliate_id', $affiliateId)
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
@@ -23,7 +23,7 @@ class AffiliatePortalCommissionController extends Controller
 
     public function bonuses(Request $request)
     {
-        $affiliateId = $request->user()->commercialAffiliate()->firstOrFail()->id;
+        $affiliateId = $request->user()->id;
 
         $bonuses = CommercialAffiliateBonus::where('affiliate_id', $affiliateId)
             ->when($request->filled('year'), fn ($q) => $q->where('year', $request->input('year')))
