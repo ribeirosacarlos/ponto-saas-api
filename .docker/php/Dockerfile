@@ -41,7 +41,7 @@ RUN php -v \
 && php artisan package:discover --ansi || true
 
 # gera a doc Swagger/OpenAPI a partir das anotações em app/Swagger, embutida na imagem
-RUN php artisan l5-swagger:generate || true
+RUN php artisan swagger:generate-safe || true
 
 COPY .docker/php/php.ini /usr/local/etc/php/conf.d/local.ini
 COPY .docker/php/zz-logs.conf /usr/local/etc/php-fpm.d/zz-logs.conf
