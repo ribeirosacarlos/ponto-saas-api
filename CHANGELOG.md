@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.13.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.0...v2.13.1) (2026-06-30)
+
+
+### Correções de Bugs
+
+* Add OpenAPI definitions for Affiliate Portal ([8fe0089](https://github.com/ribeirosacarlos/ponto-saas-api/commit/8fe0089d1624bea28a6efd153044f9b9f011a432))
+* Generate Swagger documentation in Dockerfile ([4b95af6](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4b95af61764850bd95f3180ceb4bd9c4bdef493b))
+* Modify affiliate creation request body properties ([770a0e3](https://github.com/ribeirosacarlos/ponto-saas-api/commit/770a0e3f72b38ee2afeea9bdf2ac552dca351a31))
+
 ## [2.13.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.12.1...v2.13.0) (2026-06-30)
 
 
