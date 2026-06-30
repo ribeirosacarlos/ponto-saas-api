@@ -93,6 +93,54 @@ class AffiliateLogout {}
 class AffiliateInviteAccept {}
 
 /**
+ * @OA\Post(
+ *     path="/v1/auth/affiliate/forgot-password",
+ *     summary="Solicita recuperação de senha do afiliado",
+ *     description="Endpoint público. Sempre retorna 200 (mesmo se o e-mail não existir) para evitar enumeração de contas. Envia um código de 8 caracteres por e-mail, válido por 60 minutos.",
+ *     tags={"Commercial - Affiliate Portal"},
+ *
+ *     @OA\RequestBody(
+ *         required=true,
+ *
+ *         @OA\JsonContent(
+ *             required={"email"},
+ *
+ *             @OA\Property(property="email", type="string", format="email")
+ *         )
+ *     ),
+ *
+ *     @OA\Response(response=200, description="Se o e-mail existir, um código de recuperação foi enviado")
+ * )
+ */
+class AffiliateForgotPassword {}
+
+/**
+ * @OA\Post(
+ *     path="/v1/auth/affiliate/reset-password",
+ *     summary="Redefine a senha do afiliado",
+ *     description="Endpoint público. Valida o código de 8 caracteres enviado por e-mail (válido por 60 minutos) e define a nova senha.",
+ *     tags={"Commercial - Affiliate Portal"},
+ *
+ *     @OA\RequestBody(
+ *         required=true,
+ *
+ *         @OA\JsonContent(
+ *             required={"email","code","password","password_confirmation"},
+ *
+ *             @OA\Property(property="email", type="string", format="email"),
+ *             @OA\Property(property="code", type="string", example="ABCDEFGH"),
+ *             @OA\Property(property="password", type="string", minLength=8),
+ *             @OA\Property(property="password_confirmation", type="string")
+ *         )
+ *     ),
+ *
+ *     @OA\Response(response=200, description="Senha redefinida com sucesso"),
+ *     @OA\Response(response=422, description="Código inválido ou expirado")
+ * )
+ */
+class AffiliateResetPassword {}
+
+/**
  * @OA\Get(
  *     path="/v1/affiliate-portal/me",
  *     summary="Perfil do afiliado (portal)",
