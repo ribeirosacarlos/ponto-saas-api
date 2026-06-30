@@ -35,6 +35,8 @@ Route::prefix('affiliate-portal')
 
         Route::get('commissions', [AffiliatePortalCommissionController::class, 'commissions']);
         Route::get('bonuses', [AffiliatePortalCommissionController::class, 'bonuses']);
+
+        Route::get('steps', [CommercialLeadStepController::class, 'index']);
     });
 
 Route::prefix('admin/commercial')
