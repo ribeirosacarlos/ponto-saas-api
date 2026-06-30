@@ -18,7 +18,7 @@ Route::prefix('affiliate')
     });
 
 Route::prefix('affiliate-portal')
-    ->middleware(['auth:sanctum', 'role:affiliate'])
+    ->middleware(['auth:sanctum', 'affiliate'])
     ->group(function () {
         Route::get('me', [AffiliatePortalController::class, 'me']);
         Route::get('dashboard', [AffiliatePortalController::class, 'dashboard']);
