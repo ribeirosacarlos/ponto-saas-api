@@ -10,7 +10,6 @@ class CommercialAffiliateResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
@@ -20,11 +19,6 @@ class CommercialAffiliateResource extends JsonResource
             'status' => $this->status,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
-            'user' => $this->whenLoaded('user', fn () => $this->user ? [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                'email' => $this->user->email,
-            ] : null),
             'commission_plan' => $this->whenLoaded('commissionPlan', fn () => [
                 'id' => $this->commissionPlan->id,
                 'name' => $this->commissionPlan->name,
@@ -34,3 +28,4 @@ class CommercialAffiliateResource extends JsonResource
         ];
     }
 }
+
