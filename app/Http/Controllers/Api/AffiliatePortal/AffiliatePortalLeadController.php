@@ -62,7 +62,6 @@ class AffiliatePortalLeadController extends Controller
         $affiliateId = $this->resolveAffiliateId($request);
 
         $data = $request->validated();
-        $data['created_by_user_id'] = $request->user()->id;
         $data['affiliate_id'] = $affiliateId;
 
         $duplicates = $this->duplicateService->findDuplicates($data);
@@ -133,7 +132,7 @@ class AffiliatePortalLeadController extends Controller
 
         $note = CommercialLeadNote::create([
             'lead_id' => $lead->id,
-            'user_id' => $request->user()->id,
+            'user_id' => null,
             'note' => $request->validated()['note'],
         ]);
 
@@ -167,7 +166,7 @@ class AffiliatePortalLeadController extends Controller
         CommercialLeadStepLog::create([
             'lead_id' => $lead->id,
             'step_id' => $data['step_id'],
-            'user_id' => $request->user()->id,
+            'user_id' => null,
             'status' => 'done',
             'note' => $data['note'] ?? null,
             'scheduled_at' => $data['scheduled_at'] ?? null,
@@ -232,6 +231,6 @@ class AffiliatePortalLeadController extends Controller
 
     private function resolveAffiliateId(Request $request): string
     {
-        return $request->user()->commercialAffiliate()->firstOrFail()->id;
+        return (string) $request->user()->id;
     }
 }
