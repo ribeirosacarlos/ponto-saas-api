@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.13.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.1...v2.13.2) (2026-06-30)
+
+
+### Correções de Bugs
+
+* Include Composer for autoload optimization ([3629579](https://github.com/ribeirosacarlos/ponto-saas-api/commit/36295794e230e1e6d71bc4b05cd697f9713182b6))
+* Remove deprecated OpenAPI annotations for blog ([fb6dbe8](https://github.com/ribeirosacarlos/ponto-saas-api/commit/fb6dbe844eb31b77ebda83077f6e49aaabd5702c))
+
 ## [2.13.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.0...v2.13.1) (2026-06-30)
 
 
