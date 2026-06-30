@@ -31,6 +31,11 @@ COPY . /var/www
 # copia vendor pronto
 COPY --from=vendor /app/vendor /var/www/vendor
 
+# composer binário só para reotimizar o autoload abaixo
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+RUN composer dump-autoload --optimize --no-dev
+
 # agora que artisan existe, podemos rodar discover/otimizações
 RUN php -v \
 && php artisan package:discover --ansi || true
