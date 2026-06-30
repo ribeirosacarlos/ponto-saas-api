@@ -20,7 +20,6 @@ class CommercialAffiliate extends Authenticatable
     protected $keyType = 'string';
 
     protected $fillable = [
-        'user_id',
         'name',
         'email',
         'phone',
@@ -41,11 +40,6 @@ class CommercialAffiliate extends Authenticatable
     public function getTable(): string
     {
         return CommercialSchema::table('affiliates');
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function commissionPlan(): BelongsTo
