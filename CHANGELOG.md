@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.13.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.12.1...v2.13.0) (2026-06-30)
+
+
+### Novas Funcionalidades
+
+* Add 'affiliate' role to viewAny policy ([6a6e5af](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6a6e5afa1a407143d4336fa54d3ddb61c797a525))
+* Add route for retrieving lead steps ([370be9d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/370be9d2573270e8b057dba526e72b008b2dca7c))
+
 ## [2.12.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.12.0...v2.12.1) (2026-06-28)
 
 
