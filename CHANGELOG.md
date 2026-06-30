@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.13.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.2...v2.13.3) (2026-06-30)
+
+
+### Correções de Bugs
+
+* Add swagger:generate-safe command ([cff9429](https://github.com/ribeirosacarlos/ponto-saas-api/commit/cff9429cf0beaf6950caf1a7e7dee26d16d2f444))
+* Update Swagger generation command in Dockerfile ([4545bd7](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4545bd7a719cc5091ab3fe5b4432e09bd195d312))
+
 ## [2.13.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.1...v2.13.2) (2026-06-30)
 
 
