@@ -2,18 +2,28 @@
 
 namespace App\Policies;
 
+use App\Models\CommercialAffiliate;
 use App\Models\CommercialLead;
 use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class CommercialLeadPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent', 'affiliate']);
+        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent']);
     }
 
-    public function view(User $user, CommercialLead $lead): bool
+    public function view(Authenticatable $user, CommercialLead $lead): bool
     {
+        if ($user instanceof CommercialAffiliate) {
+            return (string) $lead->affiliate_id === (string) $user->id;
+        }
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
         if ($user->hasRole(['super_admin', 'commercial_manager'])) {
             return true;
         }
@@ -24,21 +34,23 @@ class CommercialLeadPolicy
             return true;
         }
 
-        if ($user->hasRole('affiliate')) {
-            $affiliateId = $user->commercialAffiliate?->id;
-
-            return $affiliateId !== null && (string) $lead->affiliate_id === (string) $affiliateId;
-        }
-
         return false;
     }
 
-    public function create(User $user): bool
+    public function create(Authenticatable $user): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent', 'affiliate']);
+        if ($user instanceof CommercialAffiliate) {
+            return true;
+        }
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent']);
     }
 
-    public function update(User $user, CommercialLead $lead): bool
+    public function update(Authenticatable $user, CommercialLead $lead): bool
     {
         return $this->view($user, $lead);
     }
@@ -53,22 +65,22 @@ class CommercialLeadPolicy
         return $user->hasRole(['super_admin', 'commercial_manager']);
     }
 
-    public function moveStep(User $user, CommercialLead $lead): bool
+    public function moveStep(Authenticatable $user, CommercialLead $lead): bool
     {
         return $this->view($user, $lead);
     }
 
-    public function addNote(User $user, CommercialLead $lead): bool
+    public function addNote(Authenticatable $user, CommercialLead $lead): bool
     {
         return $this->view($user, $lead);
     }
 
-    public function markWon(User $user, CommercialLead $lead): bool
+    public function markWon(Authenticatable $user, CommercialLead $lead): bool
     {
         return $this->view($user, $lead);
     }
 
-    public function markLost(User $user, CommercialLead $lead): bool
+    public function markLost(Authenticatable $user, CommercialLead $lead): bool
     {
         return $this->view($user, $lead);
     }

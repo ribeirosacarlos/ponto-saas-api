@@ -37,8 +37,7 @@ class AffiliatesIndex {}
  *         @OA\Property(property="phone", type="string", nullable=true),
  *         @OA\Property(property="slug", type="string", description="Usado no link público /r/{slug}"),
  *         @OA\Property(property="commission_plan_id", type="string", format="uuid", nullable=true),
- *         @OA\Property(property="status", type="string", enum={"active","inactive"}, default="active"),
- *         @OA\Property(property="create_account", type="boolean", default=false, description="Se true, cria um User com role affiliate e envia convite de definição de senha em vez do e-mail padrão de boas-vindas")
+ *         @OA\Property(property="status", type="string", enum={"active","inactive"}, default="active")
  *     )),
  *
  *     @OA\Response(response=201, description="Afiliado criado"),

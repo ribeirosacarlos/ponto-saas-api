@@ -51,3 +51,8 @@ Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])
     ->middleware('throttle:5,1');
 Route::post('/reset-password', [PasswordResetController::class, 'reset'])
     ->middleware('throttle:5,1');
+
+Route::post('/auth/affiliate/forgot-password', [\App\Http\Controllers\Api\Commercial\CommercialAffiliateAuthController::class, 'forgotPassword'])
+    ->middleware('throttle:5,1');
+Route::post('/auth/affiliate/reset-password', [\App\Http\Controllers\Api\Commercial\CommercialAffiliateAuthController::class, 'resetPassword'])
+    ->middleware('throttle:5,1');

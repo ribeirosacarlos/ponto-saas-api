@@ -101,11 +101,6 @@ class User extends Authenticatable
         return $this->hasMany(LeaveBalance::class);
     }
 
-    public function commercialAffiliate()
-    {
-        return $this->hasOne(CommercialAffiliate::class, 'user_id');
-    }
-
     public function hasRole($role): bool
     {
         $roles = $this->roles->pluck('name')->toArray();
