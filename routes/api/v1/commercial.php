@@ -40,7 +40,7 @@ Route::prefix('affiliate-portal')
     });
 
 Route::prefix('admin/commercial')
-    ->middleware(['role:super_admin|commercial_manager|commercial_agent'])
+    ->middleware(['role:super_admin|admin'])
     ->group(function () {
         Route::get('dashboard', [CommercialDashboardController::class, 'show']);
 
@@ -58,7 +58,7 @@ Route::prefix('admin/commercial')
 
         Route::get('steps', [CommercialLeadStepController::class, 'index']);
 
-        Route::middleware(['role:super_admin|commercial_manager'])->group(function () {
+        Route::middleware(['role:super_admin|admin'])->group(function () {
             Route::post('steps', [CommercialLeadStepController::class, 'store']);
             Route::put('steps/{id}', [CommercialLeadStepController::class, 'update']);
             Route::delete('steps/{id}', [CommercialLeadStepController::class, 'destroy']);

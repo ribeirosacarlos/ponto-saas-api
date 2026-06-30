@@ -8,11 +8,11 @@ class CommercialCommissionPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager']);
+        return $user->hasRole(['super_admin', 'admin']);
     }
 
     public function manage(User $user): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager']);
+        return $user->hasRole(['super_admin', 'admin']);
     }
 }

@@ -5,7 +5,7 @@ namespace App\Swagger\Commercial;
 /**
  * @OA\Tag(
  *     name="Commercial - Commissions",
- *     description="Comissões e bônus de afiliados. Restrito a super_admin e commercial_manager. Comissão padrão: 20% por 6 meses. Bônus: 50€ a cada 5 clientes pagos no mesmo mês calendário."
+ *     description="Comissões e bônus de afiliados. Restrito a super_admin e admin. Comissão padrão: 20% por 6 meses. Bônus: 50€ a cada 5 clientes pagos no mesmo mês calendário."
  * )
  */
 class Commissions {}
@@ -21,7 +21,7 @@ class Commissions {}
  *     @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"pending","approved","cancelled","paid"})),
  *
  *     @OA\Response(response=200, description="Lista paginada de comissões"),
- *     @OA\Response(response=403, description="commercial_agent não acessa comissões")
+ *     @OA\Response(response=403, description="Sem permissão para acessar comissões")
  * )
  */
 class CommissionsIndex {}

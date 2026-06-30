@@ -5,7 +5,7 @@ namespace App\Swagger\Commercial;
 /**
  * @OA\Tag(
  *     name="Commercial - Steps",
- *     description="Etapas do funil comercial. Leitura disponível para os 3 papéis; gestão (criar/editar/remover/reordenar) restrita a super_admin e commercial_manager."
+ *     description="Etapas do funil comercial. Gestão (criar/editar/remover/reordenar) restrita a super_admin e admin."
  * )
  */
 class Steps {}
@@ -26,7 +26,7 @@ class StepsIndex {}
  * @OA\Post(
  *     path="/v1/admin/commercial/steps",
  *     summary="Cria uma etapa comercial",
- *     description="Restrito a super_admin e commercial_manager.",
+ *     description="Restrito a super_admin e admin.",
  *     tags={"Commercial - Steps"},
  *     security={{"bearerAuth":{}}},
  *
@@ -40,7 +40,7 @@ class StepsIndex {}
  *     )),
  *
  *     @OA\Response(response=201, description="Etapa criada"),
- *     @OA\Response(response=403, description="commercial_agent não pode gerenciar etapas")
+ *     @OA\Response(response=403, description="Sem permissão para gerenciar etapas")
  * )
  */
 class StepsStore {}

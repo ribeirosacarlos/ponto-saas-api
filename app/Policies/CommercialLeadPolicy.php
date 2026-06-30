@@ -11,7 +11,7 @@ class CommercialLeadPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent']);
+        return $user->hasRole(['super_admin', 'admin']);
     }
 
     public function view(Authenticatable $user, CommercialLead $lead): bool
@@ -24,17 +24,7 @@ class CommercialLeadPolicy
             return false;
         }
 
-        if ($user->hasRole(['super_admin', 'commercial_manager'])) {
-            return true;
-        }
-
-        if ($user->hasRole('commercial_agent')
-            && $lead->assigned_to_user_id !== null
-            && (string) $lead->assigned_to_user_id === (string) $user->id) {
-            return true;
-        }
-
-        return false;
+        return $user->hasRole(['super_admin', 'admin']);
     }
 
     public function create(Authenticatable $user): bool
@@ -47,7 +37,7 @@ class CommercialLeadPolicy
             return false;
         }
 
-        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent']);
+        return $user->hasRole(['super_admin', 'admin']);
     }
 
     public function update(Authenticatable $user, CommercialLead $lead): bool
@@ -57,12 +47,12 @@ class CommercialLeadPolicy
 
     public function delete(User $user, CommercialLead $lead): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager']);
+        return $user->hasRole(['super_admin', 'admin']);
     }
 
     public function assign(User $user, CommercialLead $lead): bool
     {
-        return $user->hasRole(['super_admin', 'commercial_manager']);
+        return $user->hasRole(['super_admin', 'admin']);
     }
 
     public function moveStep(Authenticatable $user, CommercialLead $lead): bool

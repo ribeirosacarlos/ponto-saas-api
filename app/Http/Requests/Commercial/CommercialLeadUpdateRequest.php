@@ -45,8 +45,8 @@ class CommercialLeadUpdateRequest extends FormRequest
 
                     $user = User::find($value);
 
-                    if (! $user || ! $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent'])) {
-                        $fail('O responsável atribuído precisa ser um usuário comercial interno.');
+                    if (! $user || ! $user->hasRole(['super_admin', 'admin'])) {
+                        $fail('O responsável atribuído precisa ser um administrador.');
                     }
                 },
             ],
