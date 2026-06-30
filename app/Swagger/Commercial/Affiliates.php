@@ -30,14 +30,15 @@ class AffiliatesIndex {}
  *     tags={"Commercial - Affiliates"},
  *     security={{"bearerAuth":{}}},
  *
- *     @OA\RequestBody(required=true, @OA\JsonContent(required={"name","slug"},
+ *     @OA\RequestBody(required=true, @OA\JsonContent(required={"name","email","slug"},
  *
  *         @OA\Property(property="name", type="string"),
- *         @OA\Property(property="email", type="string", format="email", nullable=true),
+ *         @OA\Property(property="email", type="string", format="email"),
  *         @OA\Property(property="phone", type="string", nullable=true),
  *         @OA\Property(property="slug", type="string", description="Usado no link público /r/{slug}"),
  *         @OA\Property(property="commission_plan_id", type="string", format="uuid", nullable=true),
- *         @OA\Property(property="status", type="string", enum={"active","inactive"}, default="active")
+ *         @OA\Property(property="status", type="string", enum={"active","inactive"}, default="active"),
+ *         @OA\Property(property="create_account", type="boolean", default=false, description="Se true, cria um User com role affiliate e envia convite de definição de senha em vez do e-mail padrão de boas-vindas")
  *     )),
  *
  *     @OA\Response(response=201, description="Afiliado criado"),
@@ -87,6 +88,22 @@ class AffiliatesUpdate {}
  * )
  */
 class AffiliatesDestroy {}
+
+/**
+ * @OA\Post(
+ *     path="/v1/admin/commercial/affiliates/{id}/resend-invite",
+ *     summary="Reenvia o convite de acesso ao afiliado",
+ *     description="Gera um novo invite_code, atualiza invite_expires_at e reenvia o e-mail de convite. Restrito a super_admin e commercial_manager.",
+ *     tags={"Commercial - Affiliates"},
+ *     security={{"bearerAuth":{}}},
+ *
+ *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
+ *     @OA\Response(response=200, description="Convite reenviado com sucesso"),
+ *     @OA\Response(response=404, description="Afiliado não encontrado")
+ * )
+ */
+class AffiliatesResendInvite {}
 
 /**
  * @OA\Get(

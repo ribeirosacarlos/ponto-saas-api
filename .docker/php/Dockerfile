@@ -35,6 +35,9 @@ COPY --from=vendor /app/vendor /var/www/vendor
 RUN php -v \
 && php artisan package:discover --ansi || true
 
+# gera a doc Swagger/OpenAPI a partir das anotações em app/Swagger, embutida na imagem
+RUN php artisan l5-swagger:generate || true
+
 COPY .docker/php/php.ini /usr/local/etc/php/conf.d/local.ini
 COPY .docker/php/zz-logs.conf /usr/local/etc/php-fpm.d/zz-logs.conf
 COPY .docker/entrypoint.sh /usr/local/bin/entrypoint.sh
