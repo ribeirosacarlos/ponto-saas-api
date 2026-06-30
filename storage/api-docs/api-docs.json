@@ -4660,6 +4660,2225 @@
                 }
             }
         },
+        "/v1/auth/affiliate/login": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Login do afiliado",
+                "description": "Endpoint público. Retorna um token Sanctum vinculado ao registro CommercialAffiliate (não a um User).",
+                "operationId": "b4492d3d5dcf25a0baf4de887d08c540",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login efetuado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "affiliate": {
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas"
+                    },
+                    "403": {
+                        "description": "Conta de afiliado inativa"
+                    }
+                }
+            }
+        },
+        "/v1/affiliate/me": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Dados do afiliado autenticado",
+                "operationId": "df212d738c2966c69193f937760c42b1",
+                "responses": {
+                    "200": {
+                        "description": "Afiliado autenticado, incluindo plano de comissão"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate/logout": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Logout do afiliado",
+                "description": "Revoga o token Sanctum atual do afiliado.",
+                "operationId": "60240ef061f8c7408bf852fb8a94609f",
+                "responses": {
+                    "200": {
+                        "description": "Logout efetuado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/invites/affiliate/accept": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Aceita convite de afiliado e define senha",
+                "description": "Endpoint público. Valida o invite_code (hash SHA-256) enviado por e-mail e expiração (invite_expires_at).",
+                "operationId": "44e882bf7ae831c7c5d33087b57738bc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "invite_code",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "invite_code": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 8
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Senha criada com sucesso"
+                    },
+                    "422": {
+                        "description": "Código de convite inválido ou expirado"
+                    }
+                }
+            }
+        },
+        "/v1/auth/affiliate/forgot-password": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Solicita recuperação de senha do afiliado",
+                "description": "Endpoint público. Sempre retorna 200 (mesmo se o e-mail não existir) para evitar enumeração de contas. Envia um código de 8 caracteres por e-mail, válido por 60 minutos.",
+                "operationId": "5f3494512e84898aa0b15f34ed8eab6b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Se o e-mail existir, um código de recuperação foi enviado"
+                    }
+                }
+            }
+        },
+        "/v1/auth/affiliate/reset-password": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Redefine a senha do afiliado",
+                "description": "Endpoint público. Valida o código de 8 caracteres enviado por e-mail (válido por 60 minutos) e define a nova senha.",
+                "operationId": "347227be9f5c8ba02c601d5820612f9f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "code",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "ABCDEFGH"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 8
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Senha redefinida com sucesso"
+                    },
+                    "422": {
+                        "description": "Código inválido ou expirado"
+                    }
+                }
+            }
+        },
+        "/v1/affiliate-portal/me": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Perfil do afiliado (portal)",
+                "operationId": "a1d066f9215680cace73d309dbb32bb2",
+                "responses": {
+                    "200": {
+                        "description": "Dados do afiliado autenticado, incluindo plano de comissão"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/dashboard": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Métricas do afiliado (portal)",
+                "operationId": "a28bf9f9eb29a5478867ab65a6c49567",
+                "responses": {
+                    "200": {
+                        "description": "total_clicks, unique_clicks, total_leads, won_leads, conversion_rate_click_to_lead, conversion_rate_lead_to_customer, pending_commissions, paid_commissions, pending_bonus, paid_bonus"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/leads": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Lista os leads do próprio afiliado",
+                "operationId": "bbb4375fb33bea7411ba815fae2908b1",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "in_progress",
+                                "demo_scheduled",
+                                "proposal_sent",
+                                "won",
+                                "lost",
+                                "nurturing"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high",
+                                "very_high"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "current_step_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Busca em company_name, contact_name, email, phone",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de leads do afiliado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Cria um lead indicado pelo afiliado",
+                "description": "affiliate_id é definido automaticamente a partir do afiliado autenticado. Detecta (sem bloquear) possíveis duplicados.",
+                "operationId": "f700dde988fe78a90253d2849d0135ca",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "company_name"
+                                ],
+                                "properties": {
+                                    "company_name": {
+                                        "type": "string"
+                                    },
+                                    "contact_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "whatsapp": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "website": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "segment": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "employees_count": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "source": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "current_step_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "default": "medium",
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high",
+                                            "very_high"
+                                        ]
+                                    },
+                                    "general_notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lead criado. Inclui aviso de possíveis duplicados (duplicate_warning, possible_duplicates)"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/leads/{id}": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Exibe um lead do próprio afiliado",
+                "operationId": "7e51dd63973d4fa0be854012b63e5d32",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes do lead, incluindo notas e histórico de etapas"
+                    },
+                    "404": {
+                        "description": "Lead não encontrado ou não pertence a este afiliado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Atualiza um lead do próprio afiliado",
+                "operationId": "e1933a06195c7a31fbc7752def3de9e8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lead atualizado"
+                    },
+                    "404": {
+                        "description": "Lead não encontrado ou não pertence a este afiliado"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/leads/{id}/notes": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Adiciona uma observação a um lead do afiliado",
+                "operationId": "68f9ff48ba8532b5fe33103c390b7958",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "note"
+                                ],
+                                "properties": {
+                                    "note": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Nota criada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/leads/{id}/next-action": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Define a próxima ação de um lead do afiliado",
+                "operationId": "125404612562062ff3b0994410311f73",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "next_action_type",
+                                    "next_action_at"
+                                ],
+                                "properties": {
+                                    "next_action_type": {
+                                        "type": "string"
+                                    },
+                                    "next_action_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Próxima ação registrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/leads/{id}/move-step": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Move um lead do afiliado para outra etapa",
+                "description": "Cria um registro em lead_step_logs.",
+                "operationId": "eb6f9a36d14955fd74519d7608786f53",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "step_id"
+                                ],
+                                "properties": {
+                                    "step_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "scheduled_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Etapa atualizada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/leads/{id}/mark-won": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Marca um lead do afiliado como convertido",
+                "description": "Se base_amount for informado, gera as comissões recorrentes do afiliado (padrão: 20% por 6 meses).",
+                "operationId": "0fb8866df043f2a176f678e8dc47a367",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "customer_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "base_amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lead convertido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/leads/{id}/mark-lost": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Marca um lead do afiliado como perdido",
+                "operationId": "fe0b6bf9867e36fde6896d990cffa85d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "lost_reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lead marcado como perdido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/commissions": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Lista as comissões do próprio afiliado",
+                "operationId": "95d18f4ce7fdc17264a340ab556adcf1",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "cancelled",
+                                "paid"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de comissões"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/bonuses": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Lista os bônus mensais do próprio afiliado",
+                "operationId": "331d63abfcb39e2a42a7370d4d8235c6",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de bônus (50€ a cada 5 clientes pagos no mesmo mês calendário)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/affiliate-portal/steps": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliate Portal"
+                ],
+                "summary": "Lista etapas do funil comercial (visão do afiliado)",
+                "operationId": "d5fbadc1cf45216cf8ae5fd625d7220d",
+                "responses": {
+                    "200": {
+                        "description": "Lista de etapas ordenadas por position"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/affiliates": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Lista afiliados",
+                "operationId": "c17ea621fe292e0a0157cb2bf871d1d2",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de afiliados"
+                    },
+                    "403": {
+                        "description": "Sem permissão para acessar afiliados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Cria um afiliado",
+                "operationId": "4c8800ea4ac549e2b4a89852de5b0548",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "slug"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "slug": {
+                                        "description": "Usado no link público /r/{slug}",
+                                        "type": "string"
+                                    },
+                                    "commission_plan_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "default": "active",
+                                        "enum": [
+                                            "active",
+                                            "inactive"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Afiliado criado"
+                    },
+                    "422": {
+                        "description": "Slug duplicado ou dados inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/affiliates/{affiliate}": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Exibe um afiliado",
+                "operationId": "2bb686e6b356618536ecba7ea79f92fa",
+                "parameters": [
+                    {
+                        "name": "affiliate",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes do afiliado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Atualiza um afiliado",
+                "operationId": "be24700c4d1f1a7b62809d24a8e88ec2",
+                "parameters": [
+                    {
+                        "name": "affiliate",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Afiliado atualizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Remove um afiliado",
+                "operationId": "e415e384c2f7fb2dbe19ef5e772c1540",
+                "parameters": [
+                    {
+                        "name": "affiliate",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Afiliado removido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/affiliates/{id}/resend-invite": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Reenvia o convite de acesso ao afiliado",
+                "description": "Gera um novo invite_code, atualiza invite_expires_at e reenvia o e-mail de convite. Restrito a super_admin e admin.",
+                "operationId": "28b63bedb6081bd1ba1127717557276f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Convite reenviado com sucesso"
+                    },
+                    "404": {
+                        "description": "Afiliado não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/affiliates/{id}/metrics": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Métricas de performance do afiliado",
+                "operationId": "f07967c2df650eb7f89fd38f38d29cb6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "total_clicks, unique_clicks, total_leads, won_leads, conversion_rate_click_to_lead, conversion_rate_lead_to_customer, pending_commissions, paid_commissions, pending_bonus, paid_bonus"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/r/{slug}": {
+            "get": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Link público de rastreamento do afiliado",
+                "description": "Endpoint público (sem autenticação). Registra o clique (IP salvo apenas como hash SHA-256) e redireciona para a landing page do Jornafy com ?ref={slug}.",
+                "operationId": "8ef589cb94249f9049ab8244a5109937",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirecionamento para a landing page"
+                    }
+                }
+            }
+        },
+        "/v1/commercial/track-affiliate-click": {
+            "post": {
+                "tags": [
+                    "Commercial - Affiliates"
+                ],
+                "summary": "Registra um clique de afiliado (alternativa não-redirect)",
+                "description": "Endpoint público (sem autenticação), pensado para frontends que não seguem o redirect HTTP de /r/{slug}.",
+                "operationId": "e01d2865672f1e9465744724a96a0a4e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "slug"
+                                ],
+                                "properties": {
+                                    "slug": {
+                                        "type": "string"
+                                    },
+                                    "landing_page": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "utm_source": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "utm_medium": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "utm_campaign": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Clique registrado"
+                    },
+                    "404": {
+                        "description": "Afiliado não encontrado ou inativo"
+                    }
+                }
+            }
+        },
+        "/v1/admin/commercial/commissions": {
+            "get": {
+                "tags": [
+                    "Commercial - Commissions"
+                ],
+                "summary": "Lista comissões de afiliados",
+                "operationId": "0979117cbef4260b690382f7d02aa0a1",
+                "parameters": [
+                    {
+                        "name": "affiliate_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "cancelled",
+                                "paid"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de comissões"
+                    },
+                    "403": {
+                        "description": "Sem permissão para acessar comissões"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/commissions/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Commercial - Commissions"
+                ],
+                "summary": "Aprova uma comissão pendente",
+                "description": "Fluxo manual/administrativo, usado enquanto não houver integração automática com evento de pagamento.",
+                "operationId": "d289899d918c8af80309bd2c744c9891",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comissão aprovada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/commissions/{id}/mark-paid": {
+            "post": {
+                "tags": [
+                    "Commercial - Commissions"
+                ],
+                "summary": "Marca uma comissão como paga",
+                "description": "Após marcar como paga, recalcula automaticamente o bônus mensal do afiliado (50€ a cada 5 clientes pagos no mês).",
+                "operationId": "f8b1225eaf5838d77ac0d792f0abda5f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comissão paga"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/affiliate-bonuses": {
+            "get": {
+                "tags": [
+                    "Commercial - Commissions"
+                ],
+                "summary": "Lista bônus mensais de afiliados",
+                "operationId": "6812a67ccafb513293258ecc044733aa",
+                "parameters": [
+                    {
+                        "name": "affiliate_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de bônus por afiliado/mês"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads": {
+            "get": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Lista leads comerciais",
+                "description": "super_admin e admin veem todos os leads.",
+                "operationId": "8f6c3b73b519508b8e6ac39691d0374d",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "in_progress",
+                                "demo_scheduled",
+                                "proposal_sent",
+                                "won",
+                                "lost",
+                                "nurturing"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high",
+                                "very_high"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "current_step_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "assigned_to_user_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "affiliate_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "country",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "segment",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "source",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "next_action_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "next_action_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "created_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "created_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Busca em company_name, contact_name, email, phone, whatsapp, website",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de leads"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Role sem acesso ao módulo Comercial"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Cria um novo lead",
+                "description": "Disponível para super_admin e admin. Detecta (sem bloquear) possíveis duplicados por email, telefone, whatsapp, website ou nome da empresa.",
+                "operationId": "607fa2aa431bde3ee592ed6345224b9b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "company_name"
+                                ],
+                                "properties": {
+                                    "company_name": {
+                                        "type": "string",
+                                        "example": "Acme Ltda"
+                                    },
+                                    "contact_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "whatsapp": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "website": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "segment": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "employees_count": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "source": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "affiliate_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "current_step_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "assigned_to_user_id": {
+                                        "description": "Precisa ser um usuário com role super_admin ou admin",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "default": "medium",
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high",
+                                            "very_high"
+                                        ]
+                                    },
+                                    "general_notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lead criado. Inclui aviso de possíveis duplicados (duplicate_warning, possible_duplicates), sem bloquear a criação."
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads/{id}": {
+            "get": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Exibe um lead",
+                "description": "Disponível para super_admin e admin.",
+                "operationId": "861d2fc198917dd6b864dc7ac3b5f4f7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes do lead, incluindo notas e histórico de etapas"
+                    },
+                    "404": {
+                        "description": "Lead não encontrado ou fora do escopo do usuário"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Atualiza um lead",
+                "operationId": "cfc22360ac3a06d9d4f60ca59e5f4a49",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lead atualizado"
+                    },
+                    "403": {
+                        "description": "Sem permissão para editar o lead"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Remove um lead (soft delete)",
+                "description": "Restrito a super_admin e admin.",
+                "operationId": "5ffdf4508c5025528cfe582b4978c9a9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lead removido"
+                    },
+                    "403": {
+                        "description": "Sem permissão para remover leads"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads/{id}/assign": {
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Atribui o lead a um usuário comercial",
+                "description": "Restrito a super_admin e admin.",
+                "operationId": "37bd7ff1d16f47a02b8a3608b3bc24f0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "assigned_to_user_id"
+                                ],
+                                "properties": {
+                                    "assigned_to_user_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Responsável atualizado"
+                    },
+                    "403": {
+                        "description": "Sem permissão para atribuir leads"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads/{id}/move-step": {
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Move o lead para outra etapa comercial",
+                "description": "Disponível para super_admin e admin. Cria um registro em lead_step_logs.",
+                "operationId": "2411a2def694e682f518d2395fd8737f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "step_id"
+                                ],
+                                "properties": {
+                                    "step_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "scheduled_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Etapa atualizada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads/{id}/notes": {
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Adiciona uma observação ao lead",
+                "description": "Disponível para super_admin e admin.",
+                "operationId": "aa6dfb00f093d9e66da81d224ee51400",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "note"
+                                ],
+                                "properties": {
+                                    "note": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Nota criada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads/{id}/next-action": {
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Define a próxima ação do lead",
+                "operationId": "d42708b155c990ba8a573cb9928a4427",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "next_action_type",
+                                    "next_action_at"
+                                ],
+                                "properties": {
+                                    "next_action_type": {
+                                        "type": "string"
+                                    },
+                                    "next_action_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "next_action_user_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Próxima ação registrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads/{id}/mark-won": {
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Marca o lead como convertido (cliente ganho)",
+                "description": "Se o lead tiver afiliado e base_amount for informado, gera as comissões recorrentes (padrão: 20% por 6 meses).",
+                "operationId": "0f78bfa45e5967a28d3dac0975777c5b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "customer_id": {
+                                        "description": "ID da empresa (companies) criada para este cliente",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "base_amount": {
+                                        "description": "Valor mensal base usado para calcular a comissão do afiliado",
+                                        "type": "number",
+                                        "format": "float",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lead convertido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads/{id}/mark-lost": {
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Marca o lead como perdido",
+                "operationId": "1be3ad120e1cfb2a05d495a36df064cf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "lost_reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lead marcado como perdido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/dashboard": {
+            "get": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Métricas comerciais (dashboard)",
+                "description": "Métricas completas para super_admin e admin.",
+                "operationId": "e0cdce1a0d3686a08544e5cd70a347e3",
+                "responses": {
+                    "200": {
+                        "description": "Métricas agregadas: total_leads, new_leads, leads_in_progress, demos_scheduled, proposals_sent, won_leads, lost_leads, leads_by_step, leads_by_priority, leads_by_agent, leads_by_affiliate, next_actions_today, overdue_next_actions"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/steps": {
+            "get": {
+                "tags": [
+                    "Commercial - Steps"
+                ],
+                "summary": "Lista etapas comerciais ativas e inativas",
+                "operationId": "7458c0a60f89dfcb1bfc52e6479a26c5",
+                "responses": {
+                    "200": {
+                        "description": "Lista de etapas ordenadas por position"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial - Steps"
+                ],
+                "summary": "Cria uma etapa comercial",
+                "description": "Restrito a super_admin e admin.",
+                "operationId": "ee4f6e150bf572b453bd7532c4c99698",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "position"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "position": {
+                                        "type": "integer"
+                                    },
+                                    "default_due_days": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "active": {
+                                        "type": "boolean",
+                                        "default": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Etapa criada"
+                    },
+                    "403": {
+                        "description": "Sem permissão para gerenciar etapas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/steps/{id}": {
+            "put": {
+                "tags": [
+                    "Commercial - Steps"
+                ],
+                "summary": "Atualiza uma etapa comercial",
+                "operationId": "e16df41478b7c4d81e0250f3074816b5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Etapa atualizada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Commercial - Steps"
+                ],
+                "summary": "Remove uma etapa comercial",
+                "description": "Bloqueado pelo banco se houver lead_step_logs referenciando a etapa.",
+                "operationId": "e8cd049192a9d53332842bdf2401ce58",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Etapa removida"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/steps/reorder": {
+            "post": {
+                "tags": [
+                    "Commercial - Steps"
+                ],
+                "summary": "Reordena as etapas comerciais",
+                "operationId": "b9b05c2ce7c2166cbb107f408e1961cc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "steps"
+                                ],
+                                "properties": {
+                                    "steps": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "position": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Etapas reordenadas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/debug/send-employee-invite-job": {
             "get": {
                 "tags": [
@@ -10350,6 +12569,26 @@
         {
             "name": "Billing",
             "description": "Rotas públicas de planos, sessões de checkout e portal de cobrança"
+        },
+        {
+            "name": "Commercial - Affiliate Portal",
+            "description": "Autenticação e área logada do afiliado (papel 'affiliate'). O afiliado só enxerga seus próprios leads, comissões e bônus."
+        },
+        {
+            "name": "Commercial - Affiliates",
+            "description": "Gestão de afiliados, links de rastreamento e métricas. Restrito a super_admin e admin."
+        },
+        {
+            "name": "Commercial - Commissions",
+            "description": "Comissões e bônus de afiliados. Restrito a super_admin e admin. Comissão padrão: 20% por 6 meses. Bônus: 50€ a cada 5 clientes pagos no mesmo mês calendário."
+        },
+        {
+            "name": "Commercial - Leads",
+            "description": "Gestão de leads do módulo Comercial. Acesso restrito a super_admin e admin."
+        },
+        {
+            "name": "Commercial - Steps",
+            "description": "Etapas do funil comercial. Gestão (criar/editar/remover/reordenar) restrita a super_admin e admin."
         },
         {
             "name": "Documents",
