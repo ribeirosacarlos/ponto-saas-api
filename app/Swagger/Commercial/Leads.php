@@ -5,7 +5,7 @@ namespace App\Swagger\Commercial;
 /**
  * @OA\Tag(
  *     name="Commercial - Leads",
- *     description="Gestão de leads do módulo Comercial (SuperAdmin). Acesso restrito a super_admin, commercial_manager e commercial_agent."
+ *     description="Gestão de leads do módulo Comercial. Acesso restrito a super_admin e admin."
  * )
  */
 class Leads {}
@@ -14,7 +14,7 @@ class Leads {}
  * @OA\Get(
  *     path="/v1/admin/commercial/leads",
  *     summary="Lista leads comerciais",
- *     description="super_admin e commercial_manager veem todos os leads. commercial_agent vê apenas os leads atribuídos a ele (assigned_to_user_id = usuário autenticado).",
+ *     description="super_admin e admin veem todos os leads.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -45,7 +45,7 @@ class LeadsIndex {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads",
  *     summary="Cria um novo lead",
- *     description="Disponível para super_admin, commercial_manager e commercial_agent. Detecta (sem bloquear) possíveis duplicados por email, telefone, whatsapp, website ou nome da empresa.",
+ *     description="Disponível para super_admin e admin. Detecta (sem bloquear) possíveis duplicados por email, telefone, whatsapp, website ou nome da empresa.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -68,7 +68,7 @@ class LeadsIndex {}
  *             @OA\Property(property="source", type="string", nullable=true),
  *             @OA\Property(property="affiliate_id", type="string", format="uuid", nullable=true),
  *             @OA\Property(property="current_step_id", type="string", format="uuid", nullable=true),
- *             @OA\Property(property="assigned_to_user_id", type="string", format="uuid", nullable=true, description="Precisa ser um usuário com role super_admin, commercial_manager ou commercial_agent"),
+ *             @OA\Property(property="assigned_to_user_id", type="string", format="uuid", nullable=true, description="Precisa ser um usuário com role super_admin ou admin"),
  *             @OA\Property(property="priority", type="string", enum={"low","medium","high","very_high"}, default="medium"),
  *             @OA\Property(property="general_notes", type="string", nullable=true)
  *         )
@@ -87,7 +87,7 @@ class LeadsStore {}
  * @OA\Get(
  *     path="/v1/admin/commercial/leads/{id}",
  *     summary="Exibe um lead",
- *     description="commercial_agent só pode visualizar leads atribuídos a ele (404 caso contrário, para não revelar existência do recurso).",
+ *     description="Disponível para super_admin e admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -109,7 +109,7 @@ class LeadsShow {}
  *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
  *
  *     @OA\Response(response=200, description="Lead atualizado"),
- *     @OA\Response(response=403, description="commercial_agent tentando editar lead não atribuído a ele"),
+ *     @OA\Response(response=403, description="Sem permissão para editar o lead"),
  *     @OA\Response(response=422, description="Erro de validação")
  * )
  */
@@ -119,14 +119,14 @@ class LeadsUpdate {}
  * @OA\Delete(
  *     path="/v1/admin/commercial/leads/{id}",
  *     summary="Remove um lead (soft delete)",
- *     description="Restrito a super_admin e commercial_manager.",
+ *     description="Restrito a super_admin e admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
  *
  *     @OA\Response(response=200, description="Lead removido"),
- *     @OA\Response(response=403, description="commercial_agent não pode remover leads")
+ *     @OA\Response(response=403, description="Sem permissão para remover leads")
  * )
  */
 class LeadsDestroy {}
@@ -135,7 +135,7 @@ class LeadsDestroy {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads/{id}/assign",
  *     summary="Atribui o lead a um usuário comercial",
- *     description="Restrito a super_admin e commercial_manager.",
+ *     description="Restrito a super_admin e admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -153,7 +153,7 @@ class LeadsAssign {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads/{id}/move-step",
  *     summary="Move o lead para outra etapa comercial",
- *     description="commercial_agent só pode mover etapas dos próprios leads. Cria um registro em lead_step_logs.",
+ *     description="Disponível para super_admin e admin. Cria um registro em lead_step_logs.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -175,7 +175,7 @@ class LeadsMoveStep {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads/{id}/notes",
  *     summary="Adiciona uma observação ao lead",
- *     description="commercial_agent só pode adicionar notas aos próprios leads.",
+ *     description="Disponível para super_admin e admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -250,7 +250,7 @@ class LeadsMarkLost {}
  * @OA\Get(
  *     path="/v1/admin/commercial/dashboard",
  *     summary="Métricas comerciais (dashboard)",
- *     description="super_admin e commercial_manager veem todos os dados. commercial_agent vê apenas dados dos próprios leads.",
+ *     description="Métricas completas para super_admin e admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *

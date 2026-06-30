@@ -29,7 +29,6 @@ class DatabaseSeeder extends Seeder
             AnnouncementSeeder::class,
             CommercialLeadStepsSeeder::class,
             CommercialCommissionPlanSeeder::class,
-            CommercialDevUsersSeeder::class,
         ]);
     }
 }

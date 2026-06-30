@@ -33,7 +33,7 @@ class CommercialLeadController extends Controller
     {
         $this->authorize('viewAny', CommercialLead::class);
 
-        $query = $this->scopedQuery($request->user())
+        $query = CommercialLead::query()
             ->with(['currentStep', 'assignedToUser', 'affiliate']);
 
         $this->applyFilters($query, $request);
@@ -76,7 +76,7 @@ class CommercialLeadController extends Controller
 
     public function show(Request $request, string $id)
     {
-        $lead = $this->scopedQuery($request->user())
+        $lead = CommercialLead::query()
             ->with(['currentStep', 'assignedToUser', 'createdByUser', 'affiliate', 'notes.user', 'stepLogs.step', 'stepLogs.user'])
             ->findOrFail($id);
 
@@ -262,17 +262,6 @@ class CommercialLeadController extends Controller
         );
 
         return new CommercialLeadResource($lead);
-    }
-
-    private function scopedQuery($user)
-    {
-        $query = CommercialLead::query();
-
-        if ($user->hasRole('commercial_agent') && ! $user->hasRole(['super_admin', 'commercial_manager'])) {
-            $query->where('assigned_to_user_id', $user->id);
-        }
-
-        return $query;
     }
 
     private function applyFilters($query, Request $request): void

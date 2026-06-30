@@ -5,7 +5,7 @@ namespace App\Swagger\Commercial;
 /**
  * @OA\Tag(
  *     name="Commercial - Affiliates",
- *     description="Gestão de afiliados, links de rastreamento e métricas. Restrito a super_admin e commercial_manager — commercial_agent não tem acesso."
+ *     description="Gestão de afiliados, links de rastreamento e métricas. Restrito a super_admin e admin."
  * )
  */
 class Affiliates {}
@@ -18,7 +18,7 @@ class Affiliates {}
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\Response(response=200, description="Lista paginada de afiliados"),
- *     @OA\Response(response=403, description="commercial_agent não acessa afiliados")
+ *     @OA\Response(response=403, description="Sem permissão para acessar afiliados")
  * )
  */
 class AffiliatesIndex {}
@@ -92,7 +92,7 @@ class AffiliatesDestroy {}
  * @OA\Post(
  *     path="/v1/admin/commercial/affiliates/{id}/resend-invite",
  *     summary="Reenvia o convite de acesso ao afiliado",
- *     description="Gera um novo invite_code, atualiza invite_expires_at e reenvia o e-mail de convite. Restrito a super_admin e commercial_manager.",
+ *     description="Gera um novo invite_code, atualiza invite_expires_at e reenvia o e-mail de convite. Restrito a super_admin e admin.",
  *     tags={"Commercial - Affiliates"},
  *     security={{"bearerAuth":{}}},
  *
