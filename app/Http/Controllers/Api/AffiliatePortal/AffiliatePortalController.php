@@ -11,15 +11,13 @@ class AffiliatePortalController extends Controller
 {
     public function me(Request $request)
     {
-        $affiliate = $request->user()->commercialAffiliate()->with('commissionPlan')->firstOrFail();
-
-        return new CommercialAffiliateResource($affiliate);
+        return new CommercialAffiliateResource(
+            $request->user()->load('commissionPlan')
+        );
     }
 
     public function dashboard(Request $request, CommercialAffiliateMetricsService $metricsService)
     {
-        $affiliate = $request->user()->commercialAffiliate()->firstOrFail();
-
-        return response()->json($metricsService->build($affiliate));
+        return response()->json($metricsService->build($request->user()));
     }
 }
