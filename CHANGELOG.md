@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.13.6](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.5...v2.13.6) (2026-07-01)
+
+
+### Correções de Bugs
+
+* Return 403 in RoleMiddleware for non-User authenticatables ([c604ad3](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c604ad3c1bbc99b51dcd4ae3b543a71086955371))
+* Return 403 in RoleMiddleware for non-User authenticatables ([04b9d1d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/04b9d1d92c62a8803121ed83242c95f01b903265))
+
 ## [2.13.5](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.4...v2.13.5) (2026-07-01)
 
 
