@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,10 @@ class RoleMiddleware
 
         if (! $user) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        if (! $user instanceof User) {
+            return response()->json(['message' => 'Forbidden.'], 403);
         }
 
         if ($user->hasRole('super_admin')) {
