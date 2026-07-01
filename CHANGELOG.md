@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.13.5](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.4...v2.13.5) (2026-07-01)
+
+
+### Correções de Bugs
+
+* Allow affiliates to authorize viewAny on CommercialLeadStep ([e7eae6a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e7eae6ad9936f350be49c60492f2a4d785f7edf1))
+* Allow affiliates to authorize viewAny on CommercialLeadStep ([a29d5b9](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a29d5b97619c277b6e6aefbfd9489a791bd7000d))
+
 ## [2.13.4](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.3...v2.13.4) (2026-06-30)
 
 
