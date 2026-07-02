@@ -3,33 +3,39 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\LoginRequest;
+use App\Http\Resources\AuthenticatedUserResource;
 use App\Models\User;
 use App\Support\CompanyTime;
-use App\Http\Requests\LoginRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    private const DUMMY_PASSWORD_HASH = '$2y$12$18pb3gxLga6ZoWmC0Fo.XeBNu/o77g6f.eLXTWh3CWfRlK9wvz3TW';
+
     public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required'
-        ]);
+        $user = User::with(['roles', 'company'])
+            ->where('email', strtolower($request->string('email')->toString()))
+            ->first();
 
-        $user = User::with('roles')->where('email', $request->email)->first();
+        $passwordMatches = Hash::check(
+            $request->string('password')->toString(),
+            $user?->password ?? self::DUMMY_PASSWORD_HASH
+        );
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (! $user || ! $passwordMatches) {
             return response()->json(['message' => 'Credenciais inválidas'], 401);
         }
 
         $token = $user->createToken('auth')->plainTextToken;
 
         return response()->json([
-            'user'  => $user,
+            'user' => (new AuthenticatedUserResource($user))->resolve($request),
             'roles' => $user->roles->pluck('name'),
             'token' => $token,
+            'expires_in' => config('sanctum.expiration') * 60,
         ]);
     }
 
@@ -44,7 +50,7 @@ class AuthController extends Controller
     {
         $user = $request->user()->load(['roles', 'company']);
         $timezone = CompanyTime::resolveTimezone($user->company);
-        $userPayload = $this->buildUserPayload($user, $timezone);
+        $userPayload = (new AuthenticatedUserResource($user))->resolve($request);
 
         return response()->json([
             'timezone' => $timezone,
@@ -56,20 +62,5 @@ class AuthController extends Controller
                 'timeZone' => $timezone,
             ],
         ]);
-    }
-
-    private function buildUserPayload(User $user, string $timezone): array
-    {
-        $payload = $user->toArray();
-        $payload['timezone'] = $timezone;
-        $payload['timeZone'] = $timezone;
-
-        if (isset($payload['company']) && is_array($payload['company'])) {
-            $companyTimezone = $payload['company']['timezone'] ?? $timezone;
-            $payload['company']['timezone'] = $companyTimezone;
-            $payload['company']['timeZone'] = $companyTimezone;
-        }
-
-        return $payload;
     }
 }

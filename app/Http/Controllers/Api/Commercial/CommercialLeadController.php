@@ -50,6 +50,10 @@ class CommercialLeadController extends Controller
         $data = $request->validated();
         $data['created_by_user_id'] = $request->user()->id;
 
+        if ($request->user()->hasRole('commercial_agent')) {
+            $data['assigned_to_user_id'] = $request->user()->id;
+        }
+
         $duplicates = $this->duplicateService->findDuplicates($data);
 
         $lead = CommercialLead::create($data);
@@ -76,9 +80,10 @@ class CommercialLeadController extends Controller
 
     public function show(Request $request, string $id)
     {
-        $lead = CommercialLead::query()
-            ->with(['currentStep', 'assignedToUser', 'createdByUser', 'affiliate', 'notes.user', 'stepLogs.step', 'stepLogs.user'])
-            ->findOrFail($id);
+        $lead = $this->findVisibleLead($id, [
+            'currentStep', 'assignedToUser', 'createdByUser', 'affiliate',
+            'notes.user', 'stepLogs.step', 'stepLogs.user',
+        ]);
 
         $this->authorize('view', $lead);
 
@@ -87,7 +92,7 @@ class CommercialLeadController extends Controller
 
     public function update(CommercialLeadUpdateRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('update', $lead);
 
@@ -109,7 +114,7 @@ class CommercialLeadController extends Controller
 
     public function destroy(string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('delete', $lead);
 
@@ -127,7 +132,7 @@ class CommercialLeadController extends Controller
 
     public function assign(CommercialLeadAssignRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('assign', $lead);
 
@@ -146,7 +151,7 @@ class CommercialLeadController extends Controller
 
     public function moveStep(CommercialLeadMoveStepRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('moveStep', $lead);
 
@@ -177,7 +182,7 @@ class CommercialLeadController extends Controller
 
     public function addNote(CommercialLeadNoteRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('addNote', $lead);
 
@@ -199,7 +204,7 @@ class CommercialLeadController extends Controller
 
     public function nextAction(CommercialLeadNextActionRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('update', $lead);
 
@@ -217,7 +222,7 @@ class CommercialLeadController extends Controller
 
     public function markWon(CommercialLeadMarkWonRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('markWon', $lead);
 
@@ -245,7 +250,7 @@ class CommercialLeadController extends Controller
 
     public function markLost(CommercialLeadMarkLostRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('markLost', $lead);
 
@@ -266,6 +271,10 @@ class CommercialLeadController extends Controller
 
     private function applyFilters($query, Request $request): void
     {
+        if ($request->user()->hasRole('commercial_agent')) {
+            $query->where('assigned_to_user_id', $request->user()->id);
+        }
+
         $query
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->input('priority')))
@@ -293,5 +302,18 @@ class CommercialLeadController extends Controller
                         ->orWhere('website', 'like', $term);
                 });
             });
+    }
+
+    private function findVisibleLead(string $id, array $with = []): CommercialLead
+    {
+        $user = request()->user();
+
+        return CommercialLead::query()
+            ->with($with)
+            ->when(
+                $user?->hasRole('commercial_agent'),
+                fn ($query) => $query->where('assigned_to_user_id', $user->id)
+            )
+            ->findOrFail($id);
     }
 }

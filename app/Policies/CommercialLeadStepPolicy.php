@@ -18,11 +18,11 @@ class CommercialLeadStepPolicy
             return false;
         }
 
-        return $user->hasRole('super_admin');
+        return $user->hasRole(['super_admin', 'commercial_manager', 'commercial_agent']);
     }
 
     public function manage(User $user): bool
     {
-        return $user->hasRole('super_admin');
+        return $user->hasRole(['super_admin', 'commercial_manager']);
     }
 }

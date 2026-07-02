@@ -49,7 +49,8 @@ class DocumentReviewUploadForEmployeeTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.0.original_name', 'holerite.pdf')
-            ->assertJsonPath('data.0.storage_disk', 's3')
+            ->assertJsonMissingPath('data.0.storage_disk')
+            ->assertJsonMissingPath('data.0.storage_path')
             ->assertJsonPath('data.0.mime_type', 'application/pdf');
 
         $documentId = $response->json('data.0.id');

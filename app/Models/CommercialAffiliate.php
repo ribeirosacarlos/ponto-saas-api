@@ -31,7 +31,7 @@ class CommercialAffiliate extends Authenticatable
         'invite_expires_at',
     ];
 
-    protected $hidden = ['password', 'invite_code_hash'];
+    protected $hidden = ['password', 'remember_token', 'invite_code_hash', 'invite_expires_at'];
 
     protected $casts = [
         'invite_expires_at' => 'datetime',

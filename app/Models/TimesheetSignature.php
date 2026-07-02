@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TimesheetSignature extends Model
 {
-    use HasFactory, HasUuids, CompanyScoped;
+    use CompanyScoped, HasFactory, HasUuids;
 
     public $incrementing = false;
 
@@ -37,6 +37,8 @@ class TimesheetSignature extends Model
         'superseded_at',
         'metadata',
     ];
+
+    protected $hidden = ['signature_image_path', 'password_confirmed_at', 'metadata'];
 
     protected $casts = [
         'role' => TimesheetSignatureRole::class,

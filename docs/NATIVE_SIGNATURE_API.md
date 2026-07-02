@@ -60,6 +60,8 @@ Gerado automaticamente após a assinatura do gestor. Contém:
 
 Armazenado em `timesheets/signed/{company_id}/{timesheet_id}.pdf` no disco configurado (`local` ou `s3`).
 
+> O caminho acima é exclusivamente interno. A API não retorna mais `pdf_path`; clientes usam `pdf_available` e o endpoint autenticado `/timesheets/{timesheet}/pdf`.
+
 ### Configurações por empresa (`companies`)
 
 | Campo | Tipo | Padrão | Descrição |

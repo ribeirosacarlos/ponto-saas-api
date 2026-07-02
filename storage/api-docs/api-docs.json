@@ -3,7 +3,7 @@
     "info": {
         "title": "Ponto SaaS API",
         "description": "Documentação da API de controle de ponto",
-        "version": "1.0.0"
+        "version": "1.1.0"
     },
     "servers": [
         {
@@ -3490,7 +3490,7 @@
                     "Auth"
                 ],
                 "summary": "Performs user login",
-                "description": "Returns the token and authenticated user data",
+                "description": "Retorna token Sanctum com validade de 30 dias e dados do usuário em allowlist.",
                 "operationId": "2c84e8de383e2d44452e7f8b79a8b7e2",
                 "requestBody": {
                     "description": "Login credentials",
@@ -3526,8 +3526,7 @@
                                 "schema": {
                                     "properties": {
                                         "user": {
-                                            "description": "Authenticated user object",
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/AuthenticatedUser"
                                         },
                                         "roles": {
                                             "type": "array",
@@ -3542,6 +3541,11 @@
                                         "token": {
                                             "type": "string",
                                             "example": "2|xjfi3290jf0239jf0asd0f9as..."
+                                        },
+                                        "expires_in": {
+                                            "description": "Validade do token em segundos (30 dias).",
+                                            "type": "integer",
+                                            "example": 2592000
                                         }
                                     },
                                     "type": "object"
@@ -3568,13 +3572,64 @@
                 }
             }
         },
+        "/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Retorna a sessão autenticada em formato seguro",
+                "operationId": "a14006c635ca4d480c916acf8ee95966",
+                "responses": {
+                    "200": {
+                        "description": "Sessão atual",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "timezone": {
+                                            "type": "string"
+                                        },
+                                        "timeZone": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "$ref": "#/components/schemas/AuthenticatedUser"
+                                                },
+                                                "roles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token ausente, revogado ou expirado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/auth/logout": {
             "post": {
                 "tags": [
                     "Auth"
                 ],
                 "summary": "Performs logout for authenticated user",
-                "description": "Revokes the current user token",
+                "description": "Revoga o token Sanctum atual no servidor.",
                 "operationId": "d8ae940eb58b4e626e279e176bfd7457",
                 "responses": {
                     "200": {
@@ -3607,7 +3662,7 @@
                     "Auth"
                 ],
                 "summary": "Request password reset",
-                "description": "Sends a password reset code to the user's email",
+                "description": "Enfileira a recuperação e sempre retorna resposta neutra, exista ou não uma conta.",
                 "operationId": "cd688b33a954749cb3dad5a7762f25b0",
                 "requestBody": {
                     "description": "Email for password reset",
@@ -9143,6 +9198,156 @@
                     }
                 ]
             }
+        },
+        "/v1/employee/timesheets": {
+            "get": {
+                "tags": [
+                    "Timesheets"
+                ],
+                "summary": "Lista as próprias folhas",
+                "operationId": "cd53fc6d695b2ccabc6d3626a054a80b",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TimesheetResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/timesheets/{timesheet}": {
+            "get": {
+                "tags": [
+                    "Timesheets"
+                ],
+                "summary": "Detalha a própria folha",
+                "operationId": "e684ec5084f52ed2628fde9c388afaf0",
+                "parameters": [
+                    {
+                        "name": "timesheet",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Folha",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TimesheetResource"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Folha fora do escopo"
+                    },
+                    "404": {
+                        "description": "Folha não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/timesheets/{timesheet}/pdf": {
+            "get": {
+                "tags": [
+                    "Timesheets"
+                ],
+                "summary": "Baixa ou obtém URL temporária do PDF",
+                "operationId": "d8d069a57718bcd7b004db69e4e9448c",
+                "parameters": [
+                    {
+                        "name": "timesheet",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Arquivo ou objeto com URL temporária"
+                    },
+                    "404": {
+                        "description": "PDF indisponível"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/timesheets/{timesheet}": {
+            "get": {
+                "tags": [
+                    "Timesheets"
+                ],
+                "summary": "Detalha folha visível ao gestor",
+                "operationId": "a511669a878b51ca3f8d1c6d5c85632b",
+                "parameters": [
+                    {
+                        "name": "timesheet",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Folha",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TimesheetResource"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Empresa ou área fora do escopo"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -9337,6 +9542,34 @@
                     },
                     "email": {
                         "type": "string"
+                    },
+                    "area_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "must_change_password": {
+                        "type": "boolean"
+                    },
+                    "role": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "area": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "managed_areas": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
                     },
                     "created_at": {
                         "type": "string",
@@ -9561,6 +9794,80 @@
                 },
                 "type": "object"
             },
+            "AuthenticatedCompanySummary": {
+                "description": "Resumo seguro da empresa. IDs de cobrança e configurações internas não são expostos.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "timeZone": {
+                        "type": "string"
+                    },
+                    "country": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "locale": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AuthenticatedUser": {
+                "description": "Usuário autenticado em allowlist; hashes, tokens e campos de convite nunca são retornados.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "area_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "must_change_password": {
+                        "type": "boolean"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "timeZone": {
+                        "type": "string"
+                    },
+                    "company": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/AuthenticatedCompanySummary"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "BillingCheckoutSessionRequest": {
                 "required": [
                     "plan_id"
@@ -9708,6 +10015,7 @@
                 "type": "object"
             },
             "DocumentResource": {
+                "description": "Documento sem nomes de disco ou caminhos internos. Use view_url/download_url ou os endpoints autenticados.",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -11203,12 +11511,78 @@
                     }
                 },
                 "type": "object"
+            },
+            "TimesheetResource": {
+                "description": "Folha de ponto segura. O caminho interno do PDF não é exposto.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "closure_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "employee": {
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "snapshot": {
+                        "type": "object"
+                    },
+                    "snapshot_generated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "signatures": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "open_dispute": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "pdf_available": {
+                        "description": "Use o endpoint /pdf quando true.",
+                        "type": "boolean"
+                    },
+                    "pdf_generated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "document_hash": {
+                        "description": "SHA-256 para verificação de integridade.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
-                "bearerFormat": "JWT",
+                "bearerFormat": "Sanctum",
                 "scheme": "bearer"
             }
         }
@@ -11321,6 +11695,10 @@
         {
             "name": "Settings",
             "description": "Endpoints que expõem o overview de billing e configurações da empresa logada"
+        },
+        {
+            "name": "Timesheets",
+            "description": "Folhas de ponto mensais e assinaturas"
         },
         {
             "name": "Debug",

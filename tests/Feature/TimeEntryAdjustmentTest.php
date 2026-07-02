@@ -365,7 +365,7 @@ class TimeEntryAdjustmentTest extends TestCase
         $employee->assignRole('employee');
 
         $manager = User::factory()->create(['company_id' => $company->id]);
-        $manager->assignRole('area_manager');
+        $manager->assignRole('admin');
 
         $proposedClockedAt = Carbon::now()->subHour();
 
@@ -409,7 +409,7 @@ class TimeEntryAdjustmentTest extends TestCase
         $employee->assignRole('employee');
 
         $manager = User::factory()->create(['company_id' => $company->id]);
-        $manager->assignRole('area_manager');
+        $manager->assignRole('admin');
 
         $adjustmentEntry = TimeEntry::create([
             'company_id' => $company->id,

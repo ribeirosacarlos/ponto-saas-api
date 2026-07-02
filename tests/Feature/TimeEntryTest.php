@@ -52,7 +52,7 @@ class TimeEntryTest extends TestCase
             'company_id' => $user->company_id,
             'user_id' => $user->id,
             'adjustment_status' => 'pending',
-            'adjustment_reason' => 'Fora do turno/jornada (dia nao trabalhado ou sem jornada).',
+            'adjustment_reason' => 'Fora do turno/jornada (dia não trabalhado ou sem jornada).',
         ]);
     }
 

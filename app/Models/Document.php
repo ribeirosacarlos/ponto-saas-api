@@ -68,6 +68,8 @@ class Document extends Model
         'rejected_at',
     ];
 
+    protected $hidden = ['path', 'storage_disk'];
+
     protected $casts = [
         'size_bytes' => 'integer',
     ];

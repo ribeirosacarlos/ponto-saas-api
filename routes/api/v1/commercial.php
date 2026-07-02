@@ -40,7 +40,7 @@ Route::prefix('affiliate-portal')
     });
 
 Route::prefix('admin/commercial')
-    ->middleware(['role:super_admin'])
+    ->middleware(['role:super_admin|commercial_manager|commercial_agent'])
     ->group(function () {
         Route::get('dashboard', [CommercialDashboardController::class, 'show']);
 
@@ -58,7 +58,7 @@ Route::prefix('admin/commercial')
 
         Route::get('steps', [CommercialLeadStepController::class, 'index']);
 
-        Route::middleware(['role:super_admin'])->group(function () {
+        Route::middleware(['role:super_admin|commercial_manager'])->group(function () {
             Route::post('steps', [CommercialLeadStepController::class, 'store']);
             Route::put('steps/{id}', [CommercialLeadStepController::class, 'update']);
             Route::delete('steps/{id}', [CommercialLeadStepController::class, 'destroy']);
@@ -66,7 +66,8 @@ Route::prefix('admin/commercial')
 
             Route::apiResource('affiliates', CommercialAffiliateController::class);
             Route::get('affiliates/{id}/metrics', [CommercialAffiliateController::class, 'metrics']);
-            Route::post('affiliates/{id}/resend-invite', [CommercialAffiliateController::class, 'resendInvite']);
+            Route::post('affiliates/{id}/resend-invite', [CommercialAffiliateController::class, 'resendInvite'])
+                ->middleware('throttle:email-actions');
 
             Route::get('commissions', [CommercialCommissionController::class, 'index']);
             Route::post('commissions/{id}/approve', [CommercialCommissionController::class, 'approve']);

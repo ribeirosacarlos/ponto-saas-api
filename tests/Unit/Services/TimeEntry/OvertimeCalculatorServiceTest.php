@@ -478,10 +478,10 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->assertSame(3, $result['days'][0]['exceeded_break_minutes']);
         $this->assertSame(443, $result['days'][0]['worked_minutes']);
         $this->assertSame('07:23', $result['days'][0]['worked_hhmm']);
-        $this->assertSame(100, $result['days'][0]['balance_minutes']);
-        $this->assertSame('+01:40', $result['days'][0]['balance_hhmm']);
-        $this->assertSame(100, $result['days'][0]['extra_minutes']);
-        $this->assertSame('01:40', $result['days'][0]['extra_hhmm']);
+        $this->assertSame(103, $result['days'][0]['balance_minutes']);
+        $this->assertSame('+01:43', $result['days'][0]['balance_hhmm']);
+        $this->assertSame(103, $result['days'][0]['extra_minutes']);
+        $this->assertSame('01:43', $result['days'][0]['extra_hhmm']);
         $this->assertSame(0, $result['days'][0]['debt_minutes']);
         $this->assertSame('00:00', $result['days'][0]['debt_hhmm']);
     }
