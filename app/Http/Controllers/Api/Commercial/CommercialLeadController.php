@@ -34,7 +34,7 @@ class CommercialLeadController extends Controller
         $this->authorize('viewAny', CommercialLead::class);
 
         $query = CommercialLead::query()
-            ->with(['currentStep', 'assignedToUser', 'affiliate']);
+            ->with(['currentStep', 'assignedToUser', 'createdByUser', 'affiliate']);
 
         $this->applyFilters($query, $request);
 
@@ -270,6 +270,7 @@ class CommercialLeadController extends Controller
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->input('priority')))
             ->when($request->filled('current_step_id'), fn ($q) => $q->where('current_step_id', $request->input('current_step_id')))
+            ->when($request->filled('is_overdue'), fn ($q) => $q->overdue($request->boolean('is_overdue')))
             ->when($request->filled('assigned_to_user_id'), fn ($q) => $q->where('assigned_to_user_id', $request->input('assigned_to_user_id')))
             ->when($request->filled('affiliate_id'), fn ($q) => $q->where('affiliate_id', $request->input('affiliate_id')))
             ->when($request->filled('country'), fn ($q) => $q->where('country', $request->input('country')))

@@ -34,12 +34,13 @@ class AffiliatePortalLeadController extends Controller
 
         $query = CommercialLead::query()
             ->where('affiliate_id', $affiliateId)
-            ->with(['currentStep', 'assignedToUser', 'affiliate']);
+            ->with(['currentStep', 'assignedToUser', 'createdByUser', 'affiliate']);
 
         $query
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->input('priority')))
             ->when($request->filled('current_step_id'), fn ($q) => $q->where('current_step_id', $request->input('current_step_id')))
+            ->when($request->filled('is_overdue'), fn ($q) => $q->overdue($request->boolean('is_overdue')))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = '%'.$request->input('search').'%';
                 $q->where(function ($q) use ($term) {

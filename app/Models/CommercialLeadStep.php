@@ -18,16 +18,19 @@ class CommercialLeadStep extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'description',
         'position',
         'default_due_days',
         'active',
+        'is_final',
     ];
 
     protected $casts = [
         'position' => 'integer',
         'default_due_days' => 'integer',
         'active' => 'boolean',
+        'is_final' => 'boolean',
     ];
 
     public function getTable(): string
@@ -43,5 +46,14 @@ class CommercialLeadStep extends Model
     public function stepLogs(): HasMany
     {
         return $this->hasMany(CommercialLeadStepLog::class, 'step_id');
+    }
+
+    public function nextActive(): ?self
+    {
+        return static::query()
+            ->where('active', true)
+            ->where('position', '>', $this->position)
+            ->orderBy('position')
+            ->first();
     }
 }

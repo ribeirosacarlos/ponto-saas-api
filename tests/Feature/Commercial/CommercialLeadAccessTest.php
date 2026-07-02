@@ -16,7 +16,7 @@ class CommercialLeadAccessTest extends TestCase
     {
         parent::setUp();
 
-        foreach (['super_admin', 'commercial_manager', 'commercial_agent'] as $role) {
+        foreach (['super_admin', 'admin', 'commercial_manager', 'commercial_agent'] as $role) {
             Role::updateOrCreate(['name' => $role], ['display_name' => $role]);
         }
     }
@@ -94,6 +94,26 @@ class CommercialLeadAccessTest extends TestCase
 
         $this->actingAs($agent)
             ->getJson('/v1/admin/commercial/commissions')
+            ->assertForbidden();
+    }
+
+    public function test_plain_admin_cannot_access_commercial_leads(): void
+    {
+        // O módulo comercial é da plataforma inteira (sem company_id), então
+        // um admin (escopado à própria empresa) não deve enxergá-lo — só super_admin.
+        $admin = $this->userWithRole('admin');
+
+        $this->actingAs($admin)
+            ->getJson('/v1/admin/commercial/leads')
+            ->assertForbidden();
+    }
+
+    public function test_plain_admin_cannot_access_commercial_affiliates(): void
+    {
+        $admin = $this->userWithRole('admin');
+
+        $this->actingAs($admin)
+            ->getJson('/v1/admin/commercial/affiliates')
             ->assertForbidden();
     }
 

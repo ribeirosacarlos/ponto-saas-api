@@ -5,7 +5,7 @@ namespace App\Swagger\Commercial;
 /**
  * @OA\Tag(
  *     name="Commercial - Commissions",
- *     description="Comissões e bônus de afiliados. Restrito a super_admin e admin. Comissão padrão: 20% por 6 meses. Bônus: 50€ a cada 5 clientes pagos no mesmo mês calendário."
+ *     description="Comissões e bônus de afiliados. Restrito a super_admin. Comissão padrão: 20% por 6 meses. Bônus: 50€ a cada 5 clientes pagos no mesmo mês calendário."
  * )
  */
 class Commissions {}

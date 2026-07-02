@@ -11,7 +11,7 @@ class CommercialLeadPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['super_admin', 'admin']);
+        return $user->hasRole('super_admin');
     }
 
     public function view(Authenticatable $user, CommercialLead $lead): bool
@@ -24,7 +24,7 @@ class CommercialLeadPolicy
             return false;
         }
 
-        return $user->hasRole(['super_admin', 'admin']);
+        return $user->hasRole('super_admin');
     }
 
     public function create(Authenticatable $user): bool
@@ -37,7 +37,7 @@ class CommercialLeadPolicy
             return false;
         }
 
-        return $user->hasRole(['super_admin', 'admin']);
+        return $user->hasRole('super_admin');
     }
 
     public function update(Authenticatable $user, CommercialLead $lead): bool
@@ -47,12 +47,12 @@ class CommercialLeadPolicy
 
     public function delete(User $user, CommercialLead $lead): bool
     {
-        return $user->hasRole(['super_admin', 'admin']);
+        return $user->hasRole('super_admin');
     }
 
     public function assign(User $user, CommercialLead $lead): bool
     {
-        return $user->hasRole(['super_admin', 'admin']);
+        return $user->hasRole('super_admin');
     }
 
     public function moveStep(Authenticatable $user, CommercialLead $lead): bool
