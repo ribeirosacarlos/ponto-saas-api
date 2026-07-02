@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.14.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.6...v2.14.0) (2026-07-02)
+
+
+### Novas Funcionalidades
+
+* Add Jornafy commercial pipeline stage tracking and overdue detection ([d997597](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d997597d9b9a3f902862ba2fa8f5c70d7822b742))
+
+
+### Correções de Bugs
+
+* Restrict commercial module access to super_admin only ([a6f85da](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a6f85da7fc7a1f6a18556a672ec6d81c802b0114))
+
 ## [2.13.6](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.5...v2.13.6) (2026-07-01)
 
 
