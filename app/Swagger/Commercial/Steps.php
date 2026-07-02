@@ -5,7 +5,7 @@ namespace App\Swagger\Commercial;
 /**
  * @OA\Tag(
  *     name="Commercial - Steps",
- *     description="Etapas do funil comercial. Gestão (criar/editar/remover/reordenar) restrita a super_admin e admin."
+ *     description="Etapas do funil comercial. Gestão (criar/editar/remover/reordenar) restrita a super_admin."
  * )
  */
 class Steps {}
@@ -26,7 +26,7 @@ class StepsIndex {}
  * @OA\Post(
  *     path="/v1/admin/commercial/steps",
  *     summary="Cria uma etapa comercial",
- *     description="Restrito a super_admin e admin.",
+ *     description="Restrito a super_admin.",
  *     tags={"Commercial - Steps"},
  *     security={{"bearerAuth":{}}},
  *

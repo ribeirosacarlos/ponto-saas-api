@@ -5,7 +5,7 @@ namespace App\Swagger\Commercial;
 /**
  * @OA\Tag(
  *     name="Commercial - Affiliates",
- *     description="Gestão de afiliados, links de rastreamento e métricas. Restrito a super_admin e admin."
+ *     description="Gestão de afiliados, links de rastreamento e métricas. Restrito a super_admin."
  * )
  */
 class Affiliates {}
@@ -92,7 +92,7 @@ class AffiliatesDestroy {}
  * @OA\Post(
  *     path="/v1/admin/commercial/affiliates/{id}/resend-invite",
  *     summary="Reenvia o convite de acesso ao afiliado",
- *     description="Gera um novo invite_code, atualiza invite_expires_at e reenvia o e-mail de convite. Restrito a super_admin e admin.",
+ *     description="Gera um novo invite_code, atualiza invite_expires_at e reenvia o e-mail de convite. Restrito a super_admin.",
  *     tags={"Commercial - Affiliates"},
  *     security={{"bearerAuth":{}}},
  *
