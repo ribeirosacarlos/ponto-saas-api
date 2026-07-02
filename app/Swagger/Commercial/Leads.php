@@ -21,6 +21,7 @@ class Leads {}
  *     @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"new","in_progress","demo_scheduled","proposal_sent","won","lost","nurturing"})),
  *     @OA\Parameter(name="priority", in="query", @OA\Schema(type="string", enum={"low","medium","high","very_high"})),
  *     @OA\Parameter(name="current_step_id", in="query", @OA\Schema(type="string", format="uuid")),
+ *     @OA\Parameter(name="is_overdue", in="query", description="Filtra leads cuja etapa atual já venceu (true) ou ainda está no prazo (false), com base em current_step_started_at + default_due_days da etapa", @OA\Schema(type="boolean")),
  *     @OA\Parameter(name="assigned_to_user_id", in="query", @OA\Schema(type="string", format="uuid")),
  *     @OA\Parameter(name="affiliate_id", in="query", @OA\Schema(type="string", format="uuid")),
  *     @OA\Parameter(name="country", in="query", @OA\Schema(type="string")),
@@ -34,7 +35,7 @@ class Leads {}
  *     @OA\Parameter(name="search", in="query", description="Busca em company_name, contact_name, email, phone, whatsapp, website", @OA\Schema(type="string")),
  *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=20)),
  *
- *     @OA\Response(response=200, description="Lista paginada de leads"),
+ *     @OA\Response(response=200, description="Lista paginada de leads. Cada lead inclui created_by_user {id,name,email} (quem cadastrou o lead) e assigned_to_user {id,name,email} (responsável atual), além dos campos calculados de pipeline (current_stage_name, current_stage_due_at, current_stage_is_overdue, current_stage_warning_message, next_stage_id, next_stage_name)."),
  *     @OA\Response(response=401, description="Não autenticado"),
  *     @OA\Response(response=403, description="Role sem acesso ao módulo Comercial")
  * )

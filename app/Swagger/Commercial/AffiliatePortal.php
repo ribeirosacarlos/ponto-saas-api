@@ -31,11 +31,14 @@ class AffiliatePortal {}
  *     @OA\Response(
  *         response=200,
  *         description="Login efetuado",
+ *
  *         @OA\JsonContent(
+ *
  *             @OA\Property(property="affiliate", type="object"),
  *             @OA\Property(property="token", type="string")
  *         )
  *     ),
+ *
  *     @OA\Response(response=401, description="Credenciais inválidas"),
  *     @OA\Response(response=403, description="Conta de afiliado inativa")
  * )
@@ -177,10 +180,11 @@ class PortalDashboard {}
  *     @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"new","in_progress","demo_scheduled","proposal_sent","won","lost","nurturing"})),
  *     @OA\Parameter(name="priority", in="query", @OA\Schema(type="string", enum={"low","medium","high","very_high"})),
  *     @OA\Parameter(name="current_step_id", in="query", @OA\Schema(type="string", format="uuid")),
+ *     @OA\Parameter(name="is_overdue", in="query", description="Filtra leads cuja etapa atual já venceu (true) ou ainda está no prazo (false)", @OA\Schema(type="boolean")),
  *     @OA\Parameter(name="search", in="query", description="Busca em company_name, contact_name, email, phone", @OA\Schema(type="string")),
  *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=20)),
  *
- *     @OA\Response(response=200, description="Lista paginada de leads do afiliado")
+ *     @OA\Response(response=200, description="Lista paginada de leads do afiliado. Inclui created_by_user e assigned_to_user quando aplicável, além dos campos calculados de pipeline.")
  * )
  */
 class PortalLeadsIndex {}
