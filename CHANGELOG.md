@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.16.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.1...v2.16.2) (2026-07-05)
+
+
+### Correções de Bugs
+
+* allow Pragma header in CORS preflight ([a90b472](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a90b47251b6463d8241b3229da0b6e9e631fa36d))
+* allow Pragma header in CORS preflight ([a855a21](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a855a21bc79d525f9ae765a4672a880683d94a3e))
+
 ## [2.16.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.0...v2.16.1) (2026-07-05)
 
 
