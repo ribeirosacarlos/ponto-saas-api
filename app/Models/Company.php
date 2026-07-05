@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -13,6 +13,7 @@ class Company extends Model
     use HasFactory, HasUuids, SoftDeletes;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -47,6 +48,11 @@ class Company extends Model
         'require_timesheet_signature',
         'require_password_confirmation_for_signature',
         'allow_geolocation_on_signature',
+    ];
+
+    protected $hidden = [
+        'stripe_customer_id',
+        'current_plan_id',
     ];
 
     protected $casts = [

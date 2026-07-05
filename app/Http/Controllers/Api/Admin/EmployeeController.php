@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Actions\Employees\InviteEmployeeAction;
+use App\Actions\Employees\ResendEmployeeInviteAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmployeeStoreRequest;
+use App\Http\Resources\EmployeeResource;
 use App\Models\Area;
 use App\Models\Shift;
 use App\Models\User;
-use App\Actions\Employees\InviteEmployeeAction;
-use App\Actions\Employees\ResendEmployeeInviteAction;
 use App\Services\AuditLogService;
 use App\Services\ExtraEmployeeChargeService;
-use App\Services\UserVisibilityService;
 use App\Services\UserShiftService;
+use App\Services\UserVisibilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -27,15 +28,18 @@ class EmployeeController extends Controller
         protected UserShiftService $userShiftService,
         protected ExtraEmployeeChargeService $extraEmployeeChargeService,
         protected AuditLogService $auditLogService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
-        return $this->userVisibilityService
+        $employees = $this->userVisibilityService
             ->visibleUsersQuery($request->user())
             ->with(['roles', 'area', 'managedAreas'])
             ->paginate($request->integer('per_page', 20));
+
+        $employees->through(fn (User $employee) => (new EmployeeResource($employee))->resolve($request));
+
+        return $employees;
     }
 
     public function store(EmployeeStoreRequest $request, InviteEmployeeAction $inviteEmployeeAction)
@@ -52,7 +56,7 @@ class EmployeeController extends Controller
 
         $user = $inviteEmployeeAction->execute($request->user(), $data);
 
-        return response()->json($user, 201);
+        return response()->json((new EmployeeResource($user->load(['roles', 'area', 'managedAreas'])))->resolve($request), 201);
     }
 
     public function show($id)
@@ -60,7 +64,9 @@ class EmployeeController extends Controller
         $employee = User::where('company_id', request()->user()->company_id)->findOrFail($id);
         $this->authorize('view', $employee);
 
-        return $employee->load(['userShifts.shift', 'roles', 'area', 'managedAreas']);
+        return response()->json((new EmployeeResource(
+            $employee->load(['userShifts.shift', 'roles', 'area', 'managedAreas'])
+        ))->resolve(request()));
     }
 
     public function update($id, EmployeeStoreRequest $request)
@@ -73,7 +79,7 @@ class EmployeeController extends Controller
         $areas = $this->resolveAreas($request->user()->company_id, $data);
 
         $changes = collect([
-            'name'  => $data['name'] ?? null,
+            'name' => $data['name'] ?? null,
             'email' => $data['email'] ?? null,
         ])->filter(fn ($value) => ! is_null($value))->toArray();
 
@@ -87,6 +93,7 @@ class EmployeeController extends Controller
 
         if (! empty($data['password'])) {
             $employee->update(['password' => Hash::make($data['password'])]);
+            $employee->tokens()->delete();
         }
 
         if (! empty($data['role'])) {
@@ -134,7 +141,7 @@ class EmployeeController extends Controller
             );
         }
 
-        return $employee;
+        return response()->json((new EmployeeResource($employee))->resolve($request));
     }
 
     public function destroy($id)
@@ -176,7 +183,7 @@ class EmployeeController extends Controller
         }
 
         $data = $request->validate([
-            'shift_id'   => 'required|uuid|exists:shifts,id',
+            'shift_id' => 'required|uuid|exists:shifts,id',
             'start_date' => 'nullable|date',
         ]);
         $before = $this->employeeShiftSnapshot($employee);
@@ -296,5 +303,4 @@ class EmployeeController extends Controller
             'shift_end_date' => $activeShift?->end_date,
         ]);
     }
-
 }

@@ -34,11 +34,12 @@ class PublicBlogController extends Controller
             ->when($request->input('q'), function ($q, $term) use ($lang) {
                 $q->where(function ($inner) use ($term, $lang) {
                     if (DB::getDriverName() === 'pgsql') {
-                        $inner->whereRaw("title->>'{$lang}' ILIKE ?", ["%{$term}%"])
-                            ->orWhereRaw("excerpt->>'{$lang}' ILIKE ?", ["%{$term}%"]);
+                        $inner->whereRaw('title->>? ILIKE ?', [$lang, "%{$term}%"])
+                            ->orWhereRaw('excerpt->>? ILIKE ?', [$lang, "%{$term}%"]);
                     } else {
-                        $inner->whereRaw("json_extract(title, '$.{$lang}') LIKE ?", ["%{$term}%"])
-                            ->orWhereRaw("json_extract(excerpt, '$.{$lang}') LIKE ?", ["%{$term}%"]);
+                        $path = '$.'.$lang;
+                        $inner->whereRaw('json_extract(title, ?) LIKE ?', [$path, "%{$term}%"])
+                            ->orWhereRaw('json_extract(excerpt, ?) LIKE ?', [$path, "%{$term}%"]);
                     }
                 });
             });

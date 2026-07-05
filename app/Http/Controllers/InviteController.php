@@ -11,8 +11,7 @@ class InviteController extends Controller
 {
     public function __construct(
         protected AuditLogService $auditLogService
-    ) {
-    }
+    ) {}
 
     public function accept(AcceptInviteRequest $request)
     {
@@ -43,6 +42,8 @@ class InviteController extends Controller
             'invite_expires_at' => null,
             'must_change_password' => false,
         ])->save();
+
+        $user->tokens()->delete();
 
         $this->auditLogService->log(
             action: 'invite.accepted',

@@ -48,8 +48,10 @@ Route::prefix('admin')->group(function () {
         Route::patch('/company/locale', [CompanyLocaleController::class, 'update']);
         Route::put('/settings/location', [CompanyLocationSettingsController::class, 'update']);
         Route::patch('/settings/location', [CompanyLocationSettingsController::class, 'update']);
-        Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store']);
-        Route::post('/billing/extra-employees/checkout-session', [ExtraEmployeeCheckoutSessionController::class, 'store']);
+        Route::post('/billing/extra-employees/sync', [ExtraEmployeeSyncController::class, 'store'])
+            ->middleware('throttle:sensitive-admin');
+        Route::post('/billing/extra-employees/checkout-session', [ExtraEmployeeCheckoutSessionController::class, 'store'])
+            ->middleware('throttle:sensitive-admin');
         Route::get('/audit-logs', [AuditLogController::class, 'companyIndex'])
             ->middleware('company.audit_logs_enabled');
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'companyShow'])
@@ -71,7 +73,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/timesheets/{timesheet}', [TimesheetAdminController::class, 'show']);
         Route::post('/timesheets/{timesheet}/sign', [TimesheetAdminController::class, 'sign']);
         Route::post('/timesheets/{timesheet}/disputes/{dispute}/resolve', [TimesheetAdminController::class, 'resolveDispute']);
-        Route::get('/timesheets/{timesheet}/pdf', [TimesheetPdfAdminController::class, 'download']);
+        Route::get('/timesheets/{timesheet}/pdf', [TimesheetPdfAdminController::class, 'download'])->middleware('throttle:exports');
     });
 
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
@@ -91,11 +93,12 @@ Route::prefix('admin')->group(function () {
             ->name('admin.documents.upload_for_employee');
 
         Route::apiResource('employees', EmployeeController::class);
-        Route::post('/employees/{employee}/resend-invite', [EmployeeController::class, 'resendInvite']);
+        Route::post('/employees/{employee}/resend-invite', [EmployeeController::class, 'resendInvite'])
+            ->middleware('throttle:email-actions');
         Route::get('/employees/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
 
         Route::get('/reports/time', [ReportController::class, 'timeReport'])
-            ->middleware('plan.feature:reports');
+            ->middleware(['plan.feature:reports', 'throttle:exports']);
 
         Route::post('/time-entries/{timeEntry}/adjustment/approve', [AdminTimeEntryAdjustmentController::class, 'approve']);
         Route::post('/time-entries/{timeEntry}/adjustment/reject', [AdminTimeEntryAdjustmentController::class, 'reject']);

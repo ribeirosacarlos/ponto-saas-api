@@ -23,7 +23,7 @@ Route::prefix('employee')
         Route::put('/password', [EmployeeProfileController::class, 'updatePassword']);
 
         // Registrar batida
-        Route::post('/clock', [EmployeeTimeEntryController::class, 'clock']);
+        Route::post('/clock', [EmployeeTimeEntryController::class, 'clock'])->middleware('throttle:clock');
 
         // Listar batidas do próprio usuário
         Route::get('/entries', [EmployeeTimeEntryController::class, 'myEntries']);
@@ -62,5 +62,5 @@ Route::prefix('employee')
         Route::get('/timesheets/{timesheet}', [EmployeeTimesheetController::class, 'show']);
         Route::post('/timesheets/{timesheet}/sign', [EmployeeTimesheetController::class, 'sign']);
         Route::post('/timesheets/{timesheet}/dispute', [EmployeeTimesheetController::class, 'dispute']);
-        Route::get('/timesheets/{timesheet}/pdf', [EmployeeTimesheetPdfController::class, 'download']);
+        Route::get('/timesheets/{timesheet}/pdf', [EmployeeTimesheetPdfController::class, 'download'])->middleware('throttle:exports');
     });

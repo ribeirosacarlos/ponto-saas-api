@@ -92,6 +92,6 @@ class CommercialLeadManagementTest extends TestCase
 
         $this->actingAs($agent)
             ->postJson("/v1/admin/commercial/leads/{$lead->id}/notes", ['note' => 'Tentando acessar lead de outro agente.'])
-            ->assertForbidden();
+            ->assertNotFound();
     }
 }

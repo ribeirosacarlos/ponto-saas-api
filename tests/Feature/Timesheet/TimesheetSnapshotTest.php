@@ -38,6 +38,7 @@ class TimesheetSnapshotTest extends TestCase
         $this->actingAs($admin)->postJson('/v1/admin/monthly-closures', [
             'reference_year' => 2026,
             'reference_month' => 4,
+            'employee_id' => $employee->id,
         ])->assertStatus(201);
 
         Queue::assertPushed(GenerateEmployeeTimesheetJob::class);

@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased]
+
+### Segurança
+
+- Atualiza Laravel e dependências transitivas para eliminar advisories conhecidos.
+- Adiciona expiração de 30 dias e revogação server-side de tokens Sanctum.
+- Adiciona rate limits, CORS por allowlist de ambiente e headers contra clickjacking.
+- Reforça o escopo de acesso comercial e mantém isolamento por empresa/área.
+
+### Alterações incompatíveis no contrato v1
+
+| Campo removido | Substituição |
+|---|---|
+| `document.storage_disk` | nenhuma; detalhe interno |
+| `document.storage_path` | `view_url` / `download_url` |
+| `timesheet.pdf_path` | `pdf_available` + endpoint `/pdf` |
+
+- `/auth/login` passa a retornar `expires_in=2592000` e usuário em allowlist.
+- `/auth/me` retorna somente o resumo seguro do usuário e da empresa.
+- `document_hash` e `signature_hash` permanecem no contrato de integridade.
+- Guia para atualização da SPA: `docs/SECURITY_FRONTEND_MIGRATION.md`.
 ## [2.15.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.14.0...v2.15.0) (2026-07-05)
 
 

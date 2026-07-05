@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TimeEntryStoreRequest extends FormRequest
 {
@@ -15,12 +16,14 @@ class TimeEntryStoreRequest extends FormRequest
     {
         return [
             'latitude' => [
+                Rule::requiredIf(fn () => (bool) $this->user()?->company?->geolocation_required),
                 'nullable',
                 'numeric',
                 'between:-90,90',
                 'required_with:longitude',
             ],
             'longitude' => [
+                Rule::requiredIf(fn () => (bool) $this->user()?->company?->geolocation_required),
                 'nullable',
                 'numeric',
                 'between:-180,180',

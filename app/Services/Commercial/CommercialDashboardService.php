@@ -58,6 +58,10 @@ class CommercialDashboardService
 
     private function scopedLeadsQuery(User $user)
     {
-        return CommercialLead::query();
+        return CommercialLead::query()
+            ->when(
+                $user->hasRole('commercial_agent'),
+                fn ($query) => $query->where('assigned_to_user_id', $user->id)
+            );
     }
 }
