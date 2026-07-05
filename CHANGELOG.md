@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.15.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.14.0...v2.15.0) (2026-07-05)
+
+
+### Novas Funcionalidades
+
+* adiciona comando para reconciliar ajustes de ponto ja persistidos fora de ordem ([dbc2e3a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/dbc2e3a5c9ebd6b71e3bc11b501b86d7d5cafaaf))
+
+
+### Correções de Bugs
+
+* corrige alternancia in/out em ajustes de ponto fora do turno ([0b48a68](https://github.com/ribeirosacarlos/ponto-saas-api/commit/0b48a68a0f2988dbfb7bc1597baa83632a338eba))
+
 ## [2.14.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.6...v2.14.0) (2026-07-02)
 
 
