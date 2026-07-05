@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.16.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.0...v2.16.1) (2026-07-05)
+
+
+### Correções de Bugs
+
+* allow Cache-Control header in CORS preflight ([e414419](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e4144198630e124216a5bd5f0e9814f1be47914b))
+* allow Cache-Control header in CORS preflight ([1d73fa0](https://github.com/ribeirosacarlos/ponto-saas-api/commit/1d73fa064a2ee926341b5d95d6c88efe4d35c757))
+
 ## [2.16.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.15.0...v2.16.0) (2026-07-05)
 
 
