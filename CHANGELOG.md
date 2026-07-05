@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.15.0...v2.16.0) (2026-07-05)
+
+
+### Novas Funcionalidades
+
+* harden API security and sanitize OpenAPI contract ([0286e75](https://github.com/ribeirosacarlos/ponto-saas-api/commit/0286e75659148ba1e4d424a2e748a46588d967af))
+
 ## [Unreleased]
 
 ### Segurança
