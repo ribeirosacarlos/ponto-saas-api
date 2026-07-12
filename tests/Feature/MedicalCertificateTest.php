@@ -117,7 +117,9 @@ class MedicalCertificateTest extends TestCase
             'action' => 'medical_certificate.created_approved',
         ]);
 
-        $this->assertDatabaseCount('time_entries', 2);
+        // Turno 08:00-17:00 com break 12:00-13:00: atestado de dia inteiro cruza o intervalo,
+        // gerando 4 eventos (work_start/break_start/break_end/work_end).
+        $this->assertDatabaseCount('time_entries', 4);
         $this->assertDatabaseHas('time_entries', [
             'absence_id' => $response->json('data.id'),
             'source' => 'absence_allowance',
@@ -316,7 +318,7 @@ class MedicalCertificateTest extends TestCase
             'start_date' => '2026-04-10',
         ])->assertCreated();
 
-        $this->assertDatabaseCount('time_entries', 2);
+        $this->assertDatabaseCount('time_entries', 4);
     }
 
     public function test_rejected_and_canceled_certificates_do_not_affect_calculation(): void

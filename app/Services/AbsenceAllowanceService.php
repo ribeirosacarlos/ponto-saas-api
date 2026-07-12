@@ -7,6 +7,7 @@ use App\Models\MonthlyClosure;
 use App\Models\User;
 use App\Models\VacationDay;
 use App\Services\TimeEntry\AbsenceTimeEntryService;
+use App\Services\TimeEntry\TimesheetCalculationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,10 +15,14 @@ use Illuminate\Validation\ValidationException;
 class AbsenceAllowanceService
 {
     public function __construct(
-        protected AbsenceTimeEntryService $absenceTimeEntryService
+        protected AbsenceTimeEntryService $absenceTimeEntryService,
+        protected TimesheetCalculationService $timesheetCalculationService
     ) {}
 
-    public function createFromAdmin(User $actor, User $employee, array $payload): Absence
+    /**
+     * @return array{0: Absence, 1: array<int, array{date: string, missing_minutes: int, missing_hhmm: string, message: string}>}
+     */
+    public function createFromAdmin(User $actor, User $employee, array $payload): array
     {
         [$startDate, $endDate, $startTime, $endTime] = $this->normalizeCoverage($payload);
 
@@ -47,8 +52,44 @@ class AbsenceAllowanceService
 
             $this->absenceTimeEntryService->syncForAbsence($absence);
 
-            return $absence->fresh();
+            return [$absence->fresh(), $this->buildIncompleteCoverageWarnings($absence, $employee)];
         });
+    }
+
+    /**
+     * @return array<int, array{date: string, missing_minutes: int, missing_hhmm: string, message: string}>
+     */
+    private function buildIncompleteCoverageWarnings(Absence $absence, User $employee): array
+    {
+        if (! $absence->isHoursCoverage()) {
+            return [];
+        }
+
+        $from = CarbonImmutable::parse($absence->start_date);
+        $to = CarbonImmutable::parse($absence->end_date ?? $absence->start_date);
+        $result = $this->timesheetCalculationService->calculateForEmployee($employee, $from, $to);
+
+        $warnings = [];
+        foreach ($result['days'] as $day) {
+            $debt = (int) ($day['summary']['debt_minutes'] ?? 0);
+
+            if ($debt < 0) {
+                $missing = abs($debt);
+                $warnings[] = [
+                    'date' => $day['date'],
+                    'missing_minutes' => $missing,
+                    'missing_hhmm' => sprintf('%02d:%02d', intdiv($missing, 60), $missing % 60),
+                    'message' => sprintf(
+                        'Abono nao cobre a jornada esperada do dia %s. Faltam %02d:%02d para completar a carga horaria.',
+                        $day['date'],
+                        intdiv($missing, 60),
+                        $missing % 60
+                    ),
+                ];
+            }
+        }
+
+        return $warnings;
     }
 
     public function destroyFromAdmin(Absence $absence): void
