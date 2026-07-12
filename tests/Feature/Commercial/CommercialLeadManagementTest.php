@@ -94,4 +94,89 @@ class CommercialLeadManagementTest extends TestCase
             ->postJson("/v1/admin/commercial/leads/{$lead->id}/notes", ['note' => 'Tentando acessar lead de outro agente.'])
             ->assertNotFound();
     }
+
+    public function test_lead_creation_is_blocked_by_duplicate_email(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        CommercialLead::factory()->create(['email' => 'contato@acme.test']);
+
+        $response = $this->actingAs($manager)->postJson('/v1/admin/commercial/leads', [
+            'company_name' => 'Acme Filial 2',
+            'email' => 'Contato@Acme.test',
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('email');
+        $this->assertSame(1, CommercialLead::query()->where('email', 'contato@acme.test')->count());
+    }
+
+    public function test_lead_creation_is_blocked_by_duplicate_phone_regardless_of_formatting(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        CommercialLead::factory()->create(['phone' => '+55 (11) 99999-9999']);
+
+        $response = $this->actingAs($manager)->postJson('/v1/admin/commercial/leads', [
+            'company_name' => 'Outra Empresa',
+            'phone' => '55 11 99999-9999',
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('phone');
+    }
+
+    public function test_lead_creation_is_blocked_by_duplicate_google_maps_place_id(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        CommercialLead::factory()->create(['google_maps_place_id' => 'ChIJN1t_tDeuEmsRUsoyG83frY4']);
+
+        $response = $this->actingAs($manager)->postJson('/v1/admin/commercial/leads', [
+            'company_name' => 'Outra Empresa',
+            'google_maps_place_id' => 'ChIJN1t_tDeuEmsRUsoyG83frY4',
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('google_maps_place_id');
+    }
+
+    public function test_lead_creation_is_not_blocked_when_no_field_matches(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        CommercialLead::factory()->create([
+            'email' => 'contato@acme.test',
+            'phone' => '11999999999',
+            'google_maps_place_id' => 'ChIJN1t_tDeuEmsRUsoyG83frY4',
+        ]);
+
+        $response = $this->actingAs($manager)->postJson('/v1/admin/commercial/leads', [
+            'company_name' => 'Empresa Diferente',
+            'email' => 'outro@empresa.test',
+            'phone' => '11988887777',
+            'google_maps_place_id' => 'ChIJOutroPlaceId123',
+        ]);
+
+        $response->assertCreated();
+    }
+
+    public function test_lead_update_is_blocked_when_new_email_belongs_to_another_lead(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        CommercialLead::factory()->create(['email' => 'contato@acme.test']);
+        $lead = CommercialLead::factory()->create(['email' => 'lead2@acme.test']);
+
+        $response = $this->actingAs($manager)->putJson("/v1/admin/commercial/leads/{$lead->id}", [
+            'email' => 'contato@acme.test',
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('email');
+    }
+
+    public function test_lead_update_keeping_its_own_email_is_allowed(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        $lead = CommercialLead::factory()->create(['email' => 'contato@acme.test']);
+
+        $response = $this->actingAs($manager)->putJson("/v1/admin/commercial/leads/{$lead->id}", [
+            'email' => 'contato@acme.test',
+            'contact_name' => 'Novo Contato',
+        ]);
+
+        $response->assertOk();
+    }
 }

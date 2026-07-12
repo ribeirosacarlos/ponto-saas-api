@@ -17,6 +17,7 @@ class CommercialLeadResource extends JsonResource
             'phone' => $this->phone,
             'whatsapp' => $this->whatsapp,
             'website' => $this->website,
+            'google_maps_place_id' => $this->google_maps_place_id,
             'country' => $this->country,
             'city' => $this->city,
             'segment' => $this->segment,

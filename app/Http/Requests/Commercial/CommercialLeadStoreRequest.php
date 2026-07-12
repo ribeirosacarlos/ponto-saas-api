@@ -24,6 +24,7 @@ class CommercialLeadStoreRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'whatsapp' => ['nullable', 'string', 'max:50'],
             'website' => ['nullable', 'string', 'max:255'],
+            'google_maps_place_id' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'segment' => ['nullable', 'string', 'max:255'],

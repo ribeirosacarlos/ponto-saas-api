@@ -46,7 +46,7 @@ class LeadsIndex {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads",
  *     summary="Cria um novo lead",
- *     description="Disponível para super_admin. Detecta (sem bloquear) possíveis duplicados por email, telefone, whatsapp, website ou nome da empresa.",
+ *     description="Disponível para super_admin. Bloqueia (422) se já existir lead com mesmo email, telefone (normalizado, ignorando formatação) ou google_maps_place_id. Também sinaliza (sem bloquear) possíveis duplicados por whatsapp, website ou nome da empresa.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -62,6 +62,7 @@ class LeadsIndex {}
  *             @OA\Property(property="phone", type="string", nullable=true),
  *             @OA\Property(property="whatsapp", type="string", nullable=true),
  *             @OA\Property(property="website", type="string", nullable=true),
+ *             @OA\Property(property="google_maps_place_id", type="string", nullable=true, description="place_id do Google Maps (identificador estável do local)"),
  *             @OA\Property(property="country", type="string", nullable=true),
  *             @OA\Property(property="city", type="string", nullable=true),
  *             @OA\Property(property="segment", type="string", nullable=true),
@@ -77,9 +78,9 @@ class LeadsIndex {}
  *
  *     @OA\Response(
  *         response=201,
- *         description="Lead criado. Inclui aviso de possíveis duplicados (duplicate_warning, possible_duplicates), sem bloquear a criação.",
+ *         description="Lead criado. Inclui aviso de possíveis duplicados fracos (duplicate_warning, possible_duplicates) por whatsapp/website/nome da empresa.",
  *     ),
- *     @OA\Response(response=422, description="Erro de validação")
+ *     @OA\Response(response=422, description="Erro de validação ou duplicidade bloqueante (email, phone ou google_maps_place_id já cadastrados)")
  * )
  */
 class LeadsStore {}

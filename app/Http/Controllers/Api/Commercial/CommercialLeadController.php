@@ -19,7 +19,9 @@ use App\Models\CommercialLeadStepLog;
 use App\Services\AuditLogService;
 use App\Services\Commercial\CommercialCommissionService;
 use App\Services\Commercial\CommercialLeadDuplicateService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CommercialLeadController extends Controller
 {
@@ -54,9 +56,17 @@ class CommercialLeadController extends Controller
             $data['assigned_to_user_id'] = $request->user()->id;
         }
 
+        $this->duplicateService->assertNoBlockingDuplicates($data);
+
         $duplicates = $this->duplicateService->findDuplicates($data);
 
-        $lead = CommercialLead::create($data);
+        try {
+            $lead = CommercialLead::create($data);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages([
+                'email' => 'Já existe um lead cadastrado com este e-mail, telefone ou local do Google Maps.',
+            ]);
+        }
 
         $this->auditLogService->log(
             action: 'lead.created',
@@ -97,8 +107,17 @@ class CommercialLeadController extends Controller
         $this->authorize('update', $lead);
 
         $oldValues = $this->auditLogService->snapshot($lead);
+        $data = $request->validated();
 
-        $lead->update($request->validated());
+        $this->duplicateService->assertNoBlockingDuplicates($data, $lead->id);
+
+        try {
+            $lead->update($data);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages([
+                'email' => 'Já existe outro lead cadastrado com este e-mail, telefone ou local do Google Maps.',
+            ]);
+        }
 
         $this->auditLogService->log(
             action: 'lead.updated',
