@@ -97,7 +97,7 @@ Remove um abono/ausencia lancado incorretamente e tambem remove os `time_entries
 - Ausencia, atestado ou abono pendente/efetivo no periodo bloqueia criacao.
 - `pending`, `rejected` e `canceled` nao abonam no calculo.
 - `full_day` gera pontos de entrada/saida conforme o shift do dia.
-- `hours` gera pontos conforme o intervalo informado, limitado ao dia/shift valido.
+- `hours` gera pontos exatamente no horario informado (`start_time`/`end_time`), mesmo fora da janela do turno (ex.: abono antes do inicio ou depois do fim do expediente programado) — nao ha recorte pelo horario do shift, exige apenas que o dia tenha um shift valido (dia de trabalho) associado ao funcionario.
 - Se o periodo gerado cruzar o intervalo (`break_start_time`/`break_end_time`) do shift, sao gerados 4 pontos (`work_start`/`break_start`/`break_end`/`work_end`) e o intervalo e excluido de `absence_minutes`/`worked_minutes`. Ver secao "Intervalo (break) do turno" acima.
 - A resposta traz `warnings` (nao-bloqueante) quando um abono `hours` nao fecha a jornada esperada do dia. Ver secao "Aviso de cobertura incompleta" acima.
 - Exclusao de absence remove apenas pontos gerados pelo sistema para aquela `absence_id`.

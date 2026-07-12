@@ -169,14 +169,9 @@ class AbsenceTimeEntryService
             $absenceEnd = $absenceEnd->addDay();
         }
 
-        $start = $absenceStart->greaterThan($shiftStart) ? $absenceStart : $shiftStart;
-        $end = $absenceEnd->lessThan($shiftEnd) ? $absenceEnd : $shiftEnd;
-
-        if ($end->lessThanOrEqualTo($start)) {
-            return [];
-        }
-
-        return [[$start, $end]];
+        // Abono cobre exatamente o horario informado pelo admin, mesmo fora da janela do
+        // turno (ex.: ausencia antes do inicio do expediente) — nao recorta pelo shift.
+        return [[$absenceStart, $absenceEnd]];
     }
 
     private function breakWindow(ShiftDay $shiftDay, CarbonImmutable $day, string $timezone): ?array

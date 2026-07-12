@@ -183,6 +183,46 @@ class AbsenceAllowanceTest extends TestCase
         $this->assertSame(420, $warnings[0]['missing_minutes']);
     }
 
+    public function test_admin_creates_hourly_allowance_outside_shift_window_is_not_clipped(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+
+        // Turno e 08:00-17:00, mas o abono comeca as 06:00 (2h antes do turno abrir).
+        // O periodo abonado deve ser respeitado integralmente, sem recorte pelo horario do shift.
+        $response = $this->actingAs($admin)->postJson('/v1/admin/absences', [
+            'user_id' => $employee->id,
+            'coverage_type' => Absence::COVERAGE_HOURS,
+            'date' => '2026-04-10',
+            'start_time' => '06:00',
+            'end_time' => '08:00',
+            'comment' => 'Consulta medica antes do turno',
+        ]);
+
+        $response->assertCreated();
+        $absenceId = $response->json('id');
+
+        $this->assertDatabaseCount('time_entries', 2);
+        $this->assertDatabaseHas('time_entries', [
+            'absence_id' => $absenceId,
+            'clocked_at' => '2026-04-10 06:00:00',
+            'type' => 'in',
+            'event_kind' => 'work_start',
+        ]);
+        $this->assertDatabaseHas('time_entries', [
+            'absence_id' => $absenceId,
+            'clocked_at' => '2026-04-10 08:00:00',
+            'type' => 'out',
+            'event_kind' => 'work_end',
+        ]);
+
+        $result = $this->calculateOvertime($employee, '2026-04-10');
+
+        $this->assertSame(120, $result['days'][0]['summary']['absence_minutes']);
+        $this->assertSame(120, $result['days'][0]['summary']['worked_minutes']);
+    }
+
     public function test_absence_time_entry_generation_is_idempotent(): void
     {
         $admin = $this->createAdmin();
