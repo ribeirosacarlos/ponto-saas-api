@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.17.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.17.0...v2.17.1) (2026-07-12)
+
+
+### Correções de Bugs
+
+* nao recortar abono hours pela janela do turno ([e8ee953](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e8ee9537f07977406388e73c6cd4727580c30788))
+* nao recortar abono hours pela janela do turno ([8d83317](https://github.com/ribeirosacarlos/ponto-saas-api/commit/8d83317390dc8313e1a5d101b6a1417236fec5c2))
+
 ## [2.17.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.2...v2.17.0) (2026-07-12)
 
 
