@@ -5504,7 +5504,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Cria um novo lead",
-                "description": "Disponível para super_admin. Detecta (sem bloquear) possíveis duplicados por email, telefone, whatsapp, website ou nome da empresa.",
+                "description": "Disponível para super_admin. Bloqueia (422) se já existir lead com mesmo email, telefone (normalizado, ignorando formatação) ou google_maps_place_id. Também sinaliza (sem bloquear) possíveis duplicados por whatsapp, website ou nome da empresa.",
                 "operationId": "607fa2aa431bde3ee592ed6345224b9b",
                 "requestBody": {
                     "required": true,
@@ -5537,6 +5537,11 @@
                                         "nullable": true
                                     },
                                     "website": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "google_maps_place_id": {
+                                        "description": "place_id do Google Maps (identificador estável do local)",
                                         "type": "string",
                                         "nullable": true
                                     },
@@ -5598,10 +5603,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Lead criado. Inclui aviso de possíveis duplicados (duplicate_warning, possible_duplicates), sem bloquear a criação."
+                        "description": "Lead criado. Inclui aviso de possíveis duplicados fracos (duplicate_warning, possible_duplicates) por whatsapp/website/nome da empresa."
                     },
                     "422": {
-                        "description": "Erro de validação"
+                        "description": "Erro de validação ou duplicidade bloqueante (email, phone ou google_maps_place_id já cadastrados)"
                     }
                 },
                 "security": [

@@ -26,6 +26,7 @@ class CommercialLead extends Model
         'phone',
         'whatsapp',
         'website',
+        'google_maps_place_id',
         'country',
         'city',
         'segment',
@@ -62,7 +63,30 @@ class CommercialLead extends Model
             if ($lead->isDirty('current_step_id')) {
                 $lead->current_step_started_at = now();
             }
+
+            if ($lead->isDirty('email') && $lead->email) {
+                $lead->email = strtolower(trim($lead->email));
+            }
+
+            if ($lead->isDirty('phone')) {
+                $lead->phone_normalized = self::normalizePhone($lead->phone);
+            }
+
+            if ($lead->isDirty('google_maps_place_id') && $lead->google_maps_place_id) {
+                $lead->google_maps_place_id = trim($lead->google_maps_place_id);
+            }
         });
+    }
+
+    public static function normalizePhone(?string $phone): ?string
+    {
+        if (! $phone) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        return $digits !== '' ? $digits : null;
     }
 
     public function getTable(): string
