@@ -576,7 +576,9 @@ class TeamEntriesTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('total_days', 1)
-            ->assertJsonPath('total_entries', 2)
+            // Turno 08:00-17:00 com break 12:00-13:00: abono de dia inteiro cruza o intervalo,
+            // gerando 4 eventos (work_start/break_start/break_end/work_end) em vez de 2.
+            ->assertJsonPath('total_entries', 4)
             ->assertJsonPath('data.0.day_summary.worked_minutes', 540)
             ->assertJsonPath('data.0.day_summary.raw_worked_minutes', 0)
             ->assertJsonPath('data.0.day_summary.expected_minutes', 540)

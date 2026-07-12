@@ -63,9 +63,9 @@ class AbsenceController extends Controller
             : $this->userVisibilityService->visibleUsersQuery($admin);
         $user = $targetUserQuery->whereKey($request->user_id)->firstOrFail();
 
-        $absence = $this->absenceAllowanceService->createFromAdmin($admin, $user, $request->validated());
+        [$absence, $warnings] = $this->absenceAllowanceService->createFromAdmin($admin, $user, $request->validated());
 
-        return response()->json($absence, 201);
+        return response()->json(array_merge($absence->toArray(), ['warnings' => $warnings]), 201);
     }
 
     public function destroy(Request $request, Absence $absence)
