@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.17.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.2...v2.17.0) (2026-07-12)
+
+
+### Novas Funcionalidades
+
+* block duplicate commercial leads by email, phone, or Google Map… ([db552b7](https://github.com/ribeirosacarlos/ponto-saas-api/commit/db552b7653f29c49239ab1b8a265344d2613b681))
+* block duplicate commercial leads by email, phone, or Google Maps place ([ca98758](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ca987586e6322580127862439f9e816c57f4ae54))
+
+
+### Correções de Bugs
+
+* respeitar intervalo do turno na geracao de pontos de abono ([0622dd8](https://github.com/ribeirosacarlos/ponto-saas-api/commit/0622dd882538668949ea978f233a1a0cea6dbe2f))
+* respeitar intervalo do turno na geracao de pontos de abono ([15e2fce](https://github.com/ribeirosacarlos/ponto-saas-api/commit/15e2fcee2ed270b8f2def150e621d82cdadd5eba))
+
 ## [2.16.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.1...v2.16.2) (2026-07-05)
 
 
