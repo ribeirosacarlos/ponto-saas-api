@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.18.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.17.1...v2.18.0) (2026-07-15)
+
+
+### Novas Funcionalidades
+
+* adiciona reativação de funcionário desativado (soft delete) ([20c9dd1](https://github.com/ribeirosacarlos/ponto-saas-api/commit/20c9dd13c437c878050ab80a5989ee0e3557aadb))
+* adiciona reativação de funcionário desativado (soft delete) ([dcbed42](https://github.com/ribeirosacarlos/ponto-saas-api/commit/dcbed426c44c68c5cbc6273738137974800ea84c))
+
 ## [2.17.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.17.0...v2.17.1) (2026-07-12)
 
 
