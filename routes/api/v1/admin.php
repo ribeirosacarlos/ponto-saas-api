@@ -95,6 +95,8 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('employees', EmployeeController::class);
         Route::post('/employees/{employee}/resend-invite', [EmployeeController::class, 'resendInvite'])
             ->middleware('throttle:email-actions');
+        Route::post('/employees/{employee}/restore', [EmployeeController::class, 'restore'])
+            ->name('admin.employees.restore');
         Route::get('/employees/{employee}/overtime', [EmployeeOvertimeController::class, 'show']);
 
         Route::get('/reports/time', [ReportController::class, 'timeReport'])
