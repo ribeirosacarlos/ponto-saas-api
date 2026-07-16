@@ -86,6 +86,60 @@ class LeadsIndex {}
 class LeadsStore {}
 
 /**
+ * @OA\Post(
+ *     path="/v1/admin/commercial/leads/bulk",
+ *     summary="Cria múltiplos leads de uma vez",
+ *     description="Disponível para super_admin, commercial_manager e commercial_agent. Aceita até 100 leads por requisição. Cada item é processado de forma independente (sucesso parcial): itens inválidos ou duplicados (mesmo email, telefone normalizado ou google_maps_place_id) não impedem a criação dos demais. A resposta traz o resultado individual de cada item, na mesma ordem enviada.",
+ *     tags={"Commercial - Leads"},
+ *     security={{"bearerAuth":{}}},
+ *
+ *     @OA\RequestBody(
+ *         required=true,
+ *
+ *         @OA\JsonContent(
+ *             required={"leads"},
+ *
+ *             @OA\Property(
+ *                 property="leads",
+ *                 type="array",
+ *                 minItems=1,
+ *                 maxItems=100,
+ *
+ *                 @OA\Items(
+ *                     required={"company_name"},
+ *
+ *                     @OA\Property(property="company_name", type="string", example="Acme Ltda"),
+ *                     @OA\Property(property="contact_name", type="string", nullable=true),
+ *                     @OA\Property(property="email", type="string", format="email", nullable=true),
+ *                     @OA\Property(property="phone", type="string", nullable=true),
+ *                     @OA\Property(property="whatsapp", type="string", nullable=true),
+ *                     @OA\Property(property="website", type="string", nullable=true),
+ *                     @OA\Property(property="google_maps_place_id", type="string", nullable=true),
+ *                     @OA\Property(property="country", type="string", nullable=true),
+ *                     @OA\Property(property="city", type="string", nullable=true),
+ *                     @OA\Property(property="segment", type="string", nullable=true),
+ *                     @OA\Property(property="employees_count", type="integer", nullable=true),
+ *                     @OA\Property(property="source", type="string", nullable=true),
+ *                     @OA\Property(property="affiliate_id", type="string", format="uuid", nullable=true),
+ *                     @OA\Property(property="current_step_id", type="string", format="uuid", nullable=true),
+ *                     @OA\Property(property="assigned_to_user_id", type="string", format="uuid", nullable=true, description="Precisa ser um usuário com role super_admin"),
+ *                     @OA\Property(property="priority", type="string", enum={"low","medium","high","very_high"}, default="medium"),
+ *                     @OA\Property(property="general_notes", type="string", nullable=true)
+ *                 )
+ *             )
+ *         )
+ *     ),
+ *
+ *     @OA\Response(
+ *         response=207,
+ *         description="Processamento concluído (sucesso parcial). data[] traz, por índice (mesma posição do array enviado): status ('created' ou 'error'), e para itens criados o lead serializado + duplicate_warning/possible_duplicates, ou para itens com erro o objeto errors (mesmo formato de erro de validação do Laravel). meta traz total, created e failed.",
+ *     ),
+ *     @OA\Response(response=422, description="Erro de validação no payload geral (ex: leads ausente, vazio ou acima do limite de 100 itens)")
+ * )
+ */
+class LeadsBulkStore {}
+
+/**
  * @OA\Get(
  *     path="/v1/admin/commercial/leads/{id}",
  *     summary="Exibe um lead",

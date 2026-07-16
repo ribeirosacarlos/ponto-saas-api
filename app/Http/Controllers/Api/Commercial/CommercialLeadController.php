@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Commercial;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Commercial\CommercialLeadAssignRequest;
+use App\Http\Requests\Commercial\CommercialLeadBulkStoreRequest;
 use App\Http\Requests\Commercial\CommercialLeadMarkLostRequest;
 use App\Http\Requests\Commercial\CommercialLeadMarkWonRequest;
 use App\Http\Requests\Commercial\CommercialLeadMoveStepRequest;
@@ -86,6 +87,81 @@ class CommercialLeadController extends Controller
             ])
             ->response()
             ->setStatusCode(201);
+    }
+
+    public function bulkStore(CommercialLeadBulkStoreRequest $request)
+    {
+        $this->authorize('create', CommercialLead::class);
+
+        $isAgent = $request->user()->hasRole('commercial_agent');
+        $items = $request->validated()['leads'];
+
+        $results = [];
+        $createdCount = 0;
+
+        foreach ($items as $index => $data) {
+            $data['created_by_user_id'] = $request->user()->id;
+
+            if ($isAgent) {
+                $data['assigned_to_user_id'] = $request->user()->id;
+            }
+
+            try {
+                $this->duplicateService->assertNoBlockingDuplicates($data);
+
+                $duplicates = $this->duplicateService->findDuplicates($data);
+
+                $lead = CommercialLead::create($data);
+            } catch (ValidationException $e) {
+                $results[] = [
+                    'index' => $index,
+                    'status' => 'error',
+                    'errors' => $e->errors(),
+                ];
+
+                continue;
+            } catch (UniqueConstraintViolationException) {
+                $results[] = [
+                    'index' => $index,
+                    'status' => 'error',
+                    'errors' => [
+                        'email' => ['Já existe um lead cadastrado com este e-mail, telefone ou local do Google Maps.'],
+                    ],
+                ];
+
+                continue;
+            }
+
+            $this->auditLogService->log(
+                action: 'lead.created',
+                entityType: CommercialLead::class,
+                entityId: $lead->id,
+                description: "Lead criado: {$lead->company_name}",
+                newValues: $this->auditLogService->snapshot($lead),
+            );
+
+            $createdCount++;
+
+            $results[] = [
+                'index' => $index,
+                'status' => 'created',
+                'lead' => new CommercialLeadResource($lead),
+                'duplicate_warning' => $duplicates->isNotEmpty(),
+                'possible_duplicates' => $duplicates->map(fn ($duplicate) => [
+                    'id' => $duplicate->id,
+                    'company_name' => $duplicate->company_name,
+                ]),
+            ];
+        }
+
+        return response()->json([
+            'data' => $results,
+            'meta' => [
+                'total' => count($items),
+                'created' => $createdCount,
+                'failed' => count($items) - $createdCount,
+            ],
+        ], 207);
     }
 
     public function show(Request $request, string $id)

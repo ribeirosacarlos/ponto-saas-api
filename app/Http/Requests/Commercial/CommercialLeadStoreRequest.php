@@ -17,6 +17,15 @@ class CommercialLeadStoreRequest extends FormRequest
 
     public function rules(): array
     {
+        return self::itemRules();
+    }
+
+    /**
+     * Regras de validação de um único lead, reaproveitadas pelo
+     * CommercialLeadBulkStoreRequest (prefixadas com "leads.*.").
+     */
+    public static function itemRules(): array
+    {
         return [
             'company_name' => ['required', 'string', 'max:255'],
             'contact_name' => ['nullable', 'string', 'max:255'],
