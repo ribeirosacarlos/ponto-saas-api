@@ -179,4 +179,76 @@ class CommercialLeadManagementTest extends TestCase
 
         $response->assertOk();
     }
+
+    public function test_multiple_leads_can_be_created_in_bulk(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+
+        $response = $this->actingAs($manager)->postJson('/v1/admin/commercial/leads/bulk', [
+            'leads' => [
+                ['company_name' => 'Empresa Um', 'email' => 'um@empresa.test'],
+                ['company_name' => 'Empresa Dois', 'email' => 'dois@empresa.test'],
+                ['company_name' => 'Empresa Três', 'email' => 'tres@empresa.test'],
+            ],
+        ]);
+
+        $response->assertStatus(207);
+        $response->assertJsonPath('meta.total', 3);
+        $response->assertJsonPath('meta.created', 3);
+        $response->assertJsonPath('meta.failed', 0);
+        $response->assertJsonPath('data.0.status', 'created');
+        $response->assertJsonPath('data.1.status', 'created');
+        $response->assertJsonPath('data.2.status', 'created');
+
+        $this->assertSame(3, CommercialLead::query()->count());
+    }
+
+    public function test_bulk_lead_creation_reports_partial_success_on_duplicate(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        CommercialLead::factory()->create(['email' => 'existente@empresa.test']);
+
+        $response = $this->actingAs($manager)->postJson('/v1/admin/commercial/leads/bulk', [
+            'leads' => [
+                ['company_name' => 'Empresa Válida', 'email' => 'valida@empresa.test'],
+                ['company_name' => 'Empresa Duplicada', 'email' => 'existente@empresa.test'],
+            ],
+        ]);
+
+        $response->assertStatus(207);
+        $response->assertJsonPath('meta.total', 2);
+        $response->assertJsonPath('meta.created', 1);
+        $response->assertJsonPath('meta.failed', 1);
+        $response->assertJsonPath('data.0.status', 'created');
+        $response->assertJsonPath('data.1.status', 'error');
+        $response->assertJsonPath('data.1.errors.email.0', 'Já existe um lead cadastrado com este e-mail.');
+
+        $this->assertSame(1, CommercialLead::query()->where('email', 'existente@empresa.test')->count());
+        $this->assertSame(1, CommercialLead::query()->where('email', 'valida@empresa.test')->count());
+    }
+
+    public function test_bulk_lead_creation_requires_leads_array(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+
+        $this->actingAs($manager)
+            ->postJson('/v1/admin/commercial/leads/bulk', [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('leads');
+    }
+
+    public function test_bulk_lead_creation_respects_max_items_limit(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+
+        $leads = array_map(
+            fn ($i) => ['company_name' => "Empresa {$i}"],
+            range(1, 101)
+        );
+
+        $this->actingAs($manager)
+            ->postJson('/v1/admin/commercial/leads/bulk', ['leads' => $leads])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('leads');
+    }
 }

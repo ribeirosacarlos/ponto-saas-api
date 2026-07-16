@@ -46,6 +46,7 @@ Route::prefix('admin/commercial')
 
         Route::get('leads', [CommercialLeadController::class, 'index']);
         Route::post('leads', [CommercialLeadController::class, 'store']);
+        Route::post('leads/bulk', [CommercialLeadController::class, 'bulkStore']);
         Route::get('leads/{id}', [CommercialLeadController::class, 'show']);
         Route::put('leads/{id}', [CommercialLeadController::class, 'update']);
         Route::delete('leads/{id}', [CommercialLeadController::class, 'destroy']);

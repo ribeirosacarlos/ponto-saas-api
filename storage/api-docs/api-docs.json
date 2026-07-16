@@ -5616,6 +5616,136 @@
                 ]
             }
         },
+        "/v1/admin/commercial/leads/bulk": {
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Cria múltiplos leads de uma vez",
+                "description": "Disponível para super_admin, commercial_manager e commercial_agent. Aceita até 100 leads por requisição. Cada item é processado de forma independente (sucesso parcial): itens inválidos ou duplicados (mesmo email, telefone normalizado ou google_maps_place_id) não impedem a criação dos demais. A resposta traz o resultado individual de cada item, na mesma ordem enviada.",
+                "operationId": "f24db5944b7c7f4bd17911384cdfbe56",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "leads"
+                                ],
+                                "properties": {
+                                    "leads": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "company_name"
+                                            ],
+                                            "properties": {
+                                                "company_name": {
+                                                    "type": "string",
+                                                    "example": "Acme Ltda"
+                                                },
+                                                "contact_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "nullable": true
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "whatsapp": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "website": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "google_maps_place_id": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "country": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "city": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "segment": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "employees_count": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "source": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "affiliate_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "current_step_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "assigned_to_user_id": {
+                                                    "description": "Precisa ser um usuário com role super_admin",
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "priority": {
+                                                    "type": "string",
+                                                    "default": "medium",
+                                                    "enum": [
+                                                        "low",
+                                                        "medium",
+                                                        "high",
+                                                        "very_high"
+                                                    ]
+                                                },
+                                                "general_notes": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "maxItems": 100,
+                                        "minItems": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "207": {
+                        "description": "Processamento concluído (sucesso parcial). data[] traz, por índice (mesma posição do array enviado): status ('created' ou 'error'), e para itens criados o lead serializado + duplicate_warning/possible_duplicates, ou para itens com erro o objeto errors (mesmo formato de erro de validação do Laravel). meta traz total, created e failed."
+                    },
+                    "422": {
+                        "description": "Erro de validação no payload geral (ex: leads ausente, vazio ou acima do limite de 100 itens)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/admin/commercial/leads/{id}": {
             "get": {
                 "tags": [
