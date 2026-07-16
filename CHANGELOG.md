@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.19.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.18.0...v2.19.0) (2026-07-16)
+
+
+### Novas Funcionalidades
+
+* adiciona criação de leads comerciais em lote [bulk] ([682647f](https://github.com/ribeirosacarlos/ponto-saas-api/commit/682647f82779b7bf40452b707df5be25da5a9c0a))
+* adiciona criação de leads comerciais em lote [bulk] ([05e1f6e](https://github.com/ribeirosacarlos/ponto-saas-api/commit/05e1f6e24807a5c0d8e521c0bdd72e65d05406c2))
+
 ## [2.18.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.17.1...v2.18.0) (2026-07-15)
 
 
