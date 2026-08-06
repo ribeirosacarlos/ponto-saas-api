@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'company.timezone' => SetCompanyTimezone::class,
             'company.audit_logs_enabled' => \App\Http\Middleware\EnsureCompanyAuditLogsEnabled::class,
             'affiliate' => \App\Http\Middleware\EnsureIsAffiliate::class,
+            'swagger.auth' => \App\Http\Middleware\SwaggerBasicAuth::class,
         ]);
         $middleware->prepend(HandleCors::class);
     })
