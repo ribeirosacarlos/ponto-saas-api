@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.19.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.0...v2.19.1) (2026-08-06)
+
+
+### Correções de Bugs
+
+* protect Swagger API documentation route with Basic Auth ([b5defe4](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b5defe4ef8533c3533e16bd887870574d034e3e5))
+* protect Swagger API documentation route with Basic Auth ([d75413d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d75413d55d659f4d25bacdca66deeb952be8983a))
+
 ## [2.19.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.18.0...v2.19.0) (2026-07-16)
 
 
