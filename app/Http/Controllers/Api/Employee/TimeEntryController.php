@@ -20,6 +20,7 @@ use App\Support\TimeEntryDaySummary;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TimeEntryController extends Controller
 {
@@ -74,10 +75,26 @@ class TimeEntryController extends Controller
         $lastEntry = $user->timeEntries()
             ->where('company_id', $user->company_id)
             ->excludeRejected()
+            ->whereBetween('clocked_at', [$now->startOfDay()->toDateTimeString(), $now->toDateTimeString()])
             ->latest('clocked_at')
             ->first();
-        if ($lastEntry && $lastEntry->clocked_at->diffInSeconds($now) < 60) {
-            return response()->json(['message' => 'Aguarde 1 minuto entre os registros.'], 422);
+
+        if ($lastEntry) {
+            $diffInSeconds = $lastEntry->clocked_at->diffInSeconds($now);
+
+            if ($diffInSeconds < 0) {
+                Log::warning('time_entry.throttle_check_found_future_entry', [
+                    'user_id' => $user->id,
+                    'company_id' => $user->company_id,
+                    'time_entry_id' => $lastEntry->id,
+                    'clocked_at' => $lastEntry->clocked_at->toIso8601String(),
+                    'now' => $now->toIso8601String(),
+                ]);
+            }
+
+            if (abs($diffInSeconds) < 60) {
+                return response()->json(['message' => 'Aguarde 1 minuto entre os registros.'], 422);
+            }
         }
 
         $mobilePattern = '/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone/i';

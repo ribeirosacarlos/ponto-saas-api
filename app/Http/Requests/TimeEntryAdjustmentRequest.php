@@ -14,12 +14,19 @@ class TimeEntryAdjustmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'proposed_clocked_at' => ['nullable', 'date'],
+            'proposed_clocked_at' => ['nullable', 'date', 'before:tomorrow'],
             'proposed_type' => ['nullable', 'string', 'in:in,out'],
             'proposed_latitude' => ['nullable', 'numeric'],
             'proposed_longitude' => ['nullable', 'numeric'],
             'proposed_source' => ['nullable', 'string', 'max:255'],
             'reason' => ['required', 'string', 'max:500'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'proposed_clocked_at.before' => 'Não é possível ajustar o ponto para uma data futura, além do dia de hoje.',
         ];
     }
 
