@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.19.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.1...v2.19.2) (2026-08-07)
+
+
+### Correções de Bugs
+
+* impede bloqueio permanente de ponto por data futura corrompida ([204f94a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/204f94aafd8f680586c81a50071d5291a9c47729))
+* impede bloqueio permanente de ponto por data futura corrompida ([43436bf](https://github.com/ribeirosacarlos/ponto-saas-api/commit/43436bf0d03e5b26f5478be491275a9ded21dcb2))
+
 ## [2.19.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.0...v2.19.1) (2026-08-06)
 
 
