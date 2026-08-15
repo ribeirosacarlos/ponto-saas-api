@@ -93,3 +93,68 @@ jobs:
                       docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
 
                       docker image prune -f
+
+    deploy-hostinger:
+        runs-on: ubuntu-latest
+        needs: release-please
+        if: ${{ needs.release-please.outputs.release_created == 'true' }}
+
+        permissions:
+            contents: read
+            packages: write
+
+        concurrency:
+            group: deploy-hostinger-main
+            cancel-in-progress: true
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build and push image to GHCR
+              env:
+                  IMAGE_TAG: ${{ needs.release-please.outputs.tag_name }}
+              run: |
+                  IMAGE="ghcr.io/${{ github.repository }}:${IMAGE_TAG}"
+                  IMAGE_LATEST="ghcr.io/${{ github.repository }}:latest"
+
+                  docker build \
+                    --pull \
+                    --no-cache \
+                    --build-arg APP_BUILD_SHA="${IMAGE_TAG}" \
+                    -f ./.docker/php/Dockerfile \
+                    -t "$IMAGE" \
+                    -t "$IMAGE_LATEST" \
+                    .
+
+                  docker push "$IMAGE"
+                  docker push "$IMAGE_LATEST"
+
+            - name: Deploy on Hostinger VPS via SSH
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.HOSTINGER_HOST }}
+                  username: ${{ secrets.HOSTINGER_USER }}
+                  key: ${{ secrets.HOSTINGER_SSH_KEY }}
+                  script: |
+                      set -e
+                      cd /opt/jornafy-api
+
+                      docker compose -f docker-compose.prod.yml -f docker-compose.hostinger.yml pull
+
+                      docker compose -f docker-compose.prod.yml -f docker-compose.hostinger.yml up -d --force-recreate
+
+                      sleep 10
+
+                      docker compose -f docker-compose.prod.yml -f docker-compose.hostinger.yml exec -T app php artisan migrate --force
+
+                      docker compose -f docker-compose.prod.yml -f docker-compose.hostinger.yml exec -T app php artisan l5-swagger:generate
+
+                      docker image prune -f
