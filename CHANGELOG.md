@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.20.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.2...v2.20.0) (2026-08-27)
+
+
+### Novas Funcionalidades
+
+* automação de e-mails comerciais (cold outreach) via Resend ([c15b5bd](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c15b5bd306bc18accf104e98e9be786c8cb2c2cf))
+* automação de e-mails comerciais (cold outreach) via Resend ([40b9d98](https://github.com/ribeirosacarlos/ponto-saas-api/commit/40b9d986306c58a96b11a0befc65504d6631a9d3))
+
 ## [2.19.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.1...v2.19.2) (2026-08-07)
 
 
