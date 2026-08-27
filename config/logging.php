@@ -81,6 +81,22 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'resend_webhooks' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/resend-webhooks.log'),
+            'level' => env('RESEND_WEBHOOK_LOG_LEVEL', 'debug'),
+            'days' => env('RESEND_WEBHOOK_LOG_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'commercial_email' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/commercial-email.log'),
+            'level' => env('COMMERCIAL_EMAIL_LOG_LEVEL', 'debug'),
+            'days' => env('COMMERCIAL_EMAIL_LOG_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

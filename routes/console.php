@@ -26,3 +26,8 @@ Artisan::command('swagger:generate-safe', function () {
 })->purpose('Gera a doc Swagger sem deixar os warnings inofensivos de classes não-PSR4 derrubarem o comando');
 
 Schedule::command('subscriptions:sync-expired-access')->everyFiveMinutes();
+
+Schedule::command('commercial:emails:dispatch-due')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping(10)
+    ->onOneServer();

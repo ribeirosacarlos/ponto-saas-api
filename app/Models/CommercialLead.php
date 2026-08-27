@@ -190,4 +190,27 @@ class CommercialLead extends Model
     {
         return $this->hasMany(CommercialCommission::class, 'lead_id');
     }
+
+    public function emailSequenceEnrollments(): HasMany
+    {
+        return $this->hasMany(CommercialEmailSequenceEnrollment::class, 'lead_id');
+    }
+
+    public function emailSends(): HasMany
+    {
+        return $this->hasMany(CommercialEmailSend::class, 'lead_id');
+    }
+
+    public function activeEmailEnrollment(): ?CommercialEmailSequenceEnrollment
+    {
+        return $this->emailSequenceEnrollments()
+            ->where('status', CommercialEmailSequenceEnrollment::STATUS_ACTIVE)
+            ->latest('enrolled_at')
+            ->first();
+    }
+
+    public function isEmailSuppressed(): bool
+    {
+        return CommercialEmailSuppression::isSuppressed($this->email);
+    }
 }

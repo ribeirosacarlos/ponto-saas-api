@@ -45,7 +45,7 @@ services:
       WAIT_FOR_DB: "false"
     depends_on:
       - app
-    command: ["php", "/var/www/artisan", "queue:work", "database", "--queue=default", "--sleep=1", "--tries=3", "--timeout=120"]
+    command: ["php", "/var/www/artisan", "queue:work", "database", "--queue=default,commercial-email", "--sleep=1", "--tries=3", "--timeout=120"]
     networks:
       - laravel
     logging:

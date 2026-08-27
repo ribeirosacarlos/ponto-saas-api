@@ -20,6 +20,10 @@ return [
 
     'resend' => [
         'key' => env('RESEND_API_KEY'),
+        'webhook_secret' => env('RESEND_WEBHOOK_SECRET'),
+        'webhook_tolerance' => env('RESEND_WEBHOOK_TOLERANCE', 300),
+        'outreach_from_address' => env('RESEND_OUTREACH_FROM_ADDRESS'),
+        'outreach_from_name' => env('RESEND_OUTREACH_FROM_NAME'),
     ],
 
     'ses' => [
