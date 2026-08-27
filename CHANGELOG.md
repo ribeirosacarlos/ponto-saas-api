@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.20.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.20.0...v2.20.1) (2026-08-27)
+
+
+### Correções de Bugs
+
+* suporta {{#if variavel}}...{{/if}} nos templates de e-mail comer… ([4fc71fa](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4fc71fae44048df1f43fb1471ebc821a0c759672))
+* suporta {{#if variavel}}...{{/if}} nos templates de e-mail comercial ([3aef876](https://github.com/ribeirosacarlos/ponto-saas-api/commit/3aef876d0435d7618cbef578d7e8ce30f877c4fb))
+
 ## [2.20.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.2...v2.20.0) (2026-08-27)
 
 
