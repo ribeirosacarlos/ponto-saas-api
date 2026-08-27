@@ -48,6 +48,8 @@ class CommercialEmailMergeService
 
     private function interpolate(string $text, array $variables): string
     {
+        $text = $this->applyConditionals($text, $variables);
+
         $search = [];
         $replace = [];
 
@@ -57,5 +59,26 @@ class CommercialEmailMergeService
         }
 
         return str_replace($search, $replace, $text);
+    }
+
+    /**
+     * Suporte a blocos condicionais simples no estilo {{#if variavel}}...{{/if}}:
+     * mantém o conteúdo interno (com suas próprias {{variaveis}}, resolvidas no
+     * passo seguinte) quando a variável existe e não está vazia, ou remove o
+     * bloco inteiro quando ela é ausente/vazia. Não suporta {{else}} nem blocos
+     * aninhados — só o suficiente para evitar que sintaxe tipo Handlebars vaze
+     * literalmente para o e-mail quando alguém tenta usar esse padrão.
+     */
+    private function applyConditionals(string $text, array $variables): string
+    {
+        return preg_replace_callback(
+            '/\{\{#if\s+(\w+)\}\}(.*?)\{\{\/if\}\}/s',
+            function (array $matches) use ($variables) {
+                $value = $variables[$matches[1]] ?? '';
+
+                return $value !== '' && $value !== null ? $matches[2] : '';
+            },
+            $text
+        );
     }
 }
