@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\Billing\PublicCheckoutSessionController;
 use App\Http\Controllers\Api\Billing\PublicPlanController;
 use App\Http\Controllers\Api\Billing\StripeWebhookController;
 use App\Http\Controllers\Api\Commercial\CommercialAffiliateTrackingController;
+use App\Http\Controllers\Api\Commercial\CommercialEmailUnsubscribeController;
+use App\Http\Controllers\Api\Commercial\CommercialEmailWebhookController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\Platform\CompanyRegistrationController;
 use App\Http\Controllers\Api\V1\Public\PublicBlogController;
@@ -40,6 +42,12 @@ Route::post('/auth/login', [AuthController::class, 'login'])
 
 Route::post('/commercial/track-affiliate-click', [CommercialAffiliateTrackingController::class, 'track'])
     ->middleware(['throttle:public-affiliate-click']);
+
+Route::post('/commercial/email/webhook', [CommercialEmailWebhookController::class, 'handle']);
+
+Route::match(['get', 'post'], '/commercial/email/unsubscribe/{token}', [CommercialEmailUnsubscribeController::class, 'handle'])
+    ->middleware(['throttle:public-read'])
+    ->name('public.commercial-email.unsubscribe');
 
 Route::post('/auth/affiliate/login', [\App\Http\Controllers\Api\Commercial\CommercialAffiliateAuthController::class, 'login'])
     ->middleware(['throttle:auth-login']);

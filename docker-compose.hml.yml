@@ -50,7 +50,7 @@ services:
         condition: service_started
       hml-db:
         condition: service_healthy
-    command: ["php", "/var/www/artisan", "queue:work", "database", "--queue=default", "--sleep=1", "--tries=3", "--timeout=120"]
+    command: ["php", "/var/www/artisan", "queue:work", "database", "--queue=default,commercial-email", "--sleep=1", "--tries=3", "--timeout=120"]
     volumes: !override
       - public_data:/var/www/public
       - hml_storage:/var/www/storage
