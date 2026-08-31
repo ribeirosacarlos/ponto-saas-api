@@ -54,6 +54,34 @@ services:
         awslogs-stream: laravel-queue
         awslogs-create-group: "true"
 
+  scheduler:
+    image: 511758682326.dkr.ecr.us-east-1.amazonaws.com/ponto-saas-api:latest
+    container_name: laravel-scheduler
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      LOG_CHANNEL: stderr
+
+      RUN_COMPOSER_INSTALL: "false"
+      RUN_MIGRATIONS: "false"
+      RUN_OPTIMIZE: "false"
+      WAIT_FOR_DB: "false"
+    depends_on:
+      - app
+    command: ["sh", "-c", "while true; do php /var/www/artisan schedule:run --no-interaction; sleep 60; done"]
+    networks:
+      - laravel
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: laravel-scheduler
+        awslogs-create-group: "true"
+
   nginx:
     image: nginx:alpine
     container_name: nginx
