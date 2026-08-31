@@ -46,7 +46,9 @@ class SendTestCommercialEmail extends Command
                 return self::FAILURE;
             }
         } else {
-            $lead = CommercialLead::factory()->make([
+            // Instância em memória, sem persistir e sem depender de factory/Faker
+            // (fakerphp/faker é require-dev — não existe em produção).
+            $lead = new CommercialLead([
                 'contact_name' => 'Nome de Teste',
                 'company_name' => 'Empresa de Teste',
                 'email' => $this->argument('email'),
