@@ -3,6 +3,7 @@
 use App\Console\Commands\BillingMarkPastDue;
 use App\Console\Commands\BillingSyncSubscriptions;
 use App\Console\Commands\Commercial\DispatchDueCommercialSequenceEmails;
+use App\Console\Commands\Commercial\SendTestCommercialEmail;
 use App\Console\Commands\NormalizeDocumentPaths;
 use App\Console\Commands\SyncExpiredCompanyAccess;
 use App\Http\Middleware\SetCompanyTimezone;
@@ -51,6 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncExpiredCompanyAccess::class,
         NormalizeDocumentPaths::class,
         DispatchDueCommercialSequenceEmails::class,
+        SendTestCommercialEmail::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
