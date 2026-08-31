@@ -14,6 +14,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\Commercial\CommercialEmailEnrollmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -25,9 +26,21 @@ class CommercialEmailDispatchTest extends TestCase
     {
         parent::setUp();
 
+        // Congela o "agora" dentro da janela padrão de envio (dia útil, 08:00-18:00
+        // America/Sao_Paulo) — sem isso, os testes ficam dependentes do horário real
+        // em que a suíte roda e falham fora do expediente.
+        Carbon::setTestNow(Carbon::parse('2026-08-26 10:00:00', 'America/Sao_Paulo'));
+
         foreach (['super_admin', 'commercial_manager', 'commercial_agent'] as $role) {
             Role::updateOrCreate(['name' => $role], ['display_name' => $role]);
         }
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 
     private function enrolledLeadDueNow(): CommercialEmailSequenceEnrollment
