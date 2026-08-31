@@ -22,8 +22,21 @@ class CommercialEmailMergeService
 
         return [
             'subject' => $this->interpolate($template->subject, $variables),
-            'body_html' => $this->interpolate($template->body_html, $variables),
+            'body_html' => $this->interpolate($template->body_html, $variables).$this->signatureHtml(),
         ];
+    }
+
+    /**
+     * Assinatura anexada automaticamente no final de todo e-mail comercial.
+     * A imagem vive em public/images/ desta própria API, servida a partir do
+     * APP_URL já configurado (sem precisar de S3/CDN nem de env var própria).
+     */
+    private function signatureHtml(): string
+    {
+        $imageUrl = rtrim(config('app.url'), '/').'/images/a1ad0979-eb80-431b-aca8-792702fdff98.png';
+        $alt = 'Lorena García - Administrativo - Jornafy - +34 634 49 93 69 - administrativo@jornafy.com - www.jornafy.com - España, Valencia';
+
+        return '<div style="margin-top:24px;"><img src="'.e($imageUrl).'" alt="'.e($alt).'" style="max-width:600px;width:100%;height:auto;display:block;"></div>';
     }
 
     public function variablesFor(CommercialLead $lead, CommercialEmailSequenceEnrollment $enrollment): array
