@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.21.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.21.0...v2.21.1) (2026-08-31)
+
+
+### Correções de Bugs
+
+* erro de tipo UUID no Postgres ao buscar template por slug ([7d1e1ad](https://github.com/ribeirosacarlos/ponto-saas-api/commit/7d1e1adcb441663836de4be65d2681f58d0cefc1))
+* nao usar model factory (Faker) em runtime de producao ([cbf2474](https://github.com/ribeirosacarlos/ponto-saas-api/commit/cbf2474f7d46dc03100c5af804eef869a71758ef))
+
 ## [2.21.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.20.1...v2.21.0) (2026-08-31)
 
 
