@@ -22,10 +22,14 @@ class SendTestCommercialEmail extends Command
 
     public function handle(CommercialEmailMergeService $mergeService): int
     {
-        $template = CommercialEmailTemplate::query()
-            ->where('id', $this->argument('template'))
-            ->orWhere('slug', $this->argument('template'))
-            ->first();
+        $templateArgument = $this->argument('template');
+
+        // Em Postgres a coluna "id" é uuid de verdade — comparar com uma string
+        // que não é UUID (ex.: um slug) falha com erro de tipo antes mesmo de
+        // avaliar o "or". Só filtra por id quando o argumento parece um UUID.
+        $template = Str::isUuid($templateArgument)
+            ? CommercialEmailTemplate::find($templateArgument)
+            : CommercialEmailTemplate::where('slug', $templateArgument)->first();
 
         if (! $template) {
             $this->error('Template não encontrado (busquei por id e por slug).');
@@ -34,10 +38,10 @@ class SendTestCommercialEmail extends Command
         }
 
         if ($this->option('lead')) {
-            $lead = CommercialLead::find($this->option('lead'));
+            $lead = Str::isUuid($this->option('lead')) ? CommercialLead::find($this->option('lead')) : null;
 
             if (! $lead) {
-                $this->error('Lead informado em --lead não foi encontrado.');
+                $this->error('Lead informado em --lead não foi encontrado (precisa ser um UUID válido).');
 
                 return self::FAILURE;
             }
