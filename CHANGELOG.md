@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.21.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.20.1...v2.21.0) (2026-08-31)
+
+
+### Novas Funcionalidades
+
+* adiciona serviço scheduler dedicado em produção/hostinger ([6d94aef](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6d94aefabbbd42dfd2e446a9d24b20198adfff90))
+* comando para enviar e-mail comercial de teste sem passar por fila/limites ([22bd63d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/22bd63d6acaf11f483f04665c2667b76c945e8f8))
+
 ## [2.20.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.20.0...v2.20.1) (2026-08-27)
 
 
