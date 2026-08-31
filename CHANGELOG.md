@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.22.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.21.1...v2.22.0) (2026-08-31)
+
+
+### Novas Funcionalidades
+
+* assinatura automática em todo e-mail comercial ([9c2b2a8](https://github.com/ribeirosacarlos/ponto-saas-api/commit/9c2b2a860ee57b6f70110e4c5b1409e06ba1d7a8))
+* assinatura automática em todo e-mail comercial ([8e264e9](https://github.com/ribeirosacarlos/ponto-saas-api/commit/8e264e90c364a59e02a934cdaadd9a76e66d3a7a))
+
 ## [2.21.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.21.0...v2.21.1) (2026-08-31)
 
 
