@@ -30,9 +30,24 @@ class CommercialEmailSendResource extends JsonResource
             'failure_reason' => $this->failure_reason,
             'cancel_reason' => $this->cancel_reason,
             'attempt_count' => $this->attempt_count,
+            'lead' => $this->whenLoaded('lead', fn () => [
+                'id' => $this->lead->id,
+                'company_name' => $this->lead->company_name,
+                'contact_name' => $this->lead->contact_name,
+                'assigned_to_user_id' => $this->lead->assigned_to_user_id,
+            ]),
             'template' => $this->whenLoaded('template', fn () => [
                 'id' => $this->template->id,
                 'name' => $this->template->name,
+            ]),
+            'sequence_step' => $this->whenLoaded('sequenceStep', fn () => [
+                'id' => $this->sequenceStep->id,
+                'position' => $this->sequenceStep->position,
+                'name' => $this->sequenceStep->name,
+                'sequence' => $this->sequenceStep->relationLoaded('sequence') ? [
+                    'id' => $this->sequenceStep->sequence->id,
+                    'name' => $this->sequenceStep->sequence->name,
+                ] : null,
             ]),
         ];
     }

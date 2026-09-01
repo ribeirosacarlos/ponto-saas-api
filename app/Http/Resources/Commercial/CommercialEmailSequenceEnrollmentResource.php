@@ -24,6 +24,13 @@ class CommercialEmailSequenceEnrollmentResource extends JsonResource
             'replied_at' => $this->replied_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'cancelled_at' => $this->cancelled_at?->toIso8601String(),
+            'lead' => $this->whenLoaded('lead', fn () => [
+                'id' => $this->lead->id,
+                'company_name' => $this->lead->company_name,
+                'contact_name' => $this->lead->contact_name,
+                'email' => $this->lead->email,
+                'assigned_to_user_id' => $this->lead->assigned_to_user_id,
+            ]),
             'sequence' => $this->whenLoaded('sequence', fn () => [
                 'id' => $this->sequence->id,
                 'name' => $this->sequence->name,
