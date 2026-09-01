@@ -3,6 +3,8 @@
 use App\Console\Commands\BillingMarkPastDue;
 use App\Console\Commands\BillingSyncSubscriptions;
 use App\Console\Commands\Commercial\DispatchDueCommercialSequenceEmails;
+use App\Console\Commands\Commercial\ReportCommercialEmailEnrollments;
+use App\Console\Commands\Commercial\ReportCommercialEmailSends;
 use App\Console\Commands\Commercial\SendTestCommercialEmail;
 use App\Console\Commands\NormalizeDocumentPaths;
 use App\Console\Commands\SyncExpiredCompanyAccess;
@@ -53,6 +55,8 @@ return Application::configure(basePath: dirname(__DIR__))
         NormalizeDocumentPaths::class,
         DispatchDueCommercialSequenceEmails::class,
         SendTestCommercialEmail::class,
+        ReportCommercialEmailSends::class,
+        ReportCommercialEmailEnrollments::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
