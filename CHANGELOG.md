@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.23.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.22.0...v2.23.0) (2026-09-01)
+
+
+### Novas Funcionalidades
+
+* comandos de relatório para acompanhar envios e inscrições comer… ([c3735a9](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c3735a9bab741bca728546199eac4d92c80e5288))
+* comandos de relatório para acompanhar envios e inscrições comerciais ([d9465db](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d9465dbfe1723078ec15de96d0788841014d5ca4))
+
 ## [2.22.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.21.1...v2.22.0) (2026-08-31)
 
 
