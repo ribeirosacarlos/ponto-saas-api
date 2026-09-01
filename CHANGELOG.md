@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.24.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.23.0...v2.24.0) (2026-09-01)
+
+
+### Novas Funcionalidades
+
+* endpoints de listagem geral de inscrições e envios comerciais ([bcf706d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/bcf706d669f44c4110c25b880419055b4bc799ac))
+
 ## [2.23.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.22.0...v2.23.0) (2026-09-01)
 
 
