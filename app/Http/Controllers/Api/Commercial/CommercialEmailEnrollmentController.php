@@ -11,6 +11,7 @@ use App\Models\CommercialEmailSequenceEnrollment;
 use App\Models\CommercialLead;
 use App\Services\AuditLogService;
 use App\Services\Commercial\CommercialEmailEnrollmentService;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class CommercialEmailEnrollmentController extends Controller
@@ -19,6 +20,28 @@ class CommercialEmailEnrollmentController extends Controller
         protected CommercialEmailEnrollmentService $enrollmentService,
         protected AuditLogService $auditLogService,
     ) {}
+
+    public function index(Request $request)
+    {
+        $this->authorize('viewAny', CommercialLead::class);
+
+        $user = $request->user();
+
+        $query = CommercialEmailSequenceEnrollment::query()
+            ->with(['lead', 'sequence', 'currentStep', 'nextStep'])
+            ->when(
+                $user?->hasRole('commercial_agent'),
+                fn ($q) => $q->whereHas('lead', fn ($q2) => $q2->where('assigned_to_user_id', $user->id))
+            )
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->filled('sequence_id'), fn ($q) => $q->where('sequence_id', $request->input('sequence_id')))
+            ->when($request->filled('email'), fn ($q) => $q->whereHas('lead', fn ($q2) => $q2->where('email', 'like', '%'.$request->input('email').'%')))
+            ->orderByDesc('enrolled_at');
+
+        return CommercialEmailSequenceEnrollmentResource::collection(
+            $query->paginate($request->integer('per_page', 20))
+        );
+    }
 
     public function store(CommercialEmailEnrollmentStoreRequest $request)
     {

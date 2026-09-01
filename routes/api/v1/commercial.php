@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Commercial\CommercialAffiliateController;
 use App\Http\Controllers\Api\Commercial\CommercialCommissionController;
 use App\Http\Controllers\Api\Commercial\CommercialDashboardController;
 use App\Http\Controllers\Api\Commercial\CommercialEmailEnrollmentController;
+use App\Http\Controllers\Api\Commercial\CommercialEmailSendController;
 use App\Http\Controllers\Api\Commercial\CommercialEmailSequenceController;
 use App\Http\Controllers\Api\Commercial\CommercialEmailSequenceStepController;
 use App\Http\Controllers\Api\Commercial\CommercialEmailTemplateController;
@@ -72,11 +73,14 @@ Route::prefix('admin/commercial')
             Route::get('sequences', [CommercialEmailSequenceController::class, 'index']);
             Route::get('sequences/{id}', [CommercialEmailSequenceController::class, 'show']);
 
+            Route::get('enrollments', [CommercialEmailEnrollmentController::class, 'index']);
             Route::post('enrollments', [CommercialEmailEnrollmentController::class, 'store']);
             Route::post('enrollments/{id}/pause', [CommercialEmailEnrollmentController::class, 'pause']);
             Route::post('enrollments/{id}/resume', [CommercialEmailEnrollmentController::class, 'resume']);
             Route::post('enrollments/{id}/cancel', [CommercialEmailEnrollmentController::class, 'cancel']);
             Route::post('enrollments/{id}/mark-replied', [CommercialEmailEnrollmentController::class, 'markReplied']);
+
+            Route::get('sends', [CommercialEmailSendController::class, 'index']);
         });
 
         Route::middleware(['role:super_admin|commercial_manager'])->group(function () {
