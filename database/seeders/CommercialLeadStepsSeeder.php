@@ -81,6 +81,7 @@ class CommercialLeadStepsSeeder extends Seeder
                 'position' => 9,
                 'default_due_days' => 0,
                 'is_final' => false,
+                'pauses_outreach_sequences' => true,
             ],
             [
                 'slug' => 'demo-realizada',
@@ -89,6 +90,7 @@ class CommercialLeadStepsSeeder extends Seeder
                 'position' => 10,
                 'default_due_days' => 0,
                 'is_final' => false,
+                'pauses_outreach_sequences' => true,
             ],
             [
                 'slug' => 'proposta-enviada',
@@ -97,6 +99,7 @@ class CommercialLeadStepsSeeder extends Seeder
                 'position' => 11,
                 'default_due_days' => 1,
                 'is_final' => false,
+                'pauses_outreach_sequences' => true,
             ],
             [
                 'slug' => 'negociacao',
@@ -105,6 +108,7 @@ class CommercialLeadStepsSeeder extends Seeder
                 'position' => 12,
                 'default_due_days' => 7,
                 'is_final' => false,
+                'pauses_outreach_sequences' => true,
             ],
             [
                 'slug' => 'fechado-ganho',
@@ -113,6 +117,7 @@ class CommercialLeadStepsSeeder extends Seeder
                 'position' => 13,
                 'default_due_days' => 0,
                 'is_final' => true,
+                'pauses_outreach_sequences' => true,
             ],
             [
                 'slug' => 'fechado-perdido',
@@ -121,6 +126,7 @@ class CommercialLeadStepsSeeder extends Seeder
                 'position' => 14,
                 'default_due_days' => 0,
                 'is_final' => true,
+                'pauses_outreach_sequences' => true,
             ],
         ];
 
@@ -133,6 +139,7 @@ class CommercialLeadStepsSeeder extends Seeder
                     'position' => $step['position'],
                     'default_due_days' => $step['default_due_days'],
                     'is_final' => $step['is_final'],
+                    'pauses_outreach_sequences' => $step['pauses_outreach_sequences'] ?? false,
                     'active' => true,
                 ],
             );

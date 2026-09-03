@@ -24,6 +24,7 @@ class CommercialEmailSequenceStep extends Model
         'delay_days',
         'send_time_override',
         'is_active',
+        'moves_lead_to_step_id',
     ];
 
     protected $casts = [
@@ -45,6 +46,11 @@ class CommercialEmailSequenceStep extends Model
     public function template(): BelongsTo
     {
         return $this->belongsTo(CommercialEmailTemplate::class, 'template_id');
+    }
+
+    public function movesLeadToStep(): BelongsTo
+    {
+        return $this->belongsTo(CommercialLeadStep::class, 'moves_lead_to_step_id');
     }
 
     public function nextActive(): ?self

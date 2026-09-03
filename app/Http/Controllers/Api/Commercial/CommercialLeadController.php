@@ -14,11 +14,14 @@ use App\Http\Requests\Commercial\CommercialLeadStoreRequest;
 use App\Http\Requests\Commercial\CommercialLeadUpdateRequest;
 use App\Http\Resources\Commercial\CommercialLeadNoteResource;
 use App\Http\Resources\Commercial\CommercialLeadResource;
+use App\Models\CommercialEmailSequenceEnrollment;
 use App\Models\CommercialLead;
 use App\Models\CommercialLeadNote;
+use App\Models\CommercialLeadStep;
 use App\Models\CommercialLeadStepLog;
 use App\Services\AuditLogService;
 use App\Services\Commercial\CommercialCommissionService;
+use App\Services\Commercial\CommercialEmailEnrollmentService;
 use App\Services\Commercial\CommercialLeadDuplicateService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
@@ -30,6 +33,7 @@ class CommercialLeadController extends Controller
         protected CommercialLeadDuplicateService $duplicateService,
         protected CommercialCommissionService $commissionService,
         protected AuditLogService $auditLogService,
+        protected CommercialEmailEnrollmentService $enrollmentService,
     ) {}
 
     public function index(Request $request)
@@ -271,6 +275,15 @@ class CommercialLeadController extends Controller
             entityId: $lead->id,
             description: "Etapa alterada de {$oldStepId} para {$data['step_id']}",
         );
+
+        $newStep = CommercialLeadStep::find($data['step_id']);
+
+        if ($newStep?->pauses_outreach_sequences) {
+            $lead->emailSequenceEnrollments()
+                ->whereIn('status', [CommercialEmailSequenceEnrollment::STATUS_ACTIVE, CommercialEmailSequenceEnrollment::STATUS_PAUSED])
+                ->get()
+                ->each(fn (CommercialEmailSequenceEnrollment $enrollment) => $this->enrollmentService->cancel($enrollment, 'lead_advanced_pipeline'));
+        }
 
         return new CommercialLeadResource($lead->load('currentStep'));
     }

@@ -2,10 +2,15 @@
 
 namespace Tests\Feature\Commercial;
 
+use App\Models\CommercialEmailSequence;
+use App\Models\CommercialEmailSequenceEnrollment;
+use App\Models\CommercialEmailSequenceStep;
+use App\Models\CommercialEmailTemplate;
 use App\Models\CommercialLead;
 use App\Models\CommercialLeadStep;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Commercial\CommercialEmailEnrollmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -65,6 +70,73 @@ class CommercialLeadManagementTest extends TestCase
         $this->assertDatabaseHas(
             (new \App\Models\CommercialLeadStepLog)->getTable(),
             ['lead_id' => $lead->id, 'step_id' => $step->id, 'status' => 'done']
+        );
+    }
+
+    private function activeEnrollment(CommercialLead $lead, User $actor): CommercialEmailSequenceEnrollment
+    {
+        $sequence = CommercialEmailSequence::create(['name' => 'Cold Outbound', 'status' => 'active']);
+        $template = CommercialEmailTemplate::create([
+            'name' => 'Primeiro contato',
+            'slug' => 'primeiro-contato-'.uniqid(),
+            'subject' => 'Olá',
+            'body_html' => '<p>Olá</p>',
+        ]);
+        CommercialEmailSequenceStep::create([
+            'sequence_id' => $sequence->id,
+            'template_id' => $template->id,
+            'position' => 1,
+            'delay_days' => 0,
+        ]);
+
+        return app(CommercialEmailEnrollmentService::class)->enroll($lead, $sequence, $actor);
+    }
+
+    public function test_moving_lead_to_a_step_that_pauses_outreach_cancels_active_enrollment(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        $lead = CommercialLead::factory()->create(['email' => 'lead@empresa.test']);
+        $enrollment = $this->activeEnrollment($lead, $manager);
+
+        $demoStep = CommercialLeadStep::create([
+            'name' => 'Demo agendada',
+            'position' => 9,
+            'active' => true,
+            'pauses_outreach_sequences' => true,
+        ]);
+
+        $response = $this->actingAs($manager)->postJson("/v1/admin/commercial/leads/{$lead->id}/move-step", [
+            'step_id' => $demoStep->id,
+        ]);
+
+        $response->assertOk();
+        $this->assertSame(
+            CommercialEmailSequenceEnrollment::STATUS_CANCELLED,
+            $enrollment->fresh()->status,
+        );
+    }
+
+    public function test_moving_lead_to_a_step_that_does_not_pause_outreach_keeps_enrollment_active(): void
+    {
+        $manager = $this->userWithRole('commercial_manager');
+        $lead = CommercialLead::factory()->create(['email' => 'lead@empresa.test']);
+        $enrollment = $this->activeEnrollment($lead, $manager);
+
+        $whatsappStep = CommercialLeadStep::create([
+            'name' => 'WhatsApp 2',
+            'position' => 5,
+            'active' => true,
+            'pauses_outreach_sequences' => false,
+        ]);
+
+        $response = $this->actingAs($manager)->postJson("/v1/admin/commercial/leads/{$lead->id}/move-step", [
+            'step_id' => $whatsappStep->id,
+        ]);
+
+        $response->assertOk();
+        $this->assertSame(
+            CommercialEmailSequenceEnrollment::STATUS_ACTIVE,
+            $enrollment->fresh()->status,
         );
     }
 

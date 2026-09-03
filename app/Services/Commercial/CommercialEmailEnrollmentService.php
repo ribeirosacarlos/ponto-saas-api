@@ -6,8 +6,11 @@ use App\Models\CommercialEmailSequence;
 use App\Models\CommercialEmailSequenceEnrollment;
 use App\Models\CommercialEmailSequenceStep;
 use App\Models\CommercialLead;
+use App\Models\CommercialLeadStep;
+use App\Models\CommercialLeadStepLog;
 use App\Models\CommercialOutreachSetting;
 use App\Models\User;
+use App\Services\AuditLogService;
 use Carbon\Carbon;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Str;
@@ -16,6 +19,8 @@ use Illuminate\Validation\ValidationException;
 class CommercialEmailEnrollmentService
 {
     private const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+    public function __construct(private readonly AuditLogService $auditLogService) {}
 
     public function enroll(CommercialLead $lead, CommercialEmailSequence $sequence, User $actor): CommercialEmailSequenceEnrollment
     {
@@ -170,6 +175,54 @@ class CommercialEmailEnrollmentService
             'next_step_id' => $next->id,
             'next_send_at' => $this->nextSendAtForStep($next, now()),
         ]);
+    }
+
+    /**
+     * Se o passo de e-mail enviado estiver mapeado para uma etapa do funil (kanban),
+     * avança o lead para essa etapa. Nunca regride uma etapa mais avançada definida
+     * manualmente por um vendedor.
+     */
+    public function applyPipelineEffects(CommercialEmailSequenceEnrollment $enrollment, CommercialEmailSequenceStep $sentStep): void
+    {
+        if (! $sentStep->moves_lead_to_step_id) {
+            return;
+        }
+
+        $targetStep = CommercialLeadStep::find($sentStep->moves_lead_to_step_id);
+
+        if (! $targetStep) {
+            return;
+        }
+
+        $lead = $enrollment->lead;
+        $currentStep = $lead->currentStep;
+
+        if ($currentStep && $targetStep->position <= $currentStep->position) {
+            return;
+        }
+
+        $actorId = $enrollment->enrolled_by_user_id ?? $lead->assigned_to_user_id ?? $lead->created_by_user_id;
+
+        $lead->update(['current_step_id' => $targetStep->id]);
+
+        if ($actorId) {
+            CommercialLeadStepLog::create([
+                'lead_id' => $lead->id,
+                'step_id' => $targetStep->id,
+                'user_id' => $actorId,
+                'status' => 'done',
+                'note' => "Etapa avançada automaticamente pelo envio do e-mail \"{$sentStep->name}\" da sequência.",
+                'completed_at' => now(),
+            ]);
+        }
+
+        $this->auditLogService->log(
+            action: 'lead.step_changed',
+            entityType: CommercialLead::class,
+            entityId: $lead->id,
+            description: "Etapa alterada automaticamente para {$targetStep->name} (e-mail automático enviado)",
+            userId: $actorId,
+        );
     }
 
     /**

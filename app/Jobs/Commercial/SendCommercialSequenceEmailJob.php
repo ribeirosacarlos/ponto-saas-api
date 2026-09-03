@@ -79,6 +79,7 @@ class SendCommercialSequenceEmailJob implements ShouldQueue
         ]);
 
         $enrollmentService->advanceAfterSend($enrollment, $emailSend->sequenceStep);
+        $enrollmentService->applyPipelineEffects($enrollment, $emailSend->sequenceStep);
 
         $auditLogService->log(
             action: 'commercial_email.sent',

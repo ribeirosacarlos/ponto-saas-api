@@ -30,7 +30,7 @@ class CommercialEmailSequenceStepController extends Controller
             description: "Passo adicionado à sequência: {$sequence->name}",
         );
 
-        return (new CommercialEmailSequenceStepResource($step->load('template')))->response()->setStatusCode(201);
+        return (new CommercialEmailSequenceStepResource($step->load(['template', 'movesLeadToStep'])))->response()->setStatusCode(201);
     }
 
     public function update(CommercialEmailSequenceStepRequest $request, string $sequenceId, string $stepId)
@@ -45,7 +45,7 @@ class CommercialEmailSequenceStepController extends Controller
             description: 'Passo de sequência atualizado',
         );
 
-        return new CommercialEmailSequenceStepResource($step->load('template'));
+        return new CommercialEmailSequenceStepResource($step->load(['template', 'movesLeadToStep']));
     }
 
     public function destroy(string $sequenceId, string $stepId)

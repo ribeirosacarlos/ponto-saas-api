@@ -9,12 +9,14 @@ use App\Models\CommercialEmailSequenceEnrollment;
 use App\Models\CommercialEmailSequenceStep;
 use App\Models\CommercialEmailTemplate;
 use App\Models\CommercialLead;
+use App\Models\CommercialLeadStep;
 use App\Models\CommercialOutreachSetting;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Commercial\CommercialEmailEnrollmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -130,5 +132,77 @@ class CommercialEmailDispatchTest extends TestCase
         $this->artisan('commercial:emails:dispatch-due');
 
         Queue::assertNotPushed(SendCommercialSequenceEmailJob::class);
+    }
+
+    private function enrolledLeadWithPipelineMapping(?CommercialLeadStep $currentStep, CommercialLeadStep $targetStep): CommercialLead
+    {
+        $manager = User::factory()->create(['company_id' => null]);
+        $manager->syncRoles(['commercial_manager']);
+
+        $sequence = CommercialEmailSequence::create(['name' => 'Cold Outbound', 'status' => 'active']);
+        $template = CommercialEmailTemplate::create([
+            'name' => 'Primeiro contato',
+            'slug' => 'primeiro-contato-'.uniqid(),
+            'subject' => 'Olá {{contact_name}}',
+            'body_html' => '<p>Olá {{first_name}}</p>',
+        ]);
+        CommercialEmailSequenceStep::create([
+            'sequence_id' => $sequence->id,
+            'template_id' => $template->id,
+            'position' => 1,
+            'delay_days' => 0,
+            'moves_lead_to_step_id' => $targetStep->id,
+        ]);
+        $lead = CommercialLead::factory()->create([
+            'email' => 'lead@empresa.test',
+            'current_step_id' => $currentStep?->id,
+        ]);
+
+        $enrollment = app(CommercialEmailEnrollmentService::class)->enroll($lead, $sequence, $manager);
+        $enrollment->update(['next_send_at' => now()->subMinute()]);
+
+        return $lead;
+    }
+
+    public function test_sending_a_mapped_step_advances_lead_pipeline_step(): void
+    {
+        Mail::fake();
+
+        $earlyStep = CommercialLeadStep::create(['name' => 'Lead novo', 'position' => 1, 'active' => true]);
+        $emailStep = CommercialLeadStep::create(['name' => 'E-mail 1', 'position' => 4, 'active' => true]);
+
+        $lead = $this->enrolledLeadWithPipelineMapping($earlyStep, $emailStep);
+
+        $this->artisan('commercial:emails:dispatch-due')->assertSuccessful();
+
+        $this->assertSame($emailStep->id, $lead->fresh()->current_step_id);
+    }
+
+    public function test_pipeline_advance_never_regresses_a_lead_already_further_ahead(): void
+    {
+        Mail::fake();
+
+        $advancedStep = CommercialLeadStep::create(['name' => 'Negociação', 'position' => 12, 'active' => true]);
+        $emailStep = CommercialLeadStep::create(['name' => 'E-mail 1', 'position' => 4, 'active' => true]);
+
+        $lead = $this->enrolledLeadWithPipelineMapping($advancedStep, $emailStep);
+
+        $this->artisan('commercial:emails:dispatch-due')->assertSuccessful();
+
+        $this->assertSame($advancedStep->id, $lead->fresh()->current_step_id);
+    }
+
+    public function test_sending_an_unmapped_step_does_not_touch_lead_pipeline(): void
+    {
+        Mail::fake();
+
+        $enrollment = $this->enrolledLeadDueNow();
+        $lead = $enrollment->lead;
+
+        $this->assertNull($lead->current_step_id);
+
+        $this->artisan('commercial:emails:dispatch-due')->assertSuccessful();
+
+        $this->assertNull($lead->fresh()->current_step_id);
     }
 }

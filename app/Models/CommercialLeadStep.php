@@ -24,6 +24,7 @@ class CommercialLeadStep extends Model
         'default_due_days',
         'active',
         'is_final',
+        'pauses_outreach_sequences',
     ];
 
     protected $casts = [
@@ -31,6 +32,7 @@ class CommercialLeadStep extends Model
         'default_due_days' => 'integer',
         'active' => 'boolean',
         'is_final' => 'boolean',
+        'pauses_outreach_sequences' => 'boolean',
     ];
 
     public function getTable(): string

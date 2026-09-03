@@ -15,7 +15,7 @@ class CommercialEmailSequenceController extends Controller
     public function index()
     {
         $sequences = CommercialEmailSequence::query()
-            ->with('steps.template')
+            ->with(['steps.template', 'steps.movesLeadToStep'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -58,6 +58,6 @@ class CommercialEmailSequenceController extends Controller
             description: "Sequência de e-mail atualizada: {$sequence->name}",
         );
 
-        return new CommercialEmailSequenceResource($sequence->load('steps.template'));
+        return new CommercialEmailSequenceResource($sequence->load(['steps.template', 'steps.movesLeadToStep']));
     }
 }
