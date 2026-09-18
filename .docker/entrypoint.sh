@@ -54,9 +54,18 @@ if [ "${RUN_MIGRATIONS}" = "true" ]; then
   php artisan migrate --force
 fi
 
-# Permissões (sem 777)
-echo "Ajustando permissoes..."
-chown -R www-data:www-data /var/www
+# Garante que os diretórios de framework existem
+mkdir -p /var/www/storage/framework/cache/data \
+         /var/www/storage/framework/sessions \
+         /var/www/storage/framework/views \
+         /var/www/storage/logs \
+         /var/www/bootstrap/cache
+
+# Em produção aplica chown (em local o UID do container já bate com o host via build arg)
+if [ "${APP_ENV}" != "local" ]; then
+  echo "Ajustando permissoes..."
+  chown -R www-data:www-data /var/www
+fi
 chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 echo "Aplicacao pronta!"
