@@ -105,6 +105,40 @@ class AbsenceAllowanceTest extends TestCase
         $this->assertDatabaseCount('time_entries', 2);
     }
 
+    public function test_pending_work_does_not_reduce_hourly_allowance_coverage(): void
+    {
+        $admin = $this->createAdmin();
+        $employee = $this->createEmployee($admin->company_id);
+        $this->assignShift($employee, '2026-04-10');
+        foreach ([['08:00', 'in', null], ['10:00', 'out', 'pending'], ['11:00', 'in', 'pending'], ['12:00', 'out', null]] as [$time, $type, $status]) {
+            TimeEntry::create([
+                'company_id' => $employee->company_id,
+                'user_id' => $employee->id,
+                'clocked_at' => '2026-04-10 '.$time.':00',
+                'type' => $type,
+                'source' => $status ? 'adjustment' : 'web',
+                'adjustment_status' => $status,
+            ]);
+        }
+
+        $response = $this->actingAs($admin)->postJson('/v1/admin/absences', [
+            'user_id' => $employee->id,
+            'type' => 'personal_reason',
+            'coverage_type' => Absence::COVERAGE_HOURS,
+            'date' => '2026-04-10',
+            'start_time' => '10:00',
+            'end_time' => '12:00',
+        ])->assertCreated();
+
+        $allowanceEntries = TimeEntry::where('absence_id', $response->json('id'))->orderBy('clocked_at')->get();
+        $this->assertCount(2, $allowanceEntries);
+        $this->assertSame('10:00', $allowanceEntries[0]->clocked_at->format('H:i'));
+        $this->assertSame('12:00', $allowanceEntries[1]->clocked_at->format('H:i'));
+        $result = $this->calculateOvertime($employee, '2026-04-10');
+        $this->assertSame(0, $result['days'][0]['summary']['raw_worked_minutes']);
+        $this->assertSame(120, $result['days'][0]['summary']['absence_minutes']);
+    }
+
     public function test_absence_time_entry_generation_is_idempotent(): void
     {
         $admin = $this->createAdmin();

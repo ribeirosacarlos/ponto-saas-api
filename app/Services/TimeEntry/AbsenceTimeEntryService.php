@@ -235,17 +235,19 @@ class AbsenceTimeEntryService
 
         $intervals = [];
         $pendingIn = null;
+        $pendingInIsCountable = false;
 
         foreach ($entries as $entry) {
             $clockedAt = CarbonImmutable::instance($entry->clocked_at)->setTimezone($timezone);
 
             if ($entry->type === 'in') {
                 $pendingIn = $clockedAt;
+                $pendingInIsCountable = $entry->isCountable();
 
                 continue;
             }
 
-            if ($pendingIn === null || $clockedAt->lessThanOrEqualTo($pendingIn)) {
+            if ($pendingIn === null || ! $pendingInIsCountable || ! $entry->isCountable() || $clockedAt->lessThanOrEqualTo($pendingIn)) {
                 $pendingIn = null;
 
                 continue;

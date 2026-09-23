@@ -110,6 +110,100 @@ class OvertimeCalculatorServiceTest extends TestCase
         $this->createTimeEntry($user, 'out', $date->setTime(8, 0)->addMinutes($workedMinutes));
     }
 
+    public static function adjustmentPairs(): array
+    {
+        return [
+            'pending return' => [null, 'pending', null, 240, 0, false, 1],
+            'pending departure' => [null, null, 'pending', 240, 50, true, 1],
+            'pending afternoon' => [null, 'pending', 'pending', 240, 0, false, 1],
+            'pending lunch boundaries' => ['pending', 'pending', null, 0, 0, false, 0],
+            'approved return' => [null, 'approved', null, 610, 50, false, 2],
+            'rejected return' => [null, 'rejected', null, 240, 0, false, 1],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('adjustmentPairs')]
+    public function test_only_valid_pairs_count_while_pending_entries_keep_their_positions(
+        ?string $lunchStatus,
+        ?string $returnStatus,
+        ?string $departureStatus,
+        int $workedMinutes,
+        int $breakMinutes,
+        bool $openSession,
+        int $pairCount
+    ): void {
+        CarbonImmutable::setTestNow('2026-09-23 12:00:00');
+        $date = CarbonImmutable::parse('2026-09-22', 'UTC');
+        $user = User::factory()->create();
+        $user->company->update(['timezone' => 'UTC']);
+        $this->assignShift($user, $date->isoWeekday());
+
+        foreach ([['08:00', 'in', null], ['12:00', 'out', $lunchStatus], ['12:50', 'in', $returnStatus], ['19:00', 'out', $departureStatus]] as [$time, $type, $status]) {
+            TimeEntry::create([
+                'company_id' => $user->company_id,
+                'user_id' => $user->id,
+                'clocked_at' => $date->setTimeFromTimeString($time),
+                'type' => $type,
+                'source' => $status ? 'adjustment' : 'web',
+                'adjustment_status' => $status,
+            ]);
+        }
+
+        $result = app(OvertimeCalculatorService::class)->calculateForEmployee($user, $date, $date, true);
+        $summary = $result['days'][0]['summary'];
+        $this->assertSame($workedMinutes, $summary['worked_minutes']);
+        $this->assertSame($workedMinutes, $summary['raw_worked_minutes']);
+        $this->assertSame($workedMinutes, $result['totals']['worked_minutes']);
+        $this->assertSame(max(0, $workedMinutes - 540), $result['totals']['extra_minutes']);
+        $this->assertSame($breakMinutes, $summary['real_break_minutes']);
+        $this->assertSame($openSession, $summary['open_session']);
+        $this->assertSame($pairCount, $summary['pair_count']);
+        $this->assertCount($pairCount, $summary['pair_details']);
+        $this->assertSame($workedMinutes !== 610, $summary['has_incomplete_entries']);
+        if ($openSession) {
+            $this->assertSame($date->setTime(12, 50)->toIso8601String(), $summary['open_pair']['in']);
+        } else {
+            $this->assertNull($summary['open_pair']);
+        }
+    }
+
+    public function test_pending_out_does_not_close_a_valid_in_or_bridge_to_a_later_out(): void
+    {
+        $date = CarbonImmutable::parse('2025-12-15', 'UTC');
+        $user = User::factory()->create();
+        $user->company->update(['timezone' => 'UTC']);
+        $this->assignShift($user, $date->isoWeekday());
+        $this->createTimeEntry($user, 'in', $date->setTime(8, 0));
+        $pending = $this->createTimeEntry($user, 'out', $date->setTime(12, 0));
+        $pending->forceFill(['adjustment_status' => 'pending'])->saveQuietly();
+        $this->createTimeEntry($user, 'out', $date->setTime(19, 0));
+
+        $result = app(OvertimeCalculatorService::class)->calculateForEmployee($user, $date, $date, true);
+        $this->assertSame(0, $result['totals']['worked_minutes']);
+        $this->assertSame(0, $result['totals']['extra_minutes']);
+        $this->assertTrue($result['days'][0]['summary']['open_session']);
+        $this->assertSame($date->setTime(8, 0)->toIso8601String(), $result['days'][0]['summary']['open_pair']['in']);
+    }
+
+    public function test_pending_entries_do_not_start_counting_since_or_remove_valid_overtime(): void
+    {
+        $date = CarbonImmutable::parse('2025-12-15', 'UTC');
+        $user = User::factory()->create();
+        $user->company->update(['timezone' => 'UTC']);
+        $this->assignShift($user, $date->isoWeekday());
+        $pending = $this->createTimeEntry($user, 'in', $date->subDay()->setTime(8, 0));
+        $pending->forceFill(['adjustment_status' => 'pending'])->saveQuietly();
+        $this->createSinglePairWorkday($user, $date, 600);
+        $pending = $this->createTimeEntry($user, 'in', $date->setTime(19, 0));
+        $pending->forceFill(['adjustment_status' => 'pending'])->saveQuietly();
+        $this->createTimeEntry($user, 'out', $date->setTime(20, 0));
+
+        $result = app(OvertimeCalculatorService::class)->calculateForEmployee($user, null, $date, true);
+        $this->assertSame('2025-12-15', $result['counting_since']);
+        $this->assertSame(600, $result['totals']['worked_minutes']);
+        $this->assertSame(60, $result['totals']['extra_minutes']);
+    }
+
     public function test_day_with_multiple_pairs_accumulates_worked_minutes(): void
     {
         $date = CarbonImmutable::parse('2025-12-15', 'UTC');

@@ -60,6 +60,32 @@ class TimesheetSnapshotTest extends TestCase
         $this->assertArrayHasKey('employee_id', $timesheet->snapshot);
     }
 
+    public function test_new_snapshot_keeps_pending_entries_without_counting_them(): void
+    {
+        $employee = $this->createEmployee();
+        foreach ([['08:00', 'in', null], ['12:00', 'out', null], ['12:50', 'in', 'pending'], ['19:00', 'out', null]] as [$time, $type, $status]) {
+            \App\Models\TimeEntry::create([
+                'company_id' => $employee->company_id,
+                'user_id' => $employee->id,
+                'clocked_at' => '2026-04-10 '.$time.':00',
+                'type' => $type,
+                'source' => $status ? 'adjustment' : 'web',
+                'adjustment_status' => $status,
+            ]);
+        }
+        $timesheet = $this->createTimesheet($employee);
+        app(\App\Services\Timesheet\TimesheetSnapshotService::class)->generate($timesheet);
+        $snapshot = $timesheet->fresh()->snapshot;
+        $day = collect($snapshot['days'])->firstWhere('date', '2026-04-10');
+
+        $this->assertCount(4, $day['entries']);
+        $this->assertSame('pending', $day['entries'][2]['adjustment_status']);
+        $this->assertSame(240, $day['summary']['worked_minutes']);
+        $this->assertSame(1, $day['summary']['pair_count']);
+        $this->assertTrue($day['summary']['has_incomplete_entries']);
+        $this->assertSame(240, $snapshot['totals']['worked_minutes']);
+    }
+
     private function createAdmin(): User
     {
         $user = User::factory()->create();

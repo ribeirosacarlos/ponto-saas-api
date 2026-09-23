@@ -356,6 +356,52 @@ class TimeEntryAdjustmentTest extends TestCase
         ], $sequence);
     }
 
+    public static function reviewDecisions(): array
+    {
+        return ['approved' => ['approve', 600], 'rejected' => ['reject', 0]];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('reviewDecisions')]
+    public function test_hours_only_count_after_adjustment_approval(string $decision, int $expectedMinutes): void
+    {
+        $this->seedRoles();
+        $company = $this->createSubscribedCompany();
+        $employee = User::factory()->create(['company_id' => $company->id]);
+        $employee->assignRole('employee');
+        $manager = User::factory()->create(['company_id' => $company->id]);
+        $manager->assignRole('area_manager');
+        $date = \Carbon\CarbonImmutable::parse('2026-04-10', $company->timezone);
+        TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(8, 0),
+            'type' => 'in',
+            'source' => 'web',
+        ]);
+        $pending = TimeEntry::create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'clocked_at' => $date->setTime(18, 0),
+            'type' => 'out',
+            'source' => 'adjustment',
+            'adjustment_status' => 'pending',
+        ]);
+        $service = app(\App\Services\TimeEntry\OvertimeCalculatorService::class);
+        $before = $service->calculateForEmployee($employee, $date, $date, true);
+        $this->assertSame(0, $before['totals']['worked_minutes']);
+        $this->assertSame(0, $before['totals']['extra_minutes']);
+        $this->assertTrue($before['days'][0]['summary']['open_session']);
+
+        $this->actingAs($manager)
+            ->postJson("/v1/admin/time-entries/{$pending->id}/adjustment/{$decision}", ['review_reason' => 'Analisado'])
+            ->assertOk();
+
+        $after = $service->calculateForEmployee($employee, $date, $date, true);
+        $this->assertSame($expectedMinutes, $after['totals']['worked_minutes']);
+        // No shift: only the approved interval can generate overtime.
+        $this->assertSame($expectedMinutes, $after['totals']['extra_minutes']);
+    }
+
     public function test_admin_can_approve_adjustment(): void
     {
         $this->seedRoles();

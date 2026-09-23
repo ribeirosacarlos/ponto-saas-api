@@ -479,6 +479,8 @@ class TimesheetCalculationService
     protected function pairWorkEntries(array $entries, string $timezone, int $allowedBreakMinutes): array
     {
         $pendingIn = null;
+        $pendingInIsCountable = false;
+        $openPair = null;
         $previousOut = null;
         $rawWorkedMinutes = 0;
         $realBreakMinutes = 0;
@@ -486,6 +488,11 @@ class TimesheetCalculationService
         $pairs = [];
 
         foreach ($entries as $entry) {
+            $isCountable = $entry->isCountable();
+            if (! $isCountable) {
+                $hasIncompleteEntries = true;
+            }
+
             $clockedAt = $this->truncateToMinute(
                 $this->localizeClockedAt($entry->clocked_at, $timezone)
             );
@@ -495,12 +502,14 @@ class TimesheetCalculationService
                     $hasIncompleteEntries = true;
                 }
 
-                if ($previousOut !== null && $clockedAt->greaterThan($previousOut)) {
+                if ($isCountable && $previousOut !== null && $clockedAt->greaterThan($previousOut)) {
                     $realBreakMinutes += (int) $clockedAt->diffInMinutes($previousOut, true);
-                    $previousOut = null;
                 }
+                $previousOut = null;
 
                 $pendingIn = $clockedAt;
+                $pendingInIsCountable = $isCountable;
+                $openPair = $isCountable ? $clockedAt : null;
 
                 continue;
             }
@@ -511,10 +520,21 @@ class TimesheetCalculationService
                 continue;
             }
 
+            // Keep pending entries in the sequence, but never join across an
+            // unapproved endpoint to manufacture a longer worked interval.
+            if (! $isCountable || ! $pendingInIsCountable) {
+                $hasIncompleteEntries = true;
+                $pendingIn = null;
+                $previousOut = null;
+
+                continue;
+            }
+
             if ($clockedAt->lessThanOrEqualTo($pendingIn)) {
                 $hasIncompleteEntries = true;
                 $pendingIn = null;
                 $previousOut = null;
+                $openPair = null;
 
                 continue;
             }
@@ -528,6 +548,7 @@ class TimesheetCalculationService
             ];
             $previousOut = $clockedAt;
             $pendingIn = null;
+            $openPair = null;
         }
 
         if ($pendingIn !== null) {
@@ -542,10 +563,10 @@ class TimesheetCalculationService
             'counted_break_minutes' => $countedBreakMinutes,
             'exceeded_break_minutes' => max(0, $realBreakMinutes - $allowedBreakMinutes),
             'has_incomplete_entries' => $hasIncompleteEntries,
-            'open_session' => $pendingIn !== null,
+            'open_session' => $openPair !== null,
             'pair_count' => count($pairs),
             'pairs' => $pairs,
-            'open_pair' => $pendingIn ? ['in' => $pendingIn->toIso8601String()] : null,
+            'open_pair' => $openPair ? ['in' => $openPair->toIso8601String()] : null,
         ];
     }
 
@@ -740,7 +761,7 @@ class TimesheetCalculationService
     {
         $first = $employee->timeEntries()
             ->whereIn('type', self::WORK_ENTRY_TYPES)
-            ->excludeRejected()
+            ->countable()
             ->orderBy('clocked_at')
             ->value('clocked_at');
 

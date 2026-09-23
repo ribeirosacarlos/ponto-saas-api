@@ -38,6 +38,33 @@ class WorkedTodayTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_pending_departure_does_not_close_or_count_today_work(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2025-12-19 19:00:00', 'UTC'));
+        $user = $this->createEmployee();
+        $this->assignShift($user);
+        $this->createTimeEntry($user, 'in', CarbonImmutable::parse('2025-12-19 08:00:00', 'UTC'));
+        TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'clocked_at' => '2025-12-19 18:00:00',
+            'type' => 'out',
+            'source' => 'adjustment',
+            'adjustment_status' => 'pending',
+        ]);
+
+        $this->actingAs($user)->getJson('/v1/employee/worked-today')
+            ->assertOk()
+            ->assertJsonPath('data.worked_minutes', 0)
+            ->assertJsonPath('data.open_session', true)
+            ->assertJsonPath('data.summary.extra_minutes', 0)
+            ->assertJsonPath('data.summary.is_finalized', false)
+            ->assertJsonPath('data.summary.has_incomplete_entries', true)
+            ->assertJsonCount(0, 'data.details.pairs')
+            ->assertJsonCount(2, 'data.details.entries')
+            ->assertJsonFragment(['adjustment_status' => 'pending']);
+    }
+
     public function test_returns_zero_hours_when_no_entries()
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2025-12-19 12:00:00', 'UTC'));
