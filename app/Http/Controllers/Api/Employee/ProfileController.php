@@ -45,6 +45,8 @@ class ProfileController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        $user->tokens()->delete();
+
         return response()->json([
             'message' => 'Senha atualizada com sucesso.',
         ]);

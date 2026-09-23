@@ -1,0 +1,38 @@
+services:
+  app:
+    image: ghcr.io/ribeirosacarlos/ponto-saas-api:latest
+    logging: !override
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  queue-worker:
+    image: ghcr.io/ribeirosacarlos/ponto-saas-api:latest
+    logging: !override
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  scheduler:
+    image: ghcr.io/ribeirosacarlos/ponto-saas-api:latest
+    logging: !override
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  nginx:
+    logging: !override
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  n8n:
+    logging: !override
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

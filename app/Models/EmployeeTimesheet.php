@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EmployeeTimesheet extends Model
 {
-    use HasFactory, HasUuids, CompanyScoped;
+    use CompanyScoped, HasFactory, HasUuids;
 
     public $incrementing = false;
 
@@ -30,6 +30,8 @@ class EmployeeTimesheet extends Model
         'pdf_generated_at',
         'document_hash',
     ];
+
+    protected $hidden = ['pdf_path'];
 
     protected $casts = [
         'status' => TimesheetStatus::class,

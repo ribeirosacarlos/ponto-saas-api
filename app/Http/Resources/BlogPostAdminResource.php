@@ -13,6 +13,7 @@ class BlogPostAdminResource extends JsonResource
             'id'     => $this->id,
             'slug'   => $this->slug,
             'status' => $this->status,
+            'source' => $this->source,
 
             'title'           => $this->getTranslations('title'),
             'excerpt'         => $this->getTranslations('excerpt'),

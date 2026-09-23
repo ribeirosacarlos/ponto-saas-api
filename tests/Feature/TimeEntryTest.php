@@ -52,7 +52,7 @@ class TimeEntryTest extends TestCase
             'company_id' => $user->company_id,
             'user_id' => $user->id,
             'adjustment_status' => 'pending',
-            'adjustment_reason' => 'Fora do turno/jornada (dia nao trabalhado ou sem jornada).',
+            'adjustment_reason' => 'Fora do turno/jornada (dia não trabalhado ou sem jornada).',
         ]);
     }
 
@@ -191,6 +191,55 @@ class TimeEntryTest extends TestCase
         $this->assertSame([
             ['clocked_at' => '21:43:00', 'type' => 'in', 'event_kind' => 'work_start', 'adjustment_status' => 'pending'],
             ['clocked_at' => '21:45:00', 'type' => 'out', 'event_kind' => 'work_end', 'adjustment_status' => 'pending'],
+        ], $sequence);
+    }
+
+    public function test_outside_shift_pending_adjustment_before_start_influences_next_outside_clock(): void
+    {
+        $this->freezeNow('2026-02-16 03:17:00');
+
+        $user = $this->createEmployee();
+        $assignment = $this->createShiftDayWithEvents($user, 1, true, [
+            ['kind' => 'work_start', 'time' => '08:00:00', 'day_offset' => 0, 'expected_type' => 'in'],
+            ['kind' => 'work_end', 'time' => '17:00:00', 'day_offset' => 0, 'expected_type' => 'out'],
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'user_shift_id' => $assignment->id,
+            'clocked_at' => CarbonImmutable::parse('2026-02-16 03:15:00', 'Europe/Madrid'),
+            'type' => 'in',
+            'event_kind' => 'work_start',
+            'source' => 'web',
+            'adjustment_status' => 'pending',
+            'adjustment_reason' => 'Fora do turno/jornada (dia não trabalhado ou sem jornada).',
+            'adjustment_requested_by' => $user->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/v1/employee/clock')
+            ->assertStatus(202)
+            ->assertJsonPath('status', 'adjustment_requested')
+            ->assertJsonPath('adjustment.type', 'out')
+            ->assertJsonPath('adjustment.event_kind', 'work_end');
+
+        $sequence = TimeEntry::query()
+            ->where('user_id', $user->id)
+            ->orderBy('clocked_at')
+            ->get(['clocked_at', 'type', 'event_kind', 'adjustment_status'])
+            ->map(fn (TimeEntry $entry) => [
+                'clocked_at' => $entry->clocked_at->format('H:i:s'),
+                'type' => $entry->type,
+                'event_kind' => $entry->event_kind,
+                'adjustment_status' => $entry->adjustment_status,
+            ])
+            ->all();
+
+        $this->assertSame([
+            ['clocked_at' => '03:15:00', 'type' => 'in', 'event_kind' => 'work_start', 'adjustment_status' => 'pending'],
+            ['clocked_at' => '03:17:00', 'type' => 'out', 'event_kind' => 'work_end', 'adjustment_status' => 'pending'],
         ], $sequence);
     }
 

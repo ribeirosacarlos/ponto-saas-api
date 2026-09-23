@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Traits\CompanyScoped;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Laravel\Sanctum\HasApiTokens;
-use App\Traits\HasUuid;
-use App\Traits\CompanyScoped;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Arr;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuid, CompanyScoped, SoftDeletes;
+    use CompanyScoped, HasApiTokens, HasFactory, HasUuid, Notifiable, SoftDeletes;
 
     protected static function boot(): void
     {
@@ -25,6 +25,7 @@ class User extends Authenticatable
     }
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -43,6 +44,10 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'invite_code_hash',
+        'invite_expires_at',
+        'invited_at',
+        'password_set_at',
     ];
 
     protected $appends = [

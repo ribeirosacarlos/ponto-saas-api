@@ -229,7 +229,7 @@ GET /api/v1/admin/monthly-closures/{closure_id}/timesheets
         }
       ],
       "open_dispute": null,
-      "pdf_path": null,
+      "pdf_available": false,
       "created_at": "2026-05-21T10:00:00+00:00"
     }
   ],

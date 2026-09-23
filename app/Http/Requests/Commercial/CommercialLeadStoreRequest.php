@@ -17,6 +17,15 @@ class CommercialLeadStoreRequest extends FormRequest
 
     public function rules(): array
     {
+        return self::itemRules();
+    }
+
+    /**
+     * Regras de validação de um único lead, reaproveitadas pelo
+     * CommercialLeadBulkStoreRequest (prefixadas com "leads.*.").
+     */
+    public static function itemRules(): array
+    {
         return [
             'company_name' => ['required', 'string', 'max:255'],
             'contact_name' => ['nullable', 'string', 'max:255'],
@@ -24,6 +33,7 @@ class CommercialLeadStoreRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'whatsapp' => ['nullable', 'string', 'max:50'],
             'website' => ['nullable', 'string', 'max:255'],
+            'google_maps_place_id' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'segment' => ['nullable', 'string', 'max:255'],
@@ -41,8 +51,8 @@ class CommercialLeadStoreRequest extends FormRequest
 
                     $user = User::find($value);
 
-                    if (! $user || ! $user->hasRole(['super_admin', 'admin'])) {
-                        $fail('O responsável atribuído precisa ser um administrador.');
+                    if (! $user || ! $user->hasRole('super_admin')) {
+                        $fail('O responsável atribuído precisa ser um super_admin.');
                     }
                 },
             ],

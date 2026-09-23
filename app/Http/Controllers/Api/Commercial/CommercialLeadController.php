@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Commercial;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Commercial\CommercialLeadAssignRequest;
+use App\Http\Requests\Commercial\CommercialLeadBulkStoreRequest;
 use App\Http\Requests\Commercial\CommercialLeadMarkLostRequest;
 use App\Http\Requests\Commercial\CommercialLeadMarkWonRequest;
 use App\Http\Requests\Commercial\CommercialLeadMoveStepRequest;
@@ -19,7 +20,9 @@ use App\Models\CommercialLeadStepLog;
 use App\Services\AuditLogService;
 use App\Services\Commercial\CommercialCommissionService;
 use App\Services\Commercial\CommercialLeadDuplicateService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CommercialLeadController extends Controller
 {
@@ -34,7 +37,7 @@ class CommercialLeadController extends Controller
         $this->authorize('viewAny', CommercialLead::class);
 
         $query = CommercialLead::query()
-            ->with(['currentStep', 'assignedToUser', 'affiliate']);
+            ->with(['currentStep', 'assignedToUser', 'createdByUser', 'affiliate']);
 
         $this->applyFilters($query, $request);
 
@@ -50,9 +53,21 @@ class CommercialLeadController extends Controller
         $data = $request->validated();
         $data['created_by_user_id'] = $request->user()->id;
 
+        if ($request->user()->hasRole('commercial_agent')) {
+            $data['assigned_to_user_id'] = $request->user()->id;
+        }
+
+        $this->duplicateService->assertNoBlockingDuplicates($data);
+
         $duplicates = $this->duplicateService->findDuplicates($data);
 
-        $lead = CommercialLead::create($data);
+        try {
+            $lead = CommercialLead::create($data);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages([
+                'email' => 'Já existe um lead cadastrado com este e-mail, telefone ou local do Google Maps.',
+            ]);
+        }
 
         $this->auditLogService->log(
             action: 'lead.created',
@@ -74,11 +89,87 @@ class CommercialLeadController extends Controller
             ->setStatusCode(201);
     }
 
+    public function bulkStore(CommercialLeadBulkStoreRequest $request)
+    {
+        $this->authorize('create', CommercialLead::class);
+
+        $isAgent = $request->user()->hasRole('commercial_agent');
+        $items = $request->validated()['leads'];
+
+        $results = [];
+        $createdCount = 0;
+
+        foreach ($items as $index => $data) {
+            $data['created_by_user_id'] = $request->user()->id;
+
+            if ($isAgent) {
+                $data['assigned_to_user_id'] = $request->user()->id;
+            }
+
+            try {
+                $this->duplicateService->assertNoBlockingDuplicates($data);
+
+                $duplicates = $this->duplicateService->findDuplicates($data);
+
+                $lead = CommercialLead::create($data);
+            } catch (ValidationException $e) {
+                $results[] = [
+                    'index' => $index,
+                    'status' => 'error',
+                    'errors' => $e->errors(),
+                ];
+
+                continue;
+            } catch (UniqueConstraintViolationException) {
+                $results[] = [
+                    'index' => $index,
+                    'status' => 'error',
+                    'errors' => [
+                        'email' => ['Já existe um lead cadastrado com este e-mail, telefone ou local do Google Maps.'],
+                    ],
+                ];
+
+                continue;
+            }
+
+            $this->auditLogService->log(
+                action: 'lead.created',
+                entityType: CommercialLead::class,
+                entityId: $lead->id,
+                description: "Lead criado: {$lead->company_name}",
+                newValues: $this->auditLogService->snapshot($lead),
+            );
+
+            $createdCount++;
+
+            $results[] = [
+                'index' => $index,
+                'status' => 'created',
+                'lead' => new CommercialLeadResource($lead),
+                'duplicate_warning' => $duplicates->isNotEmpty(),
+                'possible_duplicates' => $duplicates->map(fn ($duplicate) => [
+                    'id' => $duplicate->id,
+                    'company_name' => $duplicate->company_name,
+                ]),
+            ];
+        }
+
+        return response()->json([
+            'data' => $results,
+            'meta' => [
+                'total' => count($items),
+                'created' => $createdCount,
+                'failed' => count($items) - $createdCount,
+            ],
+        ], 207);
+    }
+
     public function show(Request $request, string $id)
     {
-        $lead = CommercialLead::query()
-            ->with(['currentStep', 'assignedToUser', 'createdByUser', 'affiliate', 'notes.user', 'stepLogs.step', 'stepLogs.user'])
-            ->findOrFail($id);
+        $lead = $this->findVisibleLead($id, [
+            'currentStep', 'assignedToUser', 'createdByUser', 'affiliate',
+            'notes.user', 'stepLogs.step', 'stepLogs.user',
+        ]);
 
         $this->authorize('view', $lead);
 
@@ -87,13 +178,22 @@ class CommercialLeadController extends Controller
 
     public function update(CommercialLeadUpdateRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('update', $lead);
 
         $oldValues = $this->auditLogService->snapshot($lead);
+        $data = $request->validated();
 
-        $lead->update($request->validated());
+        $this->duplicateService->assertNoBlockingDuplicates($data, $lead->id);
+
+        try {
+            $lead->update($data);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages([
+                'email' => 'Já existe outro lead cadastrado com este e-mail, telefone ou local do Google Maps.',
+            ]);
+        }
 
         $this->auditLogService->log(
             action: 'lead.updated',
@@ -109,7 +209,7 @@ class CommercialLeadController extends Controller
 
     public function destroy(string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('delete', $lead);
 
@@ -127,7 +227,7 @@ class CommercialLeadController extends Controller
 
     public function assign(CommercialLeadAssignRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('assign', $lead);
 
@@ -146,7 +246,7 @@ class CommercialLeadController extends Controller
 
     public function moveStep(CommercialLeadMoveStepRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('moveStep', $lead);
 
@@ -177,7 +277,7 @@ class CommercialLeadController extends Controller
 
     public function addNote(CommercialLeadNoteRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('addNote', $lead);
 
@@ -199,7 +299,7 @@ class CommercialLeadController extends Controller
 
     public function nextAction(CommercialLeadNextActionRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('update', $lead);
 
@@ -217,7 +317,7 @@ class CommercialLeadController extends Controller
 
     public function markWon(CommercialLeadMarkWonRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('markWon', $lead);
 
@@ -245,7 +345,7 @@ class CommercialLeadController extends Controller
 
     public function markLost(CommercialLeadMarkLostRequest $request, string $id)
     {
-        $lead = CommercialLead::findOrFail($id);
+        $lead = $this->findVisibleLead($id);
 
         $this->authorize('markLost', $lead);
 
@@ -266,10 +366,15 @@ class CommercialLeadController extends Controller
 
     private function applyFilters($query, Request $request): void
     {
+        if ($request->user()->hasRole('commercial_agent')) {
+            $query->where('assigned_to_user_id', $request->user()->id);
+        }
+
         $query
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->input('priority')))
             ->when($request->filled('current_step_id'), fn ($q) => $q->where('current_step_id', $request->input('current_step_id')))
+            ->when($request->filled('is_overdue'), fn ($q) => $q->overdue($request->boolean('is_overdue')))
             ->when($request->filled('assigned_to_user_id'), fn ($q) => $q->where('assigned_to_user_id', $request->input('assigned_to_user_id')))
             ->when($request->filled('affiliate_id'), fn ($q) => $q->where('affiliate_id', $request->input('affiliate_id')))
             ->when($request->filled('country'), fn ($q) => $q->where('country', $request->input('country')))
@@ -292,5 +397,18 @@ class CommercialLeadController extends Controller
                         ->orWhere('website', 'like', $term);
                 });
             });
+    }
+
+    private function findVisibleLead(string $id, array $with = []): CommercialLead
+    {
+        $user = request()->user();
+
+        return CommercialLead::query()
+            ->with($with)
+            ->when(
+                $user?->hasRole('commercial_agent'),
+                fn ($query) => $query->where('assigned_to_user_id', $user->id)
+            )
+            ->findOrFail($id);
     }
 }

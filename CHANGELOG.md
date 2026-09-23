@@ -1,5 +1,289 @@
 # Changelog
 
+## [2.24.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.23.0...v2.24.0) (2026-09-01)
+
+
+### Novas Funcionalidades
+
+* endpoints de listagem geral de inscrições e envios comerciais ([bcf706d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/bcf706d669f44c4110c25b880419055b4bc799ac))
+
+## [2.23.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.22.0...v2.23.0) (2026-09-01)
+
+
+### Novas Funcionalidades
+
+* comandos de relatório para acompanhar envios e inscrições comer… ([c3735a9](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c3735a9bab741bca728546199eac4d92c80e5288))
+* comandos de relatório para acompanhar envios e inscrições comerciais ([d9465db](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d9465dbfe1723078ec15de96d0788841014d5ca4))
+
+## [2.22.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.21.1...v2.22.0) (2026-08-31)
+
+
+### Novas Funcionalidades
+
+* assinatura automática em todo e-mail comercial ([9c2b2a8](https://github.com/ribeirosacarlos/ponto-saas-api/commit/9c2b2a860ee57b6f70110e4c5b1409e06ba1d7a8))
+* assinatura automática em todo e-mail comercial ([8e264e9](https://github.com/ribeirosacarlos/ponto-saas-api/commit/8e264e90c364a59e02a934cdaadd9a76e66d3a7a))
+
+## [2.21.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.21.0...v2.21.1) (2026-08-31)
+
+
+### Correções de Bugs
+
+* erro de tipo UUID no Postgres ao buscar template por slug ([7d1e1ad](https://github.com/ribeirosacarlos/ponto-saas-api/commit/7d1e1adcb441663836de4be65d2681f58d0cefc1))
+* nao usar model factory (Faker) em runtime de producao ([cbf2474](https://github.com/ribeirosacarlos/ponto-saas-api/commit/cbf2474f7d46dc03100c5af804eef869a71758ef))
+
+## [2.21.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.20.1...v2.21.0) (2026-08-31)
+
+
+### Novas Funcionalidades
+
+* adiciona serviço scheduler dedicado em produção/hostinger ([6d94aef](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6d94aefabbbd42dfd2e446a9d24b20198adfff90))
+* comando para enviar e-mail comercial de teste sem passar por fila/limites ([22bd63d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/22bd63d6acaf11f483f04665c2667b76c945e8f8))
+
+## [2.20.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.20.0...v2.20.1) (2026-08-27)
+
+
+### Correções de Bugs
+
+* suporta {{#if variavel}}...{{/if}} nos templates de e-mail comer… ([4fc71fa](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4fc71fae44048df1f43fb1471ebc821a0c759672))
+* suporta {{#if variavel}}...{{/if}} nos templates de e-mail comercial ([3aef876](https://github.com/ribeirosacarlos/ponto-saas-api/commit/3aef876d0435d7618cbef578d7e8ce30f877c4fb))
+
+## [2.20.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.2...v2.20.0) (2026-08-27)
+
+
+### Novas Funcionalidades
+
+* automação de e-mails comerciais (cold outreach) via Resend ([c15b5bd](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c15b5bd306bc18accf104e98e9be786c8cb2c2cf))
+* automação de e-mails comerciais (cold outreach) via Resend ([40b9d98](https://github.com/ribeirosacarlos/ponto-saas-api/commit/40b9d986306c58a96b11a0befc65504d6631a9d3))
+
+## [2.19.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.1...v2.19.2) (2026-08-07)
+
+
+### Correções de Bugs
+
+* impede bloqueio permanente de ponto por data futura corrompida ([204f94a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/204f94aafd8f680586c81a50071d5291a9c47729))
+* impede bloqueio permanente de ponto por data futura corrompida ([43436bf](https://github.com/ribeirosacarlos/ponto-saas-api/commit/43436bf0d03e5b26f5478be491275a9ded21dcb2))
+
+## [2.19.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.19.0...v2.19.1) (2026-08-06)
+
+
+### Correções de Bugs
+
+* protect Swagger API documentation route with Basic Auth ([b5defe4](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b5defe4ef8533c3533e16bd887870574d034e3e5))
+* protect Swagger API documentation route with Basic Auth ([d75413d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d75413d55d659f4d25bacdca66deeb952be8983a))
+
+## [2.19.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.18.0...v2.19.0) (2026-07-16)
+
+
+### Novas Funcionalidades
+
+* adiciona criação de leads comerciais em lote [bulk] ([682647f](https://github.com/ribeirosacarlos/ponto-saas-api/commit/682647f82779b7bf40452b707df5be25da5a9c0a))
+* adiciona criação de leads comerciais em lote [bulk] ([05e1f6e](https://github.com/ribeirosacarlos/ponto-saas-api/commit/05e1f6e24807a5c0d8e521c0bdd72e65d05406c2))
+
+## [2.18.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.17.1...v2.18.0) (2026-07-15)
+
+
+### Novas Funcionalidades
+
+* adiciona reativação de funcionário desativado (soft delete) ([20c9dd1](https://github.com/ribeirosacarlos/ponto-saas-api/commit/20c9dd13c437c878050ab80a5989ee0e3557aadb))
+* adiciona reativação de funcionário desativado (soft delete) ([dcbed42](https://github.com/ribeirosacarlos/ponto-saas-api/commit/dcbed426c44c68c5cbc6273738137974800ea84c))
+
+## [2.17.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.17.0...v2.17.1) (2026-07-12)
+
+
+### Correções de Bugs
+
+* nao recortar abono hours pela janela do turno ([e8ee953](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e8ee9537f07977406388e73c6cd4727580c30788))
+* nao recortar abono hours pela janela do turno ([8d83317](https://github.com/ribeirosacarlos/ponto-saas-api/commit/8d83317390dc8313e1a5d101b6a1417236fec5c2))
+
+## [2.17.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.2...v2.17.0) (2026-07-12)
+
+
+### Novas Funcionalidades
+
+* block duplicate commercial leads by email, phone, or Google Map… ([db552b7](https://github.com/ribeirosacarlos/ponto-saas-api/commit/db552b7653f29c49239ab1b8a265344d2613b681))
+* block duplicate commercial leads by email, phone, or Google Maps place ([ca98758](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ca987586e6322580127862439f9e816c57f4ae54))
+
+
+### Correções de Bugs
+
+* respeitar intervalo do turno na geracao de pontos de abono ([0622dd8](https://github.com/ribeirosacarlos/ponto-saas-api/commit/0622dd882538668949ea978f233a1a0cea6dbe2f))
+* respeitar intervalo do turno na geracao de pontos de abono ([15e2fce](https://github.com/ribeirosacarlos/ponto-saas-api/commit/15e2fcee2ed270b8f2def150e621d82cdadd5eba))
+
+## [2.16.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.1...v2.16.2) (2026-07-05)
+
+
+### Correções de Bugs
+
+* allow Pragma header in CORS preflight ([a90b472](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a90b47251b6463d8241b3229da0b6e9e631fa36d))
+* allow Pragma header in CORS preflight ([a855a21](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a855a21bc79d525f9ae765a4672a880683d94a3e))
+
+## [2.16.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.16.0...v2.16.1) (2026-07-05)
+
+
+### Correções de Bugs
+
+* allow Cache-Control header in CORS preflight ([e414419](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e4144198630e124216a5bd5f0e9814f1be47914b))
+* allow Cache-Control header in CORS preflight ([1d73fa0](https://github.com/ribeirosacarlos/ponto-saas-api/commit/1d73fa064a2ee926341b5d95d6c88efe4d35c757))
+
+## [2.16.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.15.0...v2.16.0) (2026-07-05)
+
+
+### Novas Funcionalidades
+
+* harden API security and sanitize OpenAPI contract ([0286e75](https://github.com/ribeirosacarlos/ponto-saas-api/commit/0286e75659148ba1e4d424a2e748a46588d967af))
+
+## [Unreleased]
+
+### Segurança
+
+- Atualiza Laravel e dependências transitivas para eliminar advisories conhecidos.
+- Adiciona expiração de 30 dias e revogação server-side de tokens Sanctum.
+- Adiciona rate limits, CORS por allowlist de ambiente e headers contra clickjacking.
+- Reforça o escopo de acesso comercial e mantém isolamento por empresa/área.
+
+### Alterações incompatíveis no contrato v1
+
+| Campo removido | Substituição |
+|---|---|
+| `document.storage_disk` | nenhuma; detalhe interno |
+| `document.storage_path` | `view_url` / `download_url` |
+| `timesheet.pdf_path` | `pdf_available` + endpoint `/pdf` |
+
+- `/auth/login` passa a retornar `expires_in=2592000` e usuário em allowlist.
+- `/auth/me` retorna somente o resumo seguro do usuário e da empresa.
+- `document_hash` e `signature_hash` permanecem no contrato de integridade.
+- Guia para atualização da SPA: `docs/SECURITY_FRONTEND_MIGRATION.md`.
+## [2.15.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.14.0...v2.15.0) (2026-07-05)
+
+
+### Novas Funcionalidades
+
+* adiciona comando para reconciliar ajustes de ponto ja persistidos fora de ordem ([dbc2e3a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/dbc2e3a5c9ebd6b71e3bc11b501b86d7d5cafaaf))
+
+
+### Correções de Bugs
+
+* corrige alternancia in/out em ajustes de ponto fora do turno ([0b48a68](https://github.com/ribeirosacarlos/ponto-saas-api/commit/0b48a68a0f2988dbfb7bc1597baa83632a338eba))
+
+## [2.14.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.6...v2.14.0) (2026-07-02)
+
+
+### Novas Funcionalidades
+
+* Add Jornafy commercial pipeline stage tracking and overdue detection ([d997597](https://github.com/ribeirosacarlos/ponto-saas-api/commit/d997597d9b9a3f902862ba2fa8f5c70d7822b742))
+
+
+### Correções de Bugs
+
+* Restrict commercial module access to super_admin only ([a6f85da](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a6f85da7fc7a1f6a18556a672ec6d81c802b0114))
+
+## [2.13.6](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.5...v2.13.6) (2026-07-01)
+
+
+### Correções de Bugs
+
+* Return 403 in RoleMiddleware for non-User authenticatables ([c604ad3](https://github.com/ribeirosacarlos/ponto-saas-api/commit/c604ad3c1bbc99b51dcd4ae3b543a71086955371))
+* Return 403 in RoleMiddleware for non-User authenticatables ([04b9d1d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/04b9d1d92c62a8803121ed83242c95f01b903265))
+
+## [2.13.5](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.4...v2.13.5) (2026-07-01)
+
+
+### Correções de Bugs
+
+* Allow affiliates to authorize viewAny on CommercialLeadStep ([e7eae6a](https://github.com/ribeirosacarlos/ponto-saas-api/commit/e7eae6ad9936f350be49c60492f2a4d785f7edf1))
+* Allow affiliates to authorize viewAny on CommercialLeadStep ([a29d5b9](https://github.com/ribeirosacarlos/ponto-saas-api/commit/a29d5b97619c277b6e6aefbfd9489a791bd7000d))
+
+## [2.13.4](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.3...v2.13.4) (2026-06-30)
+
+
+### Correções de Bugs
+
+* fix:  ([66de067](https://github.com/ribeirosacarlos/ponto-saas-api/commit/66de067910b0f78d237339f7b4ccf1a3fedcd386))
+* Add affiliate password reset routes ([9e2c32d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/9e2c32d374978e9672566e0fe5f289bc659ef44e))
+* Add affiliates configuration to auth.php ([baca1c1](https://github.com/ribeirosacarlos/ponto-saas-api/commit/baca1c13ae6e904a2fde51d32fce16271cdd27e6))
+* Delete app/Actions/Commercial/InviteAffiliateUserAction.php ([77901da](https://github.com/ribeirosacarlos/ponto-saas-api/commit/77901dac76ce0a0a93dc01d017df1d420d2772f2))
+* Update middleware for affiliate-portal routes ([805213f](https://github.com/ribeirosacarlos/ponto-saas-api/commit/805213f2cd466056362f71a2775752e6ae7f208c))
+
+## [2.13.3](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.2...v2.13.3) (2026-06-30)
+
+
+### Correções de Bugs
+
+* Add swagger:generate-safe command ([cff9429](https://github.com/ribeirosacarlos/ponto-saas-api/commit/cff9429cf0beaf6950caf1a7e7dee26d16d2f444))
+* Update Swagger generation command in Dockerfile ([4545bd7](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4545bd7a719cc5091ab3fe5b4432e09bd195d312))
+
+## [2.13.2](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.1...v2.13.2) (2026-06-30)
+
+
+### Correções de Bugs
+
+* Include Composer for autoload optimization ([3629579](https://github.com/ribeirosacarlos/ponto-saas-api/commit/36295794e230e1e6d71bc4b05cd697f9713182b6))
+* Remove deprecated OpenAPI annotations for blog ([fb6dbe8](https://github.com/ribeirosacarlos/ponto-saas-api/commit/fb6dbe844eb31b77ebda83077f6e49aaabd5702c))
+
+## [2.13.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.13.0...v2.13.1) (2026-06-30)
+
+
+### Correções de Bugs
+
+* Add OpenAPI definitions for Affiliate Portal ([8fe0089](https://github.com/ribeirosacarlos/ponto-saas-api/commit/8fe0089d1624bea28a6efd153044f9b9f011a432))
+* Generate Swagger documentation in Dockerfile ([4b95af6](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4b95af61764850bd95f3180ceb4bd9c4bdef493b))
+* Modify affiliate creation request body properties ([770a0e3](https://github.com/ribeirosacarlos/ponto-saas-api/commit/770a0e3f72b38ee2afeea9bdf2ac552dca351a31))
+
+## [2.13.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.12.1...v2.13.0) (2026-06-30)
+
+
+### Novas Funcionalidades
+
+* Add 'affiliate' role to viewAny policy ([6a6e5af](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6a6e5afa1a407143d4336fa54d3ddb61c797a525))
+* Add route for retrieving lead steps ([370be9d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/370be9d2573270e8b057dba526e72b008b2dca7c))
+
+## [2.12.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.12.0...v2.12.1) (2026-06-28)
+
+
+### Correções de Bugs
+
+* stop sending duplicate invite email when create_account is true ([4162702](https://github.com/ribeirosacarlos/ponto-saas-api/commit/4162702206aee97ce2401e5ad1dcf057188b0ed9))
+* validate email uniqueness in users table when create_account is true ([6ed4eed](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6ed4eedaca7eed2ac289ace3b84618faca5f557f))
+
+## [2.12.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.11.0...v2.12.0) (2026-06-26)
+
+
+### Novas Funcionalidades
+
+* add affiliate portal with user account and commission access ([5ded1da](https://github.com/ribeirosacarlos/ponto-saas-api/commit/5ded1da236573f6fc5d3e858d87523f8f586cd43))
+* add affiliate portal with user account and commission access ([0f5e252](https://github.com/ribeirosacarlos/ponto-saas-api/commit/0f5e2527657338fa5c419a62faa6dd040377d1f6))
+
+## [2.11.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.10.0...v2.11.0) (2026-06-26)
+
+
+### Novas Funcionalidades
+
+* add affiliate authentication and invite flow ([ec5c48d](https://github.com/ribeirosacarlos/ponto-saas-api/commit/ec5c48dd87fdf82842aa1b418efd9611797fa6ca))
+* add commercial module (leads, affiliates, commissions, bonuses) ([f7570ab](https://github.com/ribeirosacarlos/ponto-saas-api/commit/f7570abd9967dc692c67d824cfae2c8ad373db2b))
+* add commercial module (leads, affiliates, commissions, bonuses) ([abdc320](https://github.com/ribeirosacarlos/ponto-saas-api/commit/abdc320d13bb9a3bc01feacb9c5a361de03fc027))
+
+## [2.10.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.9.0...v2.10.0) (2026-06-23)
+
+
+### Novas Funcionalidades
+
+* fallback para imagem padrão no blog público quando cover/hero/og não cadastradas ([6fc527b](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6fc527b6e10c41f16641a5fb6a21c99c6e324d0f))
+* workflow n8n de geração diária de posts e categorias de blog novas ([b0a5441](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b0a54417072b9f4e1b2e117f3a3e3e77d60c8613))
+
+
+### Correções de Bugs
+
+* definir N8N_EDITOR_BASE_URL para evitar erro Invalid URL no n8n ([486bb64](https://github.com/ribeirosacarlos/ponto-saas-api/commit/486bb64ec9f236e5a21249b65ef989f23dc567fa))
+* definir N8N_EDITOR_BASE_URL para evitar erro Invalid URL no n8n ([4780744](https://github.com/ribeirosacarlos/ponto-saas-api/commit/478074461838d73a6b7c888ba83fb18c34bd1b1e))
+
+## [2.9.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.8.0...v2.9.0) (2026-06-23)
+
+
+### Novas Funcionalidades
+
+* add n8n service for blog automation and lock down admin blog API ([6813c92](https://github.com/ribeirosacarlos/ponto-saas-api/commit/6813c92492ab5e6a2591445a4cc2e8b9696fc861))
+* add n8n service for blog automation and lock down admin blog API ([b5705ad](https://github.com/ribeirosacarlos/ponto-saas-api/commit/b5705ade68f140b17e9ad870b4d8a8087ba6ece3))
+
 ## [2.8.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.7.3...v2.8.0) (2026-06-19)
 
 

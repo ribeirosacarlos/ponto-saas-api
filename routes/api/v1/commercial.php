@@ -6,8 +6,15 @@ use App\Http\Controllers\Api\AffiliatePortal\AffiliatePortalLeadController;
 use App\Http\Controllers\Api\Commercial\CommercialAffiliateController;
 use App\Http\Controllers\Api\Commercial\CommercialCommissionController;
 use App\Http\Controllers\Api\Commercial\CommercialDashboardController;
+use App\Http\Controllers\Api\Commercial\CommercialEmailEnrollmentController;
+use App\Http\Controllers\Api\Commercial\CommercialEmailSendController;
+use App\Http\Controllers\Api\Commercial\CommercialEmailSequenceController;
+use App\Http\Controllers\Api\Commercial\CommercialEmailSequenceStepController;
+use App\Http\Controllers\Api\Commercial\CommercialEmailTemplateController;
 use App\Http\Controllers\Api\Commercial\CommercialLeadController;
+use App\Http\Controllers\Api\Commercial\CommercialLeadEmailTimelineController;
 use App\Http\Controllers\Api\Commercial\CommercialLeadStepController;
+use App\Http\Controllers\Api\Commercial\CommercialOutreachSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('affiliate')
@@ -40,12 +47,13 @@ Route::prefix('affiliate-portal')
     });
 
 Route::prefix('admin/commercial')
-    ->middleware(['role:super_admin|admin'])
+    ->middleware(['role:super_admin|commercial_manager|commercial_agent'])
     ->group(function () {
         Route::get('dashboard', [CommercialDashboardController::class, 'show']);
 
         Route::get('leads', [CommercialLeadController::class, 'index']);
         Route::post('leads', [CommercialLeadController::class, 'store']);
+        Route::post('leads/bulk', [CommercialLeadController::class, 'bulkStore']);
         Route::get('leads/{id}', [CommercialLeadController::class, 'show']);
         Route::put('leads/{id}', [CommercialLeadController::class, 'update']);
         Route::delete('leads/{id}', [CommercialLeadController::class, 'destroy']);
@@ -58,7 +66,24 @@ Route::prefix('admin/commercial')
 
         Route::get('steps', [CommercialLeadStepController::class, 'index']);
 
-        Route::middleware(['role:super_admin|admin'])->group(function () {
+        Route::get('leads/{id}/email-timeline', [CommercialLeadEmailTimelineController::class, 'show']);
+
+        Route::prefix('email')->group(function () {
+            Route::get('templates', [CommercialEmailTemplateController::class, 'index']);
+            Route::get('sequences', [CommercialEmailSequenceController::class, 'index']);
+            Route::get('sequences/{id}', [CommercialEmailSequenceController::class, 'show']);
+
+            Route::get('enrollments', [CommercialEmailEnrollmentController::class, 'index']);
+            Route::post('enrollments', [CommercialEmailEnrollmentController::class, 'store']);
+            Route::post('enrollments/{id}/pause', [CommercialEmailEnrollmentController::class, 'pause']);
+            Route::post('enrollments/{id}/resume', [CommercialEmailEnrollmentController::class, 'resume']);
+            Route::post('enrollments/{id}/cancel', [CommercialEmailEnrollmentController::class, 'cancel']);
+            Route::post('enrollments/{id}/mark-replied', [CommercialEmailEnrollmentController::class, 'markReplied']);
+
+            Route::get('sends', [CommercialEmailSendController::class, 'index']);
+        });
+
+        Route::middleware(['role:super_admin|commercial_manager'])->group(function () {
             Route::post('steps', [CommercialLeadStepController::class, 'store']);
             Route::put('steps/{id}', [CommercialLeadStepController::class, 'update']);
             Route::delete('steps/{id}', [CommercialLeadStepController::class, 'destroy']);
@@ -66,11 +91,27 @@ Route::prefix('admin/commercial')
 
             Route::apiResource('affiliates', CommercialAffiliateController::class);
             Route::get('affiliates/{id}/metrics', [CommercialAffiliateController::class, 'metrics']);
-            Route::post('affiliates/{id}/resend-invite', [CommercialAffiliateController::class, 'resendInvite']);
+            Route::post('affiliates/{id}/resend-invite', [CommercialAffiliateController::class, 'resendInvite'])
+                ->middleware('throttle:email-actions');
 
             Route::get('commissions', [CommercialCommissionController::class, 'index']);
             Route::post('commissions/{id}/approve', [CommercialCommissionController::class, 'approve']);
             Route::post('commissions/{id}/mark-paid', [CommercialCommissionController::class, 'markPaid']);
             Route::get('affiliate-bonuses', [CommercialCommissionController::class, 'bonuses']);
+
+            Route::prefix('email')->group(function () {
+                Route::post('templates', [CommercialEmailTemplateController::class, 'store']);
+                Route::put('templates/{id}', [CommercialEmailTemplateController::class, 'update']);
+
+                Route::post('sequences', [CommercialEmailSequenceController::class, 'store']);
+                Route::put('sequences/{id}', [CommercialEmailSequenceController::class, 'update']);
+                Route::post('sequences/{sequenceId}/steps', [CommercialEmailSequenceStepController::class, 'store']);
+                Route::put('sequences/{sequenceId}/steps/{stepId}', [CommercialEmailSequenceStepController::class, 'update']);
+                Route::delete('sequences/{sequenceId}/steps/{stepId}', [CommercialEmailSequenceStepController::class, 'destroy']);
+                Route::put('sequences/{sequenceId}/steps/reorder', [CommercialEmailSequenceStepController::class, 'reorder']);
+
+                Route::get('settings', [CommercialOutreachSettingsController::class, 'show']);
+                Route::put('settings', [CommercialOutreachSettingsController::class, 'update']);
+            });
         });
     });

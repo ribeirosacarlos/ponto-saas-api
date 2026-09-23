@@ -2,31 +2,26 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Actions\Auth\SendPasswordResetAction;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password as PasswordRule;
-use Carbon\Carbon;
 
 class PasswordResetController extends Controller
 {
-    public function __construct(
-        protected SendPasswordResetAction $sendPasswordResetAction
-    ) {}
-
     public function forgot(Request $request)
     {
         $request->validate([
             'email' => ['required', 'email'],
         ]);
 
-        $this->sendPasswordResetAction->execute($request->email);
+        \App\Jobs\InitiatePasswordResetJob::dispatch(strtolower($request->string('email')->toString()));
 
         return response()->json([
-           'message' => 'Se o e-mail existir, um link de recuperação foi enviado.',
+            'message' => 'Se o e-mail existir, um link de recuperação foi enviado.',
         ]);
     }
 
@@ -39,7 +34,7 @@ class PasswordResetController extends Controller
                 'required',
                 'confirmed',
                 PasswordRule::min(8)->mixedCase()->numbers(),
-            ]
+            ],
         ]);
 
         // Check if the token exists and is valid for the email
@@ -54,7 +49,7 @@ class PasswordResetController extends Controller
         }
 
         // Verify the token hash
-        if (hash('sha256', $request->token) !== $resetToken->token) {
+        if (! hash_equals((string) $resetToken->token, hash('sha256', $request->token))) {
             return response()->json([
                 'message' => 'Token inválido ou expirado.',
             ], 422);
@@ -64,11 +59,11 @@ class PasswordResetController extends Controller
         $expiresInMinutes = config('auth.passwords.users.expire', 60);
         $createdAt = Carbon::parse($resetToken->created_at);
         $now = Carbon::now();
-        
+
         if ($createdAt->addMinutes($expiresInMinutes)->lt($now)) {
             // Delete expired token
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
-            
+
             return response()->json([
                 'message' => 'Token inválido ou expirado.',
             ], 422);
@@ -76,7 +71,7 @@ class PasswordResetController extends Controller
 
         // Find user and update password
         $user = User::where('email', $request->email)->first();
-        
+
         if (! $user) {
             return response()->json([
                 'message' => 'Token inválido ou expirado.',
@@ -87,11 +82,13 @@ class PasswordResetController extends Controller
             'password' => Hash::make($request->password),
         ])->save();
 
+        $user->tokens()->delete();
+
         // Delete the used token
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
         return response()->json([
-            'message' => 'Senha redefinida com sucesso.'
+            'message' => 'Senha redefinida com sucesso.',
         ]);
     }
 }

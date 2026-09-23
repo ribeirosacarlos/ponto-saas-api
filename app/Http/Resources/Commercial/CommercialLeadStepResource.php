@@ -11,10 +11,12 @@ class CommercialLeadStepResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'slug' => $this->slug,
             'description' => $this->description,
             'position' => $this->position,
             'default_due_days' => $this->default_due_days,
             'active' => $this->active,
+            'is_final' => $this->is_final,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

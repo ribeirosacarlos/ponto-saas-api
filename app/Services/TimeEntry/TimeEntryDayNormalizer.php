@@ -110,12 +110,9 @@ class TimeEntryDayNormalizer
         $windowStart = $context['window_start'];
         $windowEnd = $context['window_end'];
 
-        if ($localReference->lessThan($windowStart)) {
-            $windowStart = $localReference;
-        }
-
-        if ($localReference->greaterThan($windowEnd)) {
-            $windowEnd = $localReference;
+        if ($localReference->lessThan($windowStart) || $localReference->greaterThan($windowEnd)) {
+            $windowStart = $windowStart->min($context['base_date']->startOfDay());
+            $windowEnd = $windowEnd->max($context['base_date']->endOfDay());
         }
 
         return [

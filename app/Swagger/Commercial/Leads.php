@@ -5,7 +5,7 @@ namespace App\Swagger\Commercial;
 /**
  * @OA\Tag(
  *     name="Commercial - Leads",
- *     description="Gestão de leads do módulo Comercial. Acesso restrito a super_admin e admin."
+ *     description="Gestão de leads do módulo Comercial. Acesso restrito a super_admin."
  * )
  */
 class Leads {}
@@ -14,13 +14,14 @@ class Leads {}
  * @OA\Get(
  *     path="/v1/admin/commercial/leads",
  *     summary="Lista leads comerciais",
- *     description="super_admin e admin veem todos os leads.",
+ *     description="super_admin vê todos os leads.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
  *     @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"new","in_progress","demo_scheduled","proposal_sent","won","lost","nurturing"})),
  *     @OA\Parameter(name="priority", in="query", @OA\Schema(type="string", enum={"low","medium","high","very_high"})),
  *     @OA\Parameter(name="current_step_id", in="query", @OA\Schema(type="string", format="uuid")),
+ *     @OA\Parameter(name="is_overdue", in="query", description="Filtra leads cuja etapa atual já venceu (true) ou ainda está no prazo (false), com base em current_step_started_at + default_due_days da etapa", @OA\Schema(type="boolean")),
  *     @OA\Parameter(name="assigned_to_user_id", in="query", @OA\Schema(type="string", format="uuid")),
  *     @OA\Parameter(name="affiliate_id", in="query", @OA\Schema(type="string", format="uuid")),
  *     @OA\Parameter(name="country", in="query", @OA\Schema(type="string")),
@@ -34,7 +35,7 @@ class Leads {}
  *     @OA\Parameter(name="search", in="query", description="Busca em company_name, contact_name, email, phone, whatsapp, website", @OA\Schema(type="string")),
  *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=20)),
  *
- *     @OA\Response(response=200, description="Lista paginada de leads"),
+ *     @OA\Response(response=200, description="Lista paginada de leads. Cada lead inclui created_by_user {id,name,email} (quem cadastrou o lead) e assigned_to_user {id,name,email} (responsável atual), além dos campos calculados de pipeline (current_stage_name, current_stage_due_at, current_stage_is_overdue, current_stage_warning_message, next_stage_id, next_stage_name)."),
  *     @OA\Response(response=401, description="Não autenticado"),
  *     @OA\Response(response=403, description="Role sem acesso ao módulo Comercial")
  * )
@@ -45,7 +46,7 @@ class LeadsIndex {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads",
  *     summary="Cria um novo lead",
- *     description="Disponível para super_admin e admin. Detecta (sem bloquear) possíveis duplicados por email, telefone, whatsapp, website ou nome da empresa.",
+ *     description="Disponível para super_admin. Bloqueia (422) se já existir lead com mesmo email, telefone (normalizado, ignorando formatação) ou google_maps_place_id. Também sinaliza (sem bloquear) possíveis duplicados por whatsapp, website ou nome da empresa.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -61,6 +62,7 @@ class LeadsIndex {}
  *             @OA\Property(property="phone", type="string", nullable=true),
  *             @OA\Property(property="whatsapp", type="string", nullable=true),
  *             @OA\Property(property="website", type="string", nullable=true),
+ *             @OA\Property(property="google_maps_place_id", type="string", nullable=true, description="place_id do Google Maps (identificador estável do local)"),
  *             @OA\Property(property="country", type="string", nullable=true),
  *             @OA\Property(property="city", type="string", nullable=true),
  *             @OA\Property(property="segment", type="string", nullable=true),
@@ -68,7 +70,7 @@ class LeadsIndex {}
  *             @OA\Property(property="source", type="string", nullable=true),
  *             @OA\Property(property="affiliate_id", type="string", format="uuid", nullable=true),
  *             @OA\Property(property="current_step_id", type="string", format="uuid", nullable=true),
- *             @OA\Property(property="assigned_to_user_id", type="string", format="uuid", nullable=true, description="Precisa ser um usuário com role super_admin ou admin"),
+ *             @OA\Property(property="assigned_to_user_id", type="string", format="uuid", nullable=true, description="Precisa ser um usuário com role super_admin"),
  *             @OA\Property(property="priority", type="string", enum={"low","medium","high","very_high"}, default="medium"),
  *             @OA\Property(property="general_notes", type="string", nullable=true)
  *         )
@@ -76,18 +78,72 @@ class LeadsIndex {}
  *
  *     @OA\Response(
  *         response=201,
- *         description="Lead criado. Inclui aviso de possíveis duplicados (duplicate_warning, possible_duplicates), sem bloquear a criação.",
+ *         description="Lead criado. Inclui aviso de possíveis duplicados fracos (duplicate_warning, possible_duplicates) por whatsapp/website/nome da empresa.",
  *     ),
- *     @OA\Response(response=422, description="Erro de validação")
+ *     @OA\Response(response=422, description="Erro de validação ou duplicidade bloqueante (email, phone ou google_maps_place_id já cadastrados)")
  * )
  */
 class LeadsStore {}
 
 /**
+ * @OA\Post(
+ *     path="/v1/admin/commercial/leads/bulk",
+ *     summary="Cria múltiplos leads de uma vez",
+ *     description="Disponível para super_admin, commercial_manager e commercial_agent. Aceita até 100 leads por requisição. Cada item é processado de forma independente (sucesso parcial): itens inválidos ou duplicados (mesmo email, telefone normalizado ou google_maps_place_id) não impedem a criação dos demais. A resposta traz o resultado individual de cada item, na mesma ordem enviada.",
+ *     tags={"Commercial - Leads"},
+ *     security={{"bearerAuth":{}}},
+ *
+ *     @OA\RequestBody(
+ *         required=true,
+ *
+ *         @OA\JsonContent(
+ *             required={"leads"},
+ *
+ *             @OA\Property(
+ *                 property="leads",
+ *                 type="array",
+ *                 minItems=1,
+ *                 maxItems=100,
+ *
+ *                 @OA\Items(
+ *                     required={"company_name"},
+ *
+ *                     @OA\Property(property="company_name", type="string", example="Acme Ltda"),
+ *                     @OA\Property(property="contact_name", type="string", nullable=true),
+ *                     @OA\Property(property="email", type="string", format="email", nullable=true),
+ *                     @OA\Property(property="phone", type="string", nullable=true),
+ *                     @OA\Property(property="whatsapp", type="string", nullable=true),
+ *                     @OA\Property(property="website", type="string", nullable=true),
+ *                     @OA\Property(property="google_maps_place_id", type="string", nullable=true),
+ *                     @OA\Property(property="country", type="string", nullable=true),
+ *                     @OA\Property(property="city", type="string", nullable=true),
+ *                     @OA\Property(property="segment", type="string", nullable=true),
+ *                     @OA\Property(property="employees_count", type="integer", nullable=true),
+ *                     @OA\Property(property="source", type="string", nullable=true),
+ *                     @OA\Property(property="affiliate_id", type="string", format="uuid", nullable=true),
+ *                     @OA\Property(property="current_step_id", type="string", format="uuid", nullable=true),
+ *                     @OA\Property(property="assigned_to_user_id", type="string", format="uuid", nullable=true, description="Precisa ser um usuário com role super_admin"),
+ *                     @OA\Property(property="priority", type="string", enum={"low","medium","high","very_high"}, default="medium"),
+ *                     @OA\Property(property="general_notes", type="string", nullable=true)
+ *                 )
+ *             )
+ *         )
+ *     ),
+ *
+ *     @OA\Response(
+ *         response=207,
+ *         description="Processamento concluído (sucesso parcial). data[] traz, por índice (mesma posição do array enviado): status ('created' ou 'error'), e para itens criados o lead serializado + duplicate_warning/possible_duplicates, ou para itens com erro o objeto errors (mesmo formato de erro de validação do Laravel). meta traz total, created e failed.",
+ *     ),
+ *     @OA\Response(response=422, description="Erro de validação no payload geral (ex: leads ausente, vazio ou acima do limite de 100 itens)")
+ * )
+ */
+class LeadsBulkStore {}
+
+/**
  * @OA\Get(
  *     path="/v1/admin/commercial/leads/{id}",
  *     summary="Exibe um lead",
- *     description="Disponível para super_admin e admin.",
+ *     description="Disponível para super_admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -119,7 +175,7 @@ class LeadsUpdate {}
  * @OA\Delete(
  *     path="/v1/admin/commercial/leads/{id}",
  *     summary="Remove um lead (soft delete)",
- *     description="Restrito a super_admin e admin.",
+ *     description="Restrito a super_admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -135,7 +191,7 @@ class LeadsDestroy {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads/{id}/assign",
  *     summary="Atribui o lead a um usuário comercial",
- *     description="Restrito a super_admin e admin.",
+ *     description="Restrito a super_admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -153,7 +209,7 @@ class LeadsAssign {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads/{id}/move-step",
  *     summary="Move o lead para outra etapa comercial",
- *     description="Disponível para super_admin e admin. Cria um registro em lead_step_logs.",
+ *     description="Disponível para super_admin. Cria um registro em lead_step_logs.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -175,7 +231,7 @@ class LeadsMoveStep {}
  * @OA\Post(
  *     path="/v1/admin/commercial/leads/{id}/notes",
  *     summary="Adiciona uma observação ao lead",
- *     description="Disponível para super_admin e admin.",
+ *     description="Disponível para super_admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *
@@ -250,7 +306,7 @@ class LeadsMarkLost {}
  * @OA\Get(
  *     path="/v1/admin/commercial/dashboard",
  *     summary="Métricas comerciais (dashboard)",
- *     description="Métricas completas para super_admin e admin.",
+ *     description="Métricas completas para super_admin.",
  *     tags={"Commercial - Leads"},
  *     security={{"bearerAuth":{}}},
  *

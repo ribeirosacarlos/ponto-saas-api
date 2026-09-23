@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Announcement;
 use App\Models\CommercialAffiliate;
 use App\Models\CommercialCommission;
+use App\Models\CommercialEmailSequenceEnrollment;
 use App\Models\CommercialLead;
 use App\Models\CommercialLeadStep;
 use App\Models\Company;
@@ -16,6 +17,7 @@ use App\Models\User;
 use App\Policies\AnnouncementPolicy;
 use App\Policies\CommercialAffiliatePolicy;
 use App\Policies\CommercialCommissionPolicy;
+use App\Policies\CommercialEmailSequenceEnrollmentPolicy;
 use App\Policies\CommercialLeadPolicy;
 use App\Policies\CommercialLeadStepPolicy;
 use App\Policies\CompanyPolicy;
@@ -35,6 +37,7 @@ class AuthServiceProvider extends ServiceProvider
         CommercialCommission::class => CommercialCommissionPolicy::class,
         CommercialLead::class => CommercialLeadPolicy::class,
         CommercialLeadStep::class => CommercialLeadStepPolicy::class,
+        CommercialEmailSequenceEnrollment::class => CommercialEmailSequenceEnrollmentPolicy::class,
         Document::class => DocumentPolicy::class,
         EmployeeTimesheet::class => EmployeeTimesheetPolicy::class,
         MonthlyClosure::class => MonthlyClosurePolicy::class,

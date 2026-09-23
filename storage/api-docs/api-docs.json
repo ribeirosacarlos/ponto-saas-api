@@ -3,7 +3,7 @@
     "info": {
         "title": "Ponto SaaS API",
         "description": "Documentação da API de controle de ponto",
-        "version": "1.0.0"
+        "version": "1.1.0"
     },
     "servers": [
         {
@@ -19,725 +19,6 @@
         }
     ],
     "paths": {
-        "/v1/admin/blog/posts/{id}": {
-            "get": {
-                "tags": [
-                    "Admin - Blog"
-                ],
-                "summary": "Exibe um post do blog",
-                "operationId": "d99b92c155426de9d0804dc1fa0a9225",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/BlogPostAdminResource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Post não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Admin - Blog"
-                ],
-                "summary": "Atualiza um post do blog",
-                "description": "Aceita os mesmos campos do cadastro (parcialmente). Campos traduzíveis devem ser enviados como objeto com as chaves pt, es e en.",
-                "operationId": "cae9b9e0733d3a288070349f4534ccc1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "slug": {
-                                        "type": "string"
-                                    },
-                                    "author": {
-                                        "type": "string"
-                                    },
-                                    "category": {
-                                        "type": "string"
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "enum": [
-                                            "draft",
-                                            "published",
-                                            "archived"
-                                        ]
-                                    },
-                                    "cover_url": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "hero_image_url": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "audience_tag": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "reading_time": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "trending_score": {
-                                        "type": "integer",
-                                        "nullable": true
-                                    },
-                                    "featured": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    },
-                                    "published_at": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "nullable": true
-                                    },
-                                    "og_image_url": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "canonical_url": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "title": {
-                                        "description": "Traduzível (pt, es, en)",
-                                        "type": "object"
-                                    },
-                                    "excerpt": {
-                                        "description": "Traduzível (pt, es, en)",
-                                        "type": "object"
-                                    },
-                                    "content_html": {
-                                        "description": "Traduzível (pt, es, en)",
-                                        "type": "object"
-                                    },
-                                    "faq": {
-                                        "type": "array",
-                                        "items": {
-                                            "properties": {
-                                                "question": {
-                                                    "type": "object"
-                                                },
-                                                "answer": {
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "related_post_ids": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "format": "uuid"
-                                        }
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Atualizado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/BlogPostAdminResource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Post não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Admin - Blog"
-                ],
-                "summary": "Remove um post do blog",
-                "operationId": "06364fc5ff30a8e8fc5cdca6188f5289",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Removido"
-                    },
-                    "404": {
-                        "description": "Post não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/v1/admin/blog/posts": {
-            "get": {
-                "tags": [
-                    "Admin - Blog"
-                ],
-                "summary": "Lista posts do blog",
-                "description": "Retorna uma lista paginada de posts, com filtro opcional por status e categoria.",
-                "operationId": "6de2abfccc4a45aa247d05438f0209e5",
-                "parameters": [
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "description": "Filtra por status do post",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "draft",
-                                "published",
-                                "archived"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "category",
-                        "in": "query",
-                        "description": "Filtra por categoria",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "compliance"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Itens por página",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 20
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Lista paginada",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/BlogPostListItem"
-                                            }
-                                        },
-                                        "meta": {
-                                            "properties": {
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 42
-                                                },
-                                                "page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 20
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Admin - Blog"
-                ],
-                "summary": "Cria um novo post do blog",
-                "description": "Campos de texto (title, excerpt, content_html, etc.) são traduzíveis e devem ser enviados como objeto com as chaves pt, es e en.",
-                "operationId": "5574fbcaa7a8661a7aaccf7e43f5b9e8",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "slug",
-                                    "author",
-                                    "category",
-                                    "status",
-                                    "title",
-                                    "excerpt"
-                                ],
-                                "properties": {
-                                    "slug": {
-                                        "type": "string",
-                                        "example": "ponto-eletronico-espanha"
-                                    },
-                                    "author": {
-                                        "type": "string",
-                                        "example": "Equipe Jornafy"
-                                    },
-                                    "category": {
-                                        "type": "string",
-                                        "example": "compliance"
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "enum": [
-                                            "draft",
-                                            "published",
-                                            "archived"
-                                        ]
-                                    },
-                                    "cover_url": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "hero_image_url": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "audience_tag": {
-                                        "type": "string",
-                                        "example": "rh",
-                                        "nullable": true
-                                    },
-                                    "reading_time": {
-                                        "type": "string",
-                                        "example": "5 min",
-                                        "nullable": true
-                                    },
-                                    "trending_score": {
-                                        "type": "integer",
-                                        "example": 80,
-                                        "nullable": true
-                                    },
-                                    "featured": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    },
-                                    "published_at": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "nullable": true
-                                    },
-                                    "og_image_url": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "canonical_url": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "title": {
-                                        "description": "Traduzível (pt, es, en)",
-                                        "properties": {
-                                            "pt": {
-                                                "type": "string",
-                                                "example": "Como funciona o controle de ponto na Espanha"
-                                            },
-                                            "es": {
-                                                "type": "string"
-                                            },
-                                            "en": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    "excerpt": {
-                                        "description": "Traduzível (pt, es, en)",
-                                        "properties": {
-                                            "pt": {
-                                                "type": "string"
-                                            },
-                                            "es": {
-                                                "type": "string"
-                                            },
-                                            "en": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    "content_html": {
-                                        "description": "Traduzível (pt, es, en)",
-                                        "properties": {
-                                            "pt": {
-                                                "type": "string"
-                                            },
-                                            "es": {
-                                                "type": "string"
-                                            },
-                                            "en": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    "faq": {
-                                        "description": "Itens de FAQ, com pergunta e resposta traduzíveis",
-                                        "type": "array",
-                                        "items": {
-                                            "properties": {
-                                                "question": {
-                                                    "properties": {
-                                                        "pt": {
-                                                            "type": "string"
-                                                        },
-                                                        "es": {
-                                                            "type": "string"
-                                                        },
-                                                        "en": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "answer": {
-                                                    "properties": {
-                                                        "pt": {
-                                                            "type": "string"
-                                                        },
-                                                        "es": {
-                                                            "type": "string"
-                                                        },
-                                                        "en": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "related_post_ids": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "format": "uuid"
-                                        }
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Criado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/BlogPostAdminResource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Erro de validação",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "properties": {
-                                                "slug": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "example": "The slug has already been taken."
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/v1/admin/blog/posts/{id}/publish": {
-            "patch": {
-                "tags": [
-                    "Admin - Blog"
-                ],
-                "summary": "Publica um post do blog",
-                "description": "Define status=published e, se ainda não houver, define published_at como agora.",
-                "operationId": "38c53c4edb8d50d01660a7b49303381e",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Publicado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/BlogPostAdminResource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Post não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/v1/admin/blog/posts/{id}/unpublish": {
-            "patch": {
-                "tags": [
-                    "Admin - Blog"
-                ],
-                "summary": "Despublica um post do blog",
-                "description": "Define status=draft.",
-                "operationId": "e0d04f7ff1f21c08bc56e38fd227b745",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Despublicado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/BlogPostAdminResource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Post não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/v1/admin/blog/uploads/presign": {
-            "post": {
-                "tags": [
-                    "Admin - Blog"
-                ],
-                "summary": "Gera URL pré-assinada para upload de mídia do blog (S3)",
-                "description": "Retorna uma URL pré-assinada (válida por 5 minutos) para upload direto ao S3 e a URL pública final do arquivo.",
-                "operationId": "c79af7aebed4ebabf3f9d9031698bf35",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "filename",
-                                    "mime_type",
-                                    "folder"
-                                ],
-                                "properties": {
-                                    "filename": {
-                                        "type": "string",
-                                        "example": "capa-ponto-espanha.jpg"
-                                    },
-                                    "mime_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "image/jpeg",
-                                            "image/png",
-                                            "image/webp"
-                                        ]
-                                    },
-                                    "folder": {
-                                        "type": "string",
-                                        "enum": [
-                                            "covers",
-                                            "heroes",
-                                            "og"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "URL pré-assinada gerada",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "upload_url": {
-                                            "type": "string",
-                                            "example": "https://bucket.s3.amazonaws.com/blog/covers/abc.jpg?X-Amz-..."
-                                        },
-                                        "public_url": {
-                                            "type": "string",
-                                            "example": "https://cdn.jornafy.com/blog/covers/abc.jpg"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Erro de validação",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/v1/admin/company/signatures": {
             "get": {
                 "tags": [
@@ -4209,7 +3490,7 @@
                     "Auth"
                 ],
                 "summary": "Performs user login",
-                "description": "Returns the token and authenticated user data",
+                "description": "Retorna token Sanctum com validade de 30 dias e dados do usuário em allowlist.",
                 "operationId": "2c84e8de383e2d44452e7f8b79a8b7e2",
                 "requestBody": {
                     "description": "Login credentials",
@@ -4245,8 +3526,7 @@
                                 "schema": {
                                     "properties": {
                                         "user": {
-                                            "description": "Authenticated user object",
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/AuthenticatedUser"
                                         },
                                         "roles": {
                                             "type": "array",
@@ -4261,6 +3541,11 @@
                                         "token": {
                                             "type": "string",
                                             "example": "2|xjfi3290jf0239jf0asd0f9as..."
+                                        },
+                                        "expires_in": {
+                                            "description": "Validade do token em segundos (30 dias).",
+                                            "type": "integer",
+                                            "example": 2592000
                                         }
                                     },
                                     "type": "object"
@@ -4287,13 +3572,64 @@
                 }
             }
         },
+        "/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Retorna a sessão autenticada em formato seguro",
+                "operationId": "a14006c635ca4d480c916acf8ee95966",
+                "responses": {
+                    "200": {
+                        "description": "Sessão atual",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "timezone": {
+                                            "type": "string"
+                                        },
+                                        "timeZone": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "$ref": "#/components/schemas/AuthenticatedUser"
+                                                },
+                                                "roles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token ausente, revogado ou expirado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/v1/auth/logout": {
             "post": {
                 "tags": [
                     "Auth"
                 ],
                 "summary": "Performs logout for authenticated user",
-                "description": "Revokes the current user token",
+                "description": "Revoga o token Sanctum atual no servidor.",
                 "operationId": "d8ae940eb58b4e626e279e176bfd7457",
                 "responses": {
                     "200": {
@@ -4326,7 +3662,7 @@
                     "Auth"
                 ],
                 "summary": "Request password reset",
-                "description": "Sends a password reset code to the user's email",
+                "description": "Enfileira a recuperação e sempre retorna resposta neutra, exista ou não uma conta.",
                 "operationId": "cd688b33a954749cb3dad5a7762f25b0",
                 "requestBody": {
                     "description": "Email for password reset",
@@ -4972,6 +4308,14 @@
                         }
                     },
                     {
+                        "name": "is_overdue",
+                        "in": "query",
+                        "description": "Filtra leads cuja etapa atual já venceu (true) ou ainda está no prazo (false)",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
                         "name": "search",
                         "in": "query",
                         "description": "Busca em company_name, contact_name, email, phone",
@@ -4990,7 +4334,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de leads do afiliado"
+                        "description": "Lista paginada de leads do afiliado. Inclui created_by_user e assigned_to_user quando aplicável, além dos campos calculados de pipeline."
                     }
                 },
                 "security": [
@@ -5706,7 +5050,7 @@
                     "Commercial - Affiliates"
                 ],
                 "summary": "Reenvia o convite de acesso ao afiliado",
-                "description": "Gera um novo invite_code, atualiza invite_expires_at e reenvia o e-mail de convite. Restrito a super_admin e admin.",
+                "description": "Gera um novo invite_code, atualiza invite_expires_at e reenvia o e-mail de convite. Restrito a super_admin.",
                 "operationId": "28b63bedb6081bd1ba1127717557276f",
                 "parameters": [
                     {
@@ -5997,7 +5341,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Lista leads comerciais",
-                "description": "super_admin e admin veem todos os leads.",
+                "description": "super_admin vê todos os leads.",
                 "operationId": "8f6c3b73b519508b8e6ac39691d0374d",
                 "parameters": [
                     {
@@ -6035,6 +5379,14 @@
                         "schema": {
                             "type": "string",
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "is_overdue",
+                        "in": "query",
+                        "description": "Filtra leads cuja etapa atual já venceu (true) ou ainda está no prazo (false), com base em current_step_started_at + default_due_days da etapa",
+                        "schema": {
+                            "type": "boolean"
                         }
                     },
                     {
@@ -6132,7 +5484,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de leads"
+                        "description": "Lista paginada de leads. Cada lead inclui created_by_user {id,name,email} (quem cadastrou o lead) e assigned_to_user {id,name,email} (responsável atual), além dos campos calculados de pipeline (current_stage_name, current_stage_due_at, current_stage_is_overdue, current_stage_warning_message, next_stage_id, next_stage_name)."
                     },
                     "401": {
                         "description": "Não autenticado"
@@ -6152,7 +5504,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Cria um novo lead",
-                "description": "Disponível para super_admin e admin. Detecta (sem bloquear) possíveis duplicados por email, telefone, whatsapp, website ou nome da empresa.",
+                "description": "Disponível para super_admin. Bloqueia (422) se já existir lead com mesmo email, telefone (normalizado, ignorando formatação) ou google_maps_place_id. Também sinaliza (sem bloquear) possíveis duplicados por whatsapp, website ou nome da empresa.",
                 "operationId": "607fa2aa431bde3ee592ed6345224b9b",
                 "requestBody": {
                     "required": true,
@@ -6188,6 +5540,11 @@
                                         "type": "string",
                                         "nullable": true
                                     },
+                                    "google_maps_place_id": {
+                                        "description": "place_id do Google Maps (identificador estável do local)",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
                                     "country": {
                                         "type": "string",
                                         "nullable": true
@@ -6219,7 +5576,7 @@
                                         "nullable": true
                                     },
                                     "assigned_to_user_id": {
-                                        "description": "Precisa ser um usuário com role super_admin ou admin",
+                                        "description": "Precisa ser um usuário com role super_admin",
                                         "type": "string",
                                         "format": "uuid",
                                         "nullable": true
@@ -6246,10 +5603,140 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Lead criado. Inclui aviso de possíveis duplicados (duplicate_warning, possible_duplicates), sem bloquear a criação."
+                        "description": "Lead criado. Inclui aviso de possíveis duplicados fracos (duplicate_warning, possible_duplicates) por whatsapp/website/nome da empresa."
                     },
                     "422": {
-                        "description": "Erro de validação"
+                        "description": "Erro de validação ou duplicidade bloqueante (email, phone ou google_maps_place_id já cadastrados)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/commercial/leads/bulk": {
+            "post": {
+                "tags": [
+                    "Commercial - Leads"
+                ],
+                "summary": "Cria múltiplos leads de uma vez",
+                "description": "Disponível para super_admin, commercial_manager e commercial_agent. Aceita até 100 leads por requisição. Cada item é processado de forma independente (sucesso parcial): itens inválidos ou duplicados (mesmo email, telefone normalizado ou google_maps_place_id) não impedem a criação dos demais. A resposta traz o resultado individual de cada item, na mesma ordem enviada.",
+                "operationId": "f24db5944b7c7f4bd17911384cdfbe56",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "leads"
+                                ],
+                                "properties": {
+                                    "leads": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "company_name"
+                                            ],
+                                            "properties": {
+                                                "company_name": {
+                                                    "type": "string",
+                                                    "example": "Acme Ltda"
+                                                },
+                                                "contact_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "nullable": true
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "whatsapp": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "website": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "google_maps_place_id": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "country": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "city": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "segment": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "employees_count": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "source": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "affiliate_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "current_step_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "assigned_to_user_id": {
+                                                    "description": "Precisa ser um usuário com role super_admin",
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "priority": {
+                                                    "type": "string",
+                                                    "default": "medium",
+                                                    "enum": [
+                                                        "low",
+                                                        "medium",
+                                                        "high",
+                                                        "very_high"
+                                                    ]
+                                                },
+                                                "general_notes": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "maxItems": 100,
+                                        "minItems": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "207": {
+                        "description": "Processamento concluído (sucesso parcial). data[] traz, por índice (mesma posição do array enviado): status ('created' ou 'error'), e para itens criados o lead serializado + duplicate_warning/possible_duplicates, ou para itens com erro o objeto errors (mesmo formato de erro de validação do Laravel). meta traz total, created e failed."
+                    },
+                    "422": {
+                        "description": "Erro de validação no payload geral (ex: leads ausente, vazio ou acima do limite de 100 itens)"
                     }
                 },
                 "security": [
@@ -6265,7 +5752,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Exibe um lead",
-                "description": "Disponível para super_admin e admin.",
+                "description": "Disponível para super_admin.",
                 "operationId": "861d2fc198917dd6b864dc7ac3b5f4f7",
                 "parameters": [
                     {
@@ -6331,7 +5818,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Remove um lead (soft delete)",
-                "description": "Restrito a super_admin e admin.",
+                "description": "Restrito a super_admin.",
                 "operationId": "5ffdf4508c5025528cfe582b4978c9a9",
                 "parameters": [
                     {
@@ -6365,7 +5852,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Atribui o lead a um usuário comercial",
-                "description": "Restrito a super_admin e admin.",
+                "description": "Restrito a super_admin.",
                 "operationId": "37bd7ff1d16f47a02b8a3608b3bc24f0",
                 "parameters": [
                     {
@@ -6418,7 +5905,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Move o lead para outra etapa comercial",
-                "description": "Disponível para super_admin e admin. Cria um registro em lead_step_logs.",
+                "description": "Disponível para super_admin. Cria um registro em lead_step_logs.",
                 "operationId": "2411a2def694e682f518d2395fd8737f",
                 "parameters": [
                     {
@@ -6477,7 +5964,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Adiciona uma observação ao lead",
-                "description": "Disponível para super_admin e admin.",
+                "description": "Disponível para super_admin.",
                 "operationId": "aa6dfb00f093d9e66da81d224ee51400",
                 "parameters": [
                     {
@@ -6683,7 +6170,7 @@
                     "Commercial - Leads"
                 ],
                 "summary": "Métricas comerciais (dashboard)",
-                "description": "Métricas completas para super_admin e admin.",
+                "description": "Métricas completas para super_admin.",
                 "operationId": "e0cdce1a0d3686a08544e5cd70a347e3",
                 "responses": {
                     "200": {
@@ -6720,7 +6207,7 @@
                     "Commercial - Steps"
                 ],
                 "summary": "Cria uma etapa comercial",
-                "description": "Restrito a super_admin e admin.",
+                "description": "Restrito a super_admin.",
                 "operationId": "ee4f6e150bf572b453bd7532c4c99698",
                 "requestBody": {
                     "required": true,
@@ -9814,231 +9301,6 @@
                 ]
             }
         },
-        "/v1/public/blog/categories": {
-            "get": {
-                "tags": [
-                    "Public - Blog"
-                ],
-                "summary": "Lista categorias do blog",
-                "description": "Endpoint público, sem autenticação.",
-                "operationId": "b9ed3c4a2f72acdac1b383c311ebd3b7",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "key": {
-                                                        "type": "string",
-                                                        "example": "compliance"
-                                                    },
-                                                    "label_pt": {
-                                                        "type": "string"
-                                                    },
-                                                    "label_es": {
-                                                        "type": "string"
-                                                    },
-                                                    "label_en": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/public/blog/posts": {
-            "get": {
-                "tags": [
-                    "Public - Blog"
-                ],
-                "summary": "Lista posts publicados do blog",
-                "description": "Endpoint público, sem autenticação. Retorna apenas posts com status=published.",
-                "operationId": "c3aa8a7eedffe6c30dbe5d4ac1f9662a",
-                "parameters": [
-                    {
-                        "name": "language",
-                        "in": "query",
-                        "description": "Idioma de exibição (default: pt)",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "pt",
-                                "es",
-                                "en"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "category",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "compliance"
-                        }
-                    },
-                    {
-                        "name": "featured",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "maxLength": 100
-                        }
-                    },
-                    {
-                        "name": "sort",
-                        "in": "query",
-                        "description": "Critério de ordenação (default: published_at_desc)",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "published_at_desc",
-                                "trending_score_desc"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Máximo 50",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 10
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Lista paginada de posts publicados",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/BlogPostListItem"
-                                            }
-                                        },
-                                        "meta": {
-                                            "properties": {
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 42
-                                                },
-                                                "page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 10
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "example": 5
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/public/blog/posts/{slug}": {
-            "get": {
-                "tags": [
-                    "Public - Blog"
-                ],
-                "summary": "Exibe um post publicado pelo slug",
-                "description": "Endpoint público, sem autenticação. Retorna 404 se o post não existir ou não estiver publicado.",
-                "operationId": "6e4420d9876273a8fd05d716cc28e051",
-                "parameters": [
-                    {
-                        "name": "slug",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "ponto-eletronico-espanha"
-                        }
-                    },
-                    {
-                        "name": "language",
-                        "in": "query",
-                        "description": "Idioma de exibição (default: pt)",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "pt",
-                                "es",
-                                "en"
-                            ]
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/BlogPostDetailResource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Post não encontrado ou não publicado"
-                    }
-                }
-            }
-        },
         "/v1/settings/overview": {
             "get": {
                 "tags": [
@@ -10071,226 +9333,160 @@
                     }
                 ]
             }
+        },
+        "/v1/employee/timesheets": {
+            "get": {
+                "tags": [
+                    "Timesheets"
+                ],
+                "summary": "Lista as próprias folhas",
+                "operationId": "cd53fc6d695b2ccabc6d3626a054a80b",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TimesheetResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/timesheets/{timesheet}": {
+            "get": {
+                "tags": [
+                    "Timesheets"
+                ],
+                "summary": "Detalha a própria folha",
+                "operationId": "e684ec5084f52ed2628fde9c388afaf0",
+                "parameters": [
+                    {
+                        "name": "timesheet",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Folha",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TimesheetResource"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Folha fora do escopo"
+                    },
+                    "404": {
+                        "description": "Folha não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/employee/timesheets/{timesheet}/pdf": {
+            "get": {
+                "tags": [
+                    "Timesheets"
+                ],
+                "summary": "Baixa ou obtém URL temporária do PDF",
+                "operationId": "d8d069a57718bcd7b004db69e4e9448c",
+                "parameters": [
+                    {
+                        "name": "timesheet",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Arquivo ou objeto com URL temporária"
+                    },
+                    "404": {
+                        "description": "PDF indisponível"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/admin/timesheets/{timesheet}": {
+            "get": {
+                "tags": [
+                    "Timesheets"
+                ],
+                "summary": "Detalha folha visível ao gestor",
+                "operationId": "a511669a878b51ca3f8d1c6d5c85632b",
+                "parameters": [
+                    {
+                        "name": "timesheet",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Folha",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TimesheetResource"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Empresa ou área fora do escopo"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
         "schemas": {
-            "BlogPostListItem": {
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "slug": {
-                        "type": "string",
-                        "example": "ponto-eletronico-espanha"
-                    },
-                    "title": {
-                        "type": "string",
-                        "example": "Como funciona o controle de ponto na Espanha"
-                    },
-                    "excerpt": {
-                        "type": "string",
-                        "example": "Entenda as regras de jornada e fiscalização."
-                    },
-                    "cover_url": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "category": {
-                        "type": "string",
-                        "example": "compliance"
-                    },
-                    "author": {
-                        "type": "string",
-                        "example": "Equipe Jornafy"
-                    },
-                    "reading_time": {
-                        "type": "string",
-                        "example": "5 min",
-                        "nullable": true
-                    },
-                    "published_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "featured": {
-                        "type": "boolean"
-                    },
-                    "trending_score": {
-                        "type": "integer",
-                        "example": 80,
-                        "nullable": true
-                    },
-                    "language": {
-                        "type": "string",
-                        "example": "pt",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "BlogPostAdminResource": {
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "slug": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "draft",
-                            "published",
-                            "archived"
-                        ]
-                    },
-                    "title": {
-                        "properties": {
-                            "pt": {
-                                "type": "string"
-                            },
-                            "es": {
-                                "type": "string"
-                            },
-                            "en": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "excerpt": {
-                        "properties": {
-                            "pt": {
-                                "type": "string"
-                            },
-                            "es": {
-                                "type": "string"
-                            },
-                            "en": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "content_html": {
-                        "properties": {
-                            "pt": {
-                                "type": "string"
-                            },
-                            "es": {
-                                "type": "string"
-                            },
-                            "en": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "hero_image_alt": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "hero_caption": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "seo_title": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "seo_description": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "toc": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "author": {
-                        "type": "string"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "audience_tag": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "cover_url": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "hero_image_url": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "og_image_url": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "canonical_url": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "reading_time": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "trending_score": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "featured": {
-                        "type": "boolean"
-                    },
-                    "published_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "faq": {
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "format": "uuid"
-                                },
-                                "question": {
-                                    "type": "object"
-                                },
-                                "answer": {
-                                    "type": "object"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "related_posts": {
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "format": "uuid"
-                                },
-                                "slug": {
-                                    "type": "string"
-                                },
-                                "title": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
             "OvertimeDay": {
                 "properties": {
                     "date": {
@@ -10481,6 +9677,34 @@
                     },
                     "email": {
                         "type": "string"
+                    },
+                    "area_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "must_change_password": {
+                        "type": "boolean"
+                    },
+                    "role": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "area": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "managed_areas": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
                     },
                     "created_at": {
                         "type": "string",
@@ -10705,6 +9929,80 @@
                 },
                 "type": "object"
             },
+            "AuthenticatedCompanySummary": {
+                "description": "Resumo seguro da empresa. IDs de cobrança e configurações internas não são expostos.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "timeZone": {
+                        "type": "string"
+                    },
+                    "country": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "locale": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AuthenticatedUser": {
+                "description": "Usuário autenticado em allowlist; hashes, tokens e campos de convite nunca são retornados.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "area_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "must_change_password": {
+                        "type": "boolean"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "timeZone": {
+                        "type": "string"
+                    },
+                    "company": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/AuthenticatedCompanySummary"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "BillingCheckoutSessionRequest": {
                 "required": [
                     "plan_id"
@@ -10852,6 +10150,7 @@
                 "type": "object"
             },
             "DocumentResource": {
+                "description": "Documento sem nomes de disco ou caminhos internos. Use view_url/download_url ou os endpoints autenticados.",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -11998,162 +11297,6 @@
                 },
                 "type": "object"
             },
-            "BlogPostDetailResource": {
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "slug": {
-                        "type": "string"
-                    },
-                    "title": {
-                        "type": "string"
-                    },
-                    "excerpt": {
-                        "type": "string"
-                    },
-                    "content_html": {
-                        "type": "string"
-                    },
-                    "cover_url": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "hero_image_url": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "hero_image_alt": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "hero_caption": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "author": {
-                        "type": "string"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "audience_tag": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "reading_time": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "featured": {
-                        "type": "boolean"
-                    },
-                    "trending_score": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "published_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "draft",
-                            "published",
-                            "archived"
-                        ]
-                    },
-                    "seo": {
-                        "properties": {
-                            "title": {
-                                "type": "string",
-                                "nullable": true
-                            },
-                            "description": {
-                                "type": "string",
-                                "nullable": true
-                            },
-                            "og_image_url": {
-                                "type": "string",
-                                "nullable": true
-                            },
-                            "canonical_url": {
-                                "type": "string",
-                                "nullable": true
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "toc": {
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "label": {
-                                    "type": "string"
-                                },
-                                "href": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "faq": {
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "question": {
-                                    "type": "string"
-                                },
-                                "answer": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "related_posts": {
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "slug": {
-                                    "type": "string"
-                                },
-                                "title": {
-                                    "type": "string"
-                                },
-                                "excerpt": {
-                                    "type": "string"
-                                },
-                                "cover_url": {
-                                    "type": "string",
-                                    "nullable": true
-                                },
-                                "category": {
-                                    "type": "string"
-                                },
-                                "author": {
-                                    "type": "string"
-                                },
-                                "reading_time": {
-                                    "type": "string",
-                                    "nullable": true
-                                },
-                                "published_at": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "nullable": true
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
             "SettingsBilling": {
                 "properties": {
                     "plan": {
@@ -12503,21 +11646,83 @@
                     }
                 },
                 "type": "object"
+            },
+            "TimesheetResource": {
+                "description": "Folha de ponto segura. O caminho interno do PDF não é exposto.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "closure_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "employee": {
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "snapshot": {
+                        "type": "object"
+                    },
+                    "snapshot_generated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "signatures": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "open_dispute": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "pdf_available": {
+                        "description": "Use o endpoint /pdf quando true.",
+                        "type": "boolean"
+                    },
+                    "pdf_generated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "document_hash": {
+                        "description": "SHA-256 para verificação de integridade.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
-                "bearerFormat": "JWT",
+                "bearerFormat": "Sanctum",
                 "scheme": "bearer"
             }
         }
     },
     "tags": [
-        {
-            "name": "Admin - Blog",
-            "description": "Gestão de posts do blog (CRUD, publicação e upload de mídia)"
-        },
         {
             "name": "Admin - Company Settings",
             "description": "Configurações da empresa: assinaturas de folha, informações cadastrais e localização/idioma"
@@ -12576,19 +11781,19 @@
         },
         {
             "name": "Commercial - Affiliates",
-            "description": "Gestão de afiliados, links de rastreamento e métricas. Restrito a super_admin e admin."
+            "description": "Gestão de afiliados, links de rastreamento e métricas. Restrito a super_admin."
         },
         {
             "name": "Commercial - Commissions",
-            "description": "Comissões e bônus de afiliados. Restrito a super_admin e admin. Comissão padrão: 20% por 6 meses. Bônus: 50€ a cada 5 clientes pagos no mesmo mês calendário."
+            "description": "Comissões e bônus de afiliados. Restrito a super_admin. Comissão padrão: 20% por 6 meses. Bônus: 50€ a cada 5 clientes pagos no mesmo mês calendário."
         },
         {
             "name": "Commercial - Leads",
-            "description": "Gestão de leads do módulo Comercial. Acesso restrito a super_admin e admin."
+            "description": "Gestão de leads do módulo Comercial. Acesso restrito a super_admin."
         },
         {
             "name": "Commercial - Steps",
-            "description": "Etapas do funil comercial. Gestão (criar/editar/remover/reordenar) restrita a super_admin e admin."
+            "description": "Etapas do funil comercial. Gestão (criar/editar/remover/reordenar) restrita a super_admin."
         },
         {
             "name": "Documents",
@@ -12623,12 +11828,12 @@
             "description": "Rotas de gerenciamento de empresas acessíveis ao super admin"
         },
         {
-            "name": "Public - Blog",
-            "description": "Endpoints públicos do blog (sem autenticação) consumidos pelo site."
-        },
-        {
             "name": "Settings",
             "description": "Endpoints que expõem o overview de billing e configurações da empresa logada"
+        },
+        {
+            "name": "Timesheets",
+            "description": "Folhas de ponto mensais e assinaturas"
         },
         {
             "name": "Debug",

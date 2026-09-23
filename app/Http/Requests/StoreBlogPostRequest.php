@@ -34,6 +34,7 @@ class StoreBlogPostRequest extends FormRequest
             'author'             => ['required', 'string', 'max:255'],
             'category'           => ['required', 'string', 'max:100'],
             'status'             => ['required', 'in:draft,published,archived'],
+            'source'             => ['nullable', 'in:manual,n8n'],
             'cover_url'          => ['nullable', 'url', 'max:2048'],
             'hero_image_url'     => ['nullable', 'url', 'max:2048'],
             'audience_tag'       => ['nullable', 'string', 'max:100'],

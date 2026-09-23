@@ -9,6 +9,7 @@ class CommercialLeadResource extends JsonResource
     public function toArray($request): array
     {
         return [
+            ...$this->pipelineStatus(),
             'id' => $this->id,
             'company_name' => $this->company_name,
             'contact_name' => $this->contact_name,
@@ -16,6 +17,7 @@ class CommercialLeadResource extends JsonResource
             'phone' => $this->phone,
             'whatsapp' => $this->whatsapp,
             'website' => $this->website,
+            'google_maps_place_id' => $this->google_maps_place_id,
             'country' => $this->country,
             'city' => $this->city,
             'segment' => $this->segment,
@@ -23,6 +25,7 @@ class CommercialLeadResource extends JsonResource
             'source' => $this->source,
             'affiliate_id' => $this->affiliate_id,
             'current_step_id' => $this->current_step_id,
+            'current_step_started_at' => $this->current_step_started_at?->toIso8601String(),
             'assigned_to_user_id' => $this->assigned_to_user_id,
             'created_by_user_id' => $this->created_by_user_id,
             'status' => $this->status,
@@ -46,6 +49,11 @@ class CommercialLeadResource extends JsonResource
                 'id' => $this->assignedToUser->id,
                 'name' => $this->assignedToUser->name,
                 'email' => $this->assignedToUser->email,
+            ]),
+            'created_by_user' => $this->whenLoaded('createdByUser', fn () => [
+                'id' => $this->createdByUser->id,
+                'name' => $this->createdByUser->name,
+                'email' => $this->createdByUser->email,
             ]),
             'affiliate' => $this->whenLoaded('affiliate', fn () => [
                 'id' => $this->affiliate->id,

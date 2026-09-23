@@ -2,6 +2,7 @@
 .DS_Store
 .env
 .env.backup
+.env.hml
 .env.production
 .phpactor.json
 .phpunit.result.cache
@@ -12,6 +13,8 @@
 /.vscode
 /.zed
 /auth.json
+.docker/nginx/hml.htpasswd
+.docker/nginx/certs/
 /node_modules
 /public/build
 /public/hot

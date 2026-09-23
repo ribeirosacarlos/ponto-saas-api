@@ -1,0 +1,143 @@
+services:
+  app:
+    image: 511758682326.dkr.ecr.us-east-1.amazonaws.com/ponto-saas-api:latest
+    container_name: laravel-app
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      LOG_CHANNEL: stderr
+
+      RUN_COMPOSER_INSTALL: "false"
+      RUN_MIGRATIONS: "false"
+      RUN_OPTIMIZE: "false"
+      WAIT_FOR_DB: "false"
+    networks:
+      - laravel
+    volumes:
+      - public_data:/var/www/public
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: laravel-app
+        awslogs-create-group: "true"
+
+  queue-worker:
+    image: 511758682326.dkr.ecr.us-east-1.amazonaws.com/ponto-saas-api:latest
+    container_name: laravel-queue
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      LOG_CHANNEL: stderr
+
+      RUN_COMPOSER_INSTALL: "false"
+      RUN_MIGRATIONS: "false"
+      RUN_OPTIMIZE: "false"
+      WAIT_FOR_DB: "false"
+    depends_on:
+      - app
+    command: ["php", "/var/www/artisan", "queue:work", "database", "--queue=default,commercial-email", "--sleep=1", "--tries=3", "--timeout=120"]
+    networks:
+      - laravel
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: laravel-queue
+        awslogs-create-group: "true"
+
+  scheduler:
+    image: 511758682326.dkr.ecr.us-east-1.amazonaws.com/ponto-saas-api:latest
+    container_name: laravel-scheduler
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      LOG_CHANNEL: stderr
+
+      RUN_COMPOSER_INSTALL: "false"
+      RUN_MIGRATIONS: "false"
+      RUN_OPTIMIZE: "false"
+      WAIT_FOR_DB: "false"
+    depends_on:
+      - app
+    command: ["sh", "-c", "while true; do php /var/www/artisan schedule:run --no-interaction; sleep 60; done"]
+    networks:
+      - laravel
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: laravel-scheduler
+        awslogs-create-group: "true"
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app
+    networks:
+      - laravel
+    volumes:
+      - ./.docker/nginx:/etc/nginx/conf.d:ro
+      - ./.docker/nginx/certs:/etc/nginx/certs:ro
+      - public_data:/var/www/public:ro
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: nginx
+        awslogs-create-group: "true"
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:stable
+    container_name: jornafy_n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      TZ: America/Sao_Paulo
+      GENERIC_TIMEZONE: America/Sao_Paulo
+      N8N_HOST: ${N8N_HOST}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-https}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      N8N_EDITOR_BASE_URL: ${N8N_WEBHOOK_URL}
+      N8N_PROXY_HOPS: 1
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - laravel
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${AWSLOGS_GROUP:-/docker/ponto-saas-api}
+        awslogs-stream: n8n
+        awslogs-create-group: "true"
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  public_data: {}
+  n8n_data: {}

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Commercial;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Commercial\CommercialAffiliateResource;
-use App\Jobs\SendAffiliatePasswordResetJob;
+use App\Jobs\InitiateAffiliatePasswordResetJob;
 use App\Models\CommercialAffiliate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -14,16 +14,23 @@ use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class CommercialAffiliateAuthController extends Controller
 {
+    private const DUMMY_PASSWORD_HASH = '$2y$12$18pb3gxLga6ZoWmC0Fo.XeBNu/o77g6f.eLXTWh3CWfRlK9wvz3TW';
+
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
         $affiliate = CommercialAffiliate::where('email', $request->email)->first();
 
-        if (! $affiliate || ! $affiliate->password || ! Hash::check($request->password, $affiliate->password)) {
+        $passwordMatches = Hash::check(
+            $request->string('password')->toString(),
+            $affiliate?->password ?? self::DUMMY_PASSWORD_HASH
+        );
+
+        if (! $affiliate || ! $affiliate->password || ! $passwordMatches) {
             return response()->json(['message' => 'Credenciais inválidas'], 401);
         }
 
@@ -35,7 +42,7 @@ class CommercialAffiliateAuthController extends Controller
 
         return response()->json([
             'affiliate' => new CommercialAffiliateResource($affiliate->load('commissionPlan')),
-            'token'     => $token,
+            'token' => $token,
         ]);
     }
 
@@ -57,18 +64,7 @@ class CommercialAffiliateAuthController extends Controller
     {
         $request->validate(['email' => ['required', 'email']]);
 
-        $affiliate = CommercialAffiliate::where('email', $request->email)->first();
-
-        if ($affiliate) {
-            $code = $this->generateResetCode();
-
-            DB::table('password_reset_tokens')->updateOrInsert(
-                ['email' => $affiliate->email],
-                ['token' => hash('sha256', $code), 'created_at' => now()],
-            );
-
-            SendAffiliatePasswordResetJob::dispatch($affiliate->id, ['resetCode' => $code]);
-        }
+        InitiateAffiliatePasswordResetJob::dispatch(strtolower($request->string('email')->toString()));
 
         return response()->json(['message' => 'Se o e-mail existir, um código de recuperação foi enviado.']);
     }
@@ -76,14 +72,14 @@ class CommercialAffiliateAuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'email'    => ['required', 'email'],
-            'code'     => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'code' => ['required', 'string'],
             'password' => ['required', 'confirmed', PasswordRule::min(8)->mixedCase()->numbers()],
         ]);
 
         $record = DB::table('password_reset_tokens')->where('email', $request->email)->first();
 
-        if (! $record || hash('sha256', $request->code) !== $record->token) {
+        if (! $record || ! hash_equals((string) $record->token, hash('sha256', $request->code))) {
             return response()->json(['message' => 'Código inválido ou expirado.'], 422);
         }
 
@@ -91,6 +87,7 @@ class CommercialAffiliateAuthController extends Controller
 
         if (Carbon::parse($record->created_at)->addMinutes($expireMinutes)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
             return response()->json(['message' => 'Código inválido ou expirado.'], 422);
         }
 
@@ -102,21 +99,10 @@ class CommercialAffiliateAuthController extends Controller
 
         $affiliate->forceFill(['password' => Hash::make($request->password)])->save();
 
+        $affiliate->tokens()->delete();
+
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
         return response()->json(['message' => 'Senha redefinida com sucesso.']);
-    }
-
-    private function generateResetCode(): string
-    {
-        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        $len = strlen($chars);
-        $code = '';
-
-        for ($i = 0; $i < 8; $i++) {
-            $code .= $chars[random_int(0, $len - 1)];
-        }
-
-        return $code;
     }
 }

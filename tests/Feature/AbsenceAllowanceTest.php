@@ -50,7 +50,8 @@ class AbsenceAllowanceTest extends TestCase
         $response->assertCreated()
             ->assertJsonPath('type', Absence::TYPE_EXCUSED_ABSENCE)
             ->assertJsonPath('status', Absence::STATUS_RECORDED)
-            ->assertJsonPath('coverage_type', Absence::COVERAGE_FULL_DAY);
+            ->assertJsonPath('coverage_type', Absence::COVERAGE_FULL_DAY)
+            ->assertJsonPath('warnings', []);
 
         $result = $this->calculateOvertime($employee, '2026-04-10');
 
@@ -61,18 +62,36 @@ class AbsenceAllowanceTest extends TestCase
         $this->assertSame(0, $result['totals']['debt_minutes']);
         $this->assertTrue($result['days'][0]['summary']['is_absence']);
         $this->assertSame(Absence::TYPE_EXCUSED_ABSENCE, $result['days'][0]['summary']['absence_type']);
-        $this->assertDatabaseCount('time_entries', 2);
+        // Turno 08:00-17:00 com break 12:00-13:00: um abono de dia inteiro cruza o intervalo,
+        // entao devem ser gerados 4 eventos (work_start/break_start/break_end/work_end), nao 2.
+        $this->assertDatabaseCount('time_entries', 4);
         $this->assertDatabaseHas('time_entries', [
             'absence_id' => $response->json('id'),
             'source' => 'absence_allowance',
             'device_type' => 'system',
             'type' => 'in',
+            'event_kind' => 'work_start',
         ]);
         $this->assertDatabaseHas('time_entries', [
             'absence_id' => $response->json('id'),
             'source' => 'absence_allowance',
             'device_type' => 'system',
             'type' => 'out',
+            'event_kind' => 'break_start',
+        ]);
+        $this->assertDatabaseHas('time_entries', [
+            'absence_id' => $response->json('id'),
+            'source' => 'absence_allowance',
+            'device_type' => 'system',
+            'type' => 'in',
+            'event_kind' => 'break_end',
+        ]);
+        $this->assertDatabaseHas('time_entries', [
+            'absence_id' => $response->json('id'),
+            'source' => 'absence_allowance',
+            'device_type' => 'system',
+            'type' => 'out',
+            'event_kind' => 'work_end',
         ]);
     }
 
@@ -95,6 +114,12 @@ class AbsenceAllowanceTest extends TestCase
         $response->assertCreated()
             ->assertJsonPath('type', 'personal_reason')
             ->assertJsonPath('coverage_type', Absence::COVERAGE_HOURS);
+
+        // Abono nao cobre a jornada inteira (120 de 540), entao deve vir com aviso de cobertura incompleta.
+        $warnings = $response->json('warnings');
+        $this->assertCount(1, $warnings);
+        $this->assertSame('2026-04-10', $warnings[0]['date']);
+        $this->assertSame(420, $warnings[0]['missing_minutes']);
 
         $result = $this->calculateOvertime($employee, '2026-04-10');
 
@@ -157,7 +182,7 @@ class AbsenceAllowanceTest extends TestCase
         app(AbsenceTimeEntryService::class)->syncForAbsence($absence);
         app(AbsenceTimeEntryService::class)->syncForAbsence($absence);
 
-        $this->assertSame(2, TimeEntry::query()
+        $this->assertSame(4, TimeEntry::query()
             ->where('absence_id', $absence->id)
             ->where('source', 'absence_allowance')
             ->count());
@@ -216,7 +241,7 @@ class AbsenceAllowanceTest extends TestCase
             'start_date' => '2026-04-10',
         ])->assertCreated();
 
-        $this->assertDatabaseCount('time_entries', 2);
+        $this->assertDatabaseCount('time_entries', 4);
     }
 
     public function test_admin_deletes_allowance_and_generated_time_entries(): void
@@ -235,7 +260,7 @@ class AbsenceAllowanceTest extends TestCase
         $absenceId = $response->json('id');
 
         $this->assertDatabaseHas('absences', ['id' => $absenceId]);
-        $this->assertSame(2, TimeEntry::query()->where('absence_id', $absenceId)->count());
+        $this->assertSame(4, TimeEntry::query()->where('absence_id', $absenceId)->count());
 
         $this->actingAs($admin)
             ->deleteJson("/api/v1/admin/absences/{$absenceId}")
@@ -276,7 +301,7 @@ class AbsenceAllowanceTest extends TestCase
             ->assertJsonValidationErrors('start_date');
 
         $this->assertDatabaseHas('absences', ['id' => $absenceId]);
-        $this->assertSame(2, TimeEntry::query()->where('absence_id', $absenceId)->count());
+        $this->assertSame(4, TimeEntry::query()->where('absence_id', $absenceId)->count());
     }
 
     public function test_other_employee_monthly_closure_does_not_block_allowance_delete(): void
@@ -334,7 +359,7 @@ class AbsenceAllowanceTest extends TestCase
             ->assertNotFound();
 
         $this->assertDatabaseHas('absences', ['id' => $absenceId]);
-        $this->assertSame(2, TimeEntry::query()->where('absence_id', $absenceId)->count());
+        $this->assertSame(4, TimeEntry::query()->where('absence_id', $absenceId)->count());
     }
 
     private function createAdmin(?string $companyId = null): User

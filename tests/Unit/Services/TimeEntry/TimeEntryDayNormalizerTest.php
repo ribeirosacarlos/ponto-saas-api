@@ -266,6 +266,67 @@ class TimeEntryDayNormalizerTest extends TestCase
         ], $ordered);
     }
 
+    public function test_normalizes_out_of_order_adjustments_before_shift_start(): void
+    {
+        $user = $this->createEmployee();
+        $assignment = $this->createShiftDayWithEvents($user, 1, [
+            ['kind' => 'work_start', 'time' => '08:00:00', 'day_offset' => 0, 'expected_type' => 'in'],
+            ['kind' => 'work_end', 'time' => '17:00:00', 'day_offset' => 0, 'expected_type' => 'out'],
+        ]);
+
+        // Ambas as batidas ficam antes da janela padrão do turno (04:00-21:00) e
+        // foram persistidas fora de ordem, replicando o bug em que cada ajuste
+        // recalculava sua própria janela e nunca enxergava o outro registro.
+        TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'user_shift_id' => $assignment->id,
+            'clocked_at' => CarbonImmutable::parse('2026-02-16 03:00:00', 'Europe/Madrid'),
+            'type' => 'in',
+            'event_kind' => 'work_start',
+            'source' => 'adjustment',
+            'adjustment_status' => 'pending',
+            'adjustment_reason' => 'Fora do turno/jornada (dia não trabalhado ou sem jornada).',
+            'adjustment_requested_by' => $user->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        TimeEntry::create([
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
+            'user_shift_id' => $assignment->id,
+            'clocked_at' => CarbonImmutable::parse('2026-02-16 02:00:00', 'Europe/Madrid'),
+            'type' => 'in',
+            'event_kind' => 'work_start',
+            'source' => 'adjustment',
+            'adjustment_status' => 'pending',
+            'adjustment_reason' => 'Fora do turno/jornada (dia não trabalhado ou sem jornada).',
+            'adjustment_requested_by' => $user->id,
+            'adjustment_requested_at' => now(),
+        ]);
+
+        app(TimeEntryDayNormalizer::class)->normalizeForReference(
+            $user,
+            CarbonImmutable::parse('2026-02-16 03:00:00', 'Europe/Madrid')
+        );
+
+        $ordered = TimeEntry::query()
+            ->where('user_id', $user->id)
+            ->orderBy('clocked_at')
+            ->get(['clocked_at', 'type', 'event_kind'])
+            ->map(fn (TimeEntry $entry) => [
+                'clocked_at' => $entry->clocked_at->format('H:i:s'),
+                'type' => $entry->type,
+                'event_kind' => $entry->event_kind,
+            ])
+            ->all();
+
+        $this->assertSame([
+            ['clocked_at' => '02:00:00', 'type' => 'in', 'event_kind' => 'work_start'],
+            ['clocked_at' => '03:00:00', 'type' => 'out', 'event_kind' => 'work_end'],
+        ], $ordered);
+    }
+
     /**
      * @param  array<int, array{kind: string, time: string, day_offset: int, expected_type: string}>  $events
      */

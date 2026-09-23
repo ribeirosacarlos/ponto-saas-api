@@ -46,7 +46,8 @@ class DocumentS3FlowTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.0.storage_disk', 's3')
+            ->assertJsonMissingPath('data.0.storage_disk')
+            ->assertJsonMissingPath('data.0.storage_path')
             ->assertJsonPath('data.0.original_name', 'contrato.pdf');
 
         $document = Document::query()->findOrFail($response->json('data.0.id'));
@@ -99,7 +100,8 @@ class DocumentS3FlowTest extends TestCase
         ]);
 
         $response->assertOk()
-            ->assertJsonPath('data.storage_disk', 's3')
+            ->assertJsonMissingPath('data.storage_disk')
+            ->assertJsonMissingPath('data.storage_path')
             ->assertJsonPath('data.original_name', 'novo.pdf')
             ->assertJsonPath('data.status', Document::STATUS_PENDING);
 

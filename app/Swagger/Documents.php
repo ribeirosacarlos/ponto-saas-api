@@ -11,6 +11,8 @@ namespace App\Swagger;
  * @OA\Schema(
  *     schema="DocumentResource",
  *     type="object",
+ *     description="Documento sem nomes de disco ou caminhos internos. Use view_url/download_url ou os endpoints autenticados.",
+ *
  *     @OA\Property(property="id", type="string", format="uuid"),
  *     @OA\Property(property="title", type="string"),
  *     @OA\Property(property="category", type="string", enum={"payroll","courses","personal","others"}),
@@ -28,6 +30,7 @@ namespace App\Swagger;
  *     allOf={
  *         @OA\Schema(ref="#/components/schemas/DocumentResource"),
  *         @OA\Schema(
+ *
  *             @OA\Property(property="employee", type="object",
  *                 @OA\Property(property="id", type="string", format="uuid"),
  *                 @OA\Property(property="name", type="string"),
@@ -46,6 +49,7 @@ namespace App\Swagger;
  *     security={{"bearerAuth": {}}},
  *     summary="Lista os documentos do funcionário logado",
  *     description="Permite filtrar por categoria, status, busca e paginar. O filtro user_id só é respeitado por funções privilegiadas.",
+ *
  *     @OA\Parameter(name="category", in="query", required=false, @OA\Schema(type="string", enum={"payroll","courses","personal","others"})),
  *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string", enum={"pending","review","available","expired"})),
  *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string", description="Busca parcial no título ou notas")),
@@ -53,13 +57,16 @@ namespace App\Swagger;
  *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", example=1)),
  *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", example=20)),
  *     @OA\Parameter(name="sort", in="query", required=false, @OA\Schema(type="string", example="updated_at:desc")),
+ *
  *     @OA\Response(response=200, description="Lista paginada de documentos", @OA\JsonContent(
+ *
  *         @OA\Property(property="current_page", type="integer", example=1),
  *         @OA\Property(property="per_page", type="integer", example=20),
  *         @OA\Property(property="last_page", type="integer", example=5),
  *         @OA\Property(property="total", type="integer", example=80),
  *         @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/DocumentResource"))
  *     )),
+ *
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
  *     @OA\Response(response=422, description="Parâmetros inválidos")
@@ -70,12 +77,16 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Envio de um ou mais documentos",
+ *
  *     @OA\RequestBody(
  *         required=true,
+ *
  *         @OA\MediaType(
  *             mediaType="multipart/form-data",
+ *
  *             @OA\Schema(
  *                 required={"category","files"},
+ *
  *                 @OA\Property(property="category", type="string", enum={"payroll","courses","personal","others"}),
  *                 @OA\Property(property="title", type="string", maxLength=180),
  *                 @OA\Property(property="notes", type="string", maxLength=2000),
@@ -83,9 +94,12 @@ namespace App\Swagger;
  *             )
  *         )
  *     ),
+ *
  *     @OA\Response(response=201, description="Documentos criados", @OA\JsonContent(
+ *
  *         @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/DocumentResource"))
  *     )),
+ *
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
  *     @OA\Response(response=422, description="Dados inválidos ou arquivo muito grande")
@@ -96,7 +110,9 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Detalhes de um documento",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\Response(response=200, description="Documento retornado", @OA\JsonContent(ref="#/components/schemas/DocumentResource")),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -108,7 +124,9 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Abre o documento em modo inline",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\Response(response=200, description="Stream do arquivo"),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -120,7 +138,9 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Baixa o documento como anexo",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\Response(response=200, description="Download do arquivo"),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -132,17 +152,23 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Reenvia o documento rejeitado",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\RequestBody(
  *         required=true,
+ *
  *         @OA\MediaType(
  *             mediaType="multipart/form-data",
+ *
  *             @OA\Schema(
  *                 required={"file"},
+ *
  *                 @OA\Property(property="file", type="string", format="binary")
  *             )
  *         )
  *     ),
+ *
  *     @OA\Response(response=200, description="Documento reenviado", @OA\JsonContent(ref="#/components/schemas/DocumentResource")),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -154,16 +180,21 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Atualiza metadados ou status do documento",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\RequestBody(
  *         required=true,
+ *
  *         @OA\JsonContent(
+ *
  *             @OA\Property(property="title", type="string", maxLength=180),
  *             @OA\Property(property="category", type="string", enum={"payroll","courses","personal","others"}),
  *             @OA\Property(property="status", type="string", enum={"pending","review","available","expired"}),
  *             @OA\Property(property="notes", type="string", maxLength=2000)
  *         )
  *     ),
+ *
  *     @OA\Response(response=200, description="Documento atualizado", @OA\JsonContent(ref="#/components/schemas/DocumentResource")),
  *     @OA\Response(response=400, description="Dados inválidos"),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
@@ -176,7 +207,9 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Marca o documento como disponível",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\Response(response=200, description="Documento aprovado", @OA\JsonContent(ref="#/components/schemas/DocumentResource")),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -188,7 +221,9 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Remove um documento",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\Response(response=204, description="Documento removido"),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -200,17 +235,21 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Lista documentos pendentes para revisão",
+ *
  *     @OA\Parameter(name="category", in="query", required=false, @OA\Schema(type="string", enum={"payroll","courses","personal","others"})),
  *     @OA\Parameter(name="employee_id", in="query", required=false, @OA\Schema(type="string", format="uuid")),
  *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string")),
  *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", example=1)),
  *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", example=20)),
  *     @OA\Parameter(name="sort", in="query", required=false, @OA\Schema(type="string", example="updated_at:desc")),
+ *
  *     @OA\Response(response=200, description="Documentos pendentes", @OA\JsonContent(
+ *
  *         @OA\Property(property="current_page", type="integer", example=1),
  *         @OA\Property(property="per_page", type="integer", example=20),
  *         @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/DocumentAdminResource"))
  *     )),
+ *
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado")
  * )
@@ -220,17 +259,21 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Lista documentos rejeitados aguardando reenvio",
+ *
  *     @OA\Parameter(name="category", in="query", required=false, @OA\Schema(type="string", enum={"payroll","courses","personal","others"})),
  *     @OA\Parameter(name="employee_id", in="query", required=false, @OA\Schema(type="string", format="uuid")),
  *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string")),
  *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", example=1)),
  *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", example=20)),
  *     @OA\Parameter(name="sort", in="query", required=false, @OA\Schema(type="string", example="updated_at:desc")),
+ *
  *     @OA\Response(response=200, description="Documentos em revisão", @OA\JsonContent(
+ *
  *         @OA\Property(property="current_page", type="integer", example=1),
  *         @OA\Property(property="per_page", type="integer", example=20),
  *         @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/DocumentAdminResource"))
  *     )),
+ *
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado")
  * )
@@ -240,7 +283,9 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Detalhes administrativos de um documento",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\Response(response=200, description="Documento retornado", @OA\JsonContent(ref="#/components/schemas/DocumentAdminResource")),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -252,7 +297,9 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Aprova um documento e limpa o estado de rejeição",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\Response(response=200, description="Documento aprovado", @OA\JsonContent(ref="#/components/schemas/DocumentAdminResource")),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -264,13 +311,18 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Rejeita um documento com comentário",
+ *
  *     @OA\Parameter(name="document", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+ *
  *     @OA\RequestBody(
  *         required=true,
+ *
  *         @OA\JsonContent(
+ *
  *             @OA\Property(property="comment", type="string", minLength=5, maxLength=2000)
  *         )
  *     ),
+ *
  *     @OA\Response(response=200, description="Documento rejeitado", @OA\JsonContent(ref="#/components/schemas/DocumentAdminResource")),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),
@@ -283,12 +335,16 @@ namespace App\Swagger;
  *     tags={"Documents"},
  *     security={{"bearerAuth": {}}},
  *     summary="Upload de documentos para funcionário (apenas admin)",
+ *
  *     @OA\RequestBody(
  *         required=true,
+ *
  *         @OA\MediaType(
  *             mediaType="multipart/form-data",
+ *
  *             @OA\Schema(
  *                 required={"user_id","category","files"},
+ *
  *                 @OA\Property(property="user_id", type="string", format="uuid", description="ID do funcionário"),
  *                 @OA\Property(property="category", type="string", enum={"payroll","courses","personal","others"}),
  *                 @OA\Property(property="title", type="string", maxLength=180),
@@ -297,9 +353,12 @@ namespace App\Swagger;
  *             )
  *         )
  *     ),
+ *
  *     @OA\Response(response=201, description="Documentos criados", @OA\JsonContent(
+ *
  *         @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/DocumentAdminResource"))
  *     )),
+ *
  *     @OA\Response(response=400, description="Dados inválidos"),
  *     @OA\Response(response=401, description="Requisição não autenticada"),
  *     @OA\Response(response=403, description="Acesso negado"),

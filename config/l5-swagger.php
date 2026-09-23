@@ -2,6 +2,14 @@
 
 return [
     'default' => 'default',
+
+    /*
+     * Credentials for HTTP Basic Auth protecting the docs/UI routes (see 'swagger.auth' middleware).
+     */
+    'auth' => [
+        'username' => env('L5_SWAGGER_USERNAME'),
+        'password' => env('L5_SWAGGER_PASSWORD'),
+    ],
     'documentations' => [
         'default' => [
             'api' => [
@@ -65,9 +73,9 @@ return [
              * Middleware allows to prevent unexpected access to API documentation
              */
             'middleware' => [
-                'api' => [],
+                'api' => ['swagger.auth'],
                 'asset' => [],
-                'docs' => [],
+                'docs' => ['swagger.auth'],
                 'oauth2_callback' => [],
             ],
 

@@ -5,20 +5,23 @@ namespace App\Jobs;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Throwable;
 
-class SendPasswordResetEmailJob implements ShouldQueue
+class SendPasswordResetEmailJob implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
+
     public array $backoff = [60, 300, 900, 1800, 3600];
+
     public int $timeout = 60;
 
     public function __construct(
@@ -34,13 +37,11 @@ class SendPasswordResetEmailJob implements ShouldQueue
 
         if (! $user) {
             Log::warning('Password reset job: user not found', ['user_id' => $this->userId]);
+
             return;
         }
 
-        $metadata = [
-            'user_id' => $this->userId,
-            'email' => $user->email,
-        ];
+        $metadata = ['user_id' => $this->userId];
 
         Log::info('Starting password reset email job', $metadata);
 
@@ -63,7 +64,6 @@ class SendPasswordResetEmailJob implements ShouldQueue
 
         Log::error('Failed to send password reset email', [
             'user_id' => $this->userId,
-            'email' => $user?->email,
             'error' => $exception->getMessage(),
         ]);
     }

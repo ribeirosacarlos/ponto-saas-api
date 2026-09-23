@@ -24,6 +24,7 @@ class CommercialLeadUpdateRequest extends FormRequest
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
             'whatsapp' => ['sometimes', 'nullable', 'string', 'max:50'],
             'website' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'google_maps_place_id' => ['sometimes', 'nullable', 'string', 'max:255'],
             'country' => ['sometimes', 'nullable', 'string', 'max:255'],
             'city' => ['sometimes', 'nullable', 'string', 'max:255'],
             'segment' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -45,8 +46,8 @@ class CommercialLeadUpdateRequest extends FormRequest
 
                     $user = User::find($value);
 
-                    if (! $user || ! $user->hasRole(['super_admin', 'admin'])) {
-                        $fail('O responsável atribuído precisa ser um administrador.');
+                    if (! $user || ! $user->hasRole('super_admin')) {
+                        $fail('O responsável atribuído precisa ser um super_admin.');
                     }
                 },
             ],

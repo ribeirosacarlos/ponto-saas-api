@@ -50,8 +50,18 @@ class AbsenceTimeEntryService
                 }
 
                 foreach ($this->targetIntervals($absence, $day, $shiftDay, $timezone) as [$targetStart, $targetEnd]) {
-                    foreach ($this->subtractRealCoverage($employee, $targetStart, $targetEnd, $timezone) as [$entryStart, $entryEnd]) {
-                        $this->createGeneratedPair($absence, $employee, $assignment, $entryStart, $entryEnd);
+                    foreach ($this->splitAroundBreak($targetStart, $targetEnd, $shiftDay, $day, $timezone) as $segment) {
+                        $remaining = $this->subtractRealCoverage($employee, $segment['start'], $segment['end'], $timezone);
+                        $lastIndex = array_key_last($remaining);
+
+                        foreach ($remaining as $index => [$entryStart, $entryEnd]) {
+                            $startKind = ($index === 0 && $entryStart->equalTo($segment['start']) && $segment['touchesBreakEnd'])
+                                ? 'break_end' : 'work_start';
+                            $endKind = ($index === $lastIndex && $entryEnd->equalTo($segment['end']) && $segment['touchesBreakStart'])
+                                ? 'break_start' : 'work_end';
+
+                            $this->createGeneratedPair($absence, $employee, $assignment, $entryStart, $entryEnd, $startKind, $endKind);
+                        }
                     }
                 }
             }
@@ -159,14 +169,53 @@ class AbsenceTimeEntryService
             $absenceEnd = $absenceEnd->addDay();
         }
 
-        $start = $absenceStart->greaterThan($shiftStart) ? $absenceStart : $shiftStart;
-        $end = $absenceEnd->lessThan($shiftEnd) ? $absenceEnd : $shiftEnd;
+        // Abono cobre exatamente o horario informado pelo admin, mesmo fora da janela do
+        // turno (ex.: ausencia antes do inicio do expediente) — nao recorta pelo shift.
+        return [[$absenceStart, $absenceEnd]];
+    }
 
-        if ($end->lessThanOrEqualTo($start)) {
-            return [];
+    private function breakWindow(ShiftDay $shiftDay, CarbonImmutable $day, string $timezone): ?array
+    {
+        if (! $shiftDay->break_start_time || ! $shiftDay->break_end_time) {
+            return null;
         }
 
-        return [[$start, $end]];
+        $breakStart = $this->dateTimeFromDateAndTime($day, $shiftDay->break_start_time, $timezone);
+        $breakEnd = $this->dateTimeFromDateAndTime($day, $shiftDay->break_end_time, $timezone);
+
+        if ($breakEnd->lessThanOrEqualTo($breakStart)) {
+            $breakEnd = $breakEnd->addDay();
+        }
+
+        return [$breakStart, $breakEnd];
+    }
+
+    /**
+     * @return array<int, array{start: CarbonImmutable, end: CarbonImmutable, touchesBreakStart: bool, touchesBreakEnd: bool}>
+     */
+    private function splitAroundBreak(CarbonImmutable $start, CarbonImmutable $end, ShiftDay $shiftDay, CarbonImmutable $day, string $timezone): array
+    {
+        $breakWindow = $this->breakWindow($shiftDay, $day, $timezone);
+
+        if ($breakWindow === null
+            || $breakWindow[1]->lessThanOrEqualTo($start)
+            || $breakWindow[0]->greaterThanOrEqualTo($end)) {
+            return [['start' => $start, 'end' => $end, 'touchesBreakStart' => false, 'touchesBreakEnd' => false]];
+        }
+
+        [$breakStart, $breakEnd] = $breakWindow;
+        $effectiveStart = $breakStart->greaterThan($start) ? $breakStart : $start;
+        $effectiveEnd = $breakEnd->lessThan($end) ? $breakEnd : $end;
+
+        $segments = [];
+        if ($effectiveStart->greaterThan($start)) {
+            $segments[] = ['start' => $start, 'end' => $effectiveStart, 'touchesBreakStart' => true, 'touchesBreakEnd' => false];
+        }
+        if ($effectiveEnd->lessThan($end)) {
+            $segments[] = ['start' => $effectiveEnd, 'end' => $end, 'touchesBreakStart' => false, 'touchesBreakEnd' => true];
+        }
+
+        return $segments;
     }
 
     /**
@@ -226,8 +275,8 @@ class AbsenceTimeEntryService
                     ->orWhere('adjustment_status', '!=', 'rejected');
             })
             ->whereBetween('clocked_at', [
-                $windowStart->setTimezone('UTC')->toDateTimeString(),
-                $targetEnd->setTimezone('UTC')->toDateTimeString(),
+                $windowStart->toDateTimeString(),
+                $targetEnd->toDateTimeString(),
             ])
             ->orderBy('clocked_at')
             ->orderBy('created_at')
@@ -271,16 +320,18 @@ class AbsenceTimeEntryService
         User $employee,
         ?UserShift $assignment,
         CarbonImmutable $start,
-        CarbonImmutable $end
+        CarbonImmutable $end,
+        string $startKind = 'work_start',
+        string $endKind = 'work_end'
     ): void {
         TimeEntry::create([
             'company_id' => $absence->company_id,
             'user_id' => $employee->id,
             'user_shift_id' => $assignment?->id,
             'absence_id' => $absence->id,
-            'clocked_at' => $start->setTimezone('UTC')->toDateTimeString(),
+            'clocked_at' => $start->toDateTimeString(),
             'type' => 'in',
-            'event_kind' => 'work_start',
+            'event_kind' => $startKind,
             'source' => self::SOURCE,
             'device_type' => 'system',
         ]);
@@ -290,9 +341,9 @@ class AbsenceTimeEntryService
             'user_id' => $employee->id,
             'user_shift_id' => $assignment?->id,
             'absence_id' => $absence->id,
-            'clocked_at' => $end->setTimezone('UTC')->toDateTimeString(),
+            'clocked_at' => $end->toDateTimeString(),
             'type' => 'out',
-            'event_kind' => 'work_end',
+            'event_kind' => $endKind,
             'source' => self::SOURCE,
             'device_type' => 'system',
         ]);

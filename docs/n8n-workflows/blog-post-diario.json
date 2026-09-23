@@ -1,0 +1,436 @@
+{
+  "name": "Blog - Post diário (pesquisa web + IA -> Jornafy API)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "trigger-diario",
+      "name": "Todo dia 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Sugerir tema do próximo post de blog",
+        "formDescription": "Preencha para forçar um tema específico no próximo post gerado pela IA. Deixe tudo em branco para a IA pesquisar na internet e decidir o tema sozinha.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Tema sugerido",
+              "fieldType": "text",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Keyword sugerida",
+              "fieldType": "text",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Categoria sugerida",
+              "fieldType": "text",
+              "requiredField": false
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "trigger-form-manual",
+      "name": "Sugestão manual de tema",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        220
+      ],
+      "webhookId": "f3a4b9d2-6e0a-4c2a-9b7e-2a6d0f3c9e11"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\n\nconst tema = data['Tema sugerido'] || data.tema || '';\nconst keyword = data['Keyword sugerida'] || data.keyword || '';\nconst categoria = data['Categoria sugerida'] || data.categoria || '';\n\nreturn [{\n  json: {\n    temaSugerido: String(tema).trim(),\n    keywordSugerida: String(keyword).trim(),\n    categoriaSugerida: String(categoria).trim(),\n    hoje: new Date().toISOString().slice(0, 10),\n  },\n}];"
+      },
+      "id": "normalizar-entrada",
+      "name": "Normalizar Entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        110
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-tema",
+              "leftValue": "={{ $json.temaSugerido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-tema-sugerido",
+      "name": "Tema foi sugerido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        110
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $json;\n\nreturn [{\n  json: {\n    tema: d.temaSugerido,\n    keyword: d.keywordSugerida || '(inferir a palavra-chave principal mais relevante a partir do tema acima)',\n    categoria: d.categoriaSugerida || '(escolher a categoria mais adequada dentre as opções permitidas)',\n    intencaoBusca: '(inferir a intenção de busca mais provável para esse tema)',\n    hoje: d.hoje,\n  },\n}];"
+      },
+      "id": "montar-variaveis-manual",
+      "name": "Montar Variáveis (Manual)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.jornafy.com/v1/platform/blog/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "8"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "buscar-posts-recentes",
+      "name": "Buscar Posts Recentes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const hoje = $('Normalizar Entrada').first().json.hoje;\nconst recentes = ($json.data || [])\n  .map((p) => (p.title && (p.title.es || p.title.pt || p.title.en)) || '')\n  .filter(Boolean);\n\nconst listaRecentes = recentes.length\n  ? recentes.map((t) => `- ${t}`).join('\\n')\n  : '(nenhum post publicado ainda)';\n\nconst instrucoes = `Pesquise na internet por notícias, tendências, mudanças legislativas recentes e dúvidas frequentes sobre controle de ponto/jornada de trabalho, gestão de RH, compliance trabalhista e produtividade, com foco em PMEs na Espanha (mercado principal) e secundariamente no Brasil. Data de hoje: ${hoje}.\n\nNÃO repita nenhum destes temas já publicados recentemente:\n${listaRecentes}\n\nDepois de pesquisar, responda APENAS com um JSON válido, sem markdown, sem texto fora do JSON, neste formato exato:\n{\"tema\":\"\",\"keyword\":\"\",\"categoria\":\"\",\"intencao_busca\":\"\",\"justificativa\":\"\"}\n\nRegras:\n- categoria deve ser exatamente uma destas: produto, controle-ponto, gestao-rh, compliance, produtividade, folha-ponto.\n- intencao_busca deve ser exatamente uma destas: informacional, comercial, comparativo, guia-pratico.\n- tema deve ser específico e prático, não genérico, e diferente dos temas recentes listados acima.\n- justificativa deve explicar em 1-2 frases por que esse tema é relevante agora, citando o contexto pesquisado.`;\n\nreturn [{\n  json: {\n    openAiResearchRequest: {\n      model: 'gpt-4o',\n      tools: [{ type: 'web_search_preview' }],\n      input: instrucoes,\n    },\n  },\n}];"
+      },
+      "id": "montar-pesquisa-tema",
+      "name": "Montar Pesquisa de Tema",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.openAiResearchRequest }}",
+        "options": {}
+      },
+      "id": "pesquisar-tema-openai",
+      "name": "Pesquisar Tema (OpenAI Web Search)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const resp = $json;\nconst output = resp.output || [];\nconst messageItem = output.find((o) => o.type === 'message') || {};\nconst textPart = (messageItem.content || []).find((c) => c.type === 'output_text') || {};\nconst raw = textPart.text || resp.output_text || '{}';\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  parsed = {};\n}\n\nreturn [{\n  json: {\n    tema: parsed.tema || 'Controle de ponto e gestão de jornada para PMEs',\n    keyword: parsed.keyword || 'control de fichaje',\n    categoria: parsed.categoria || 'controle-ponto',\n    intencaoBusca: parsed.intencao_busca || 'informacional',\n    hoje: $('Normalizar Entrada').first().json.hoje,\n  },\n}];"
+      },
+      "id": "montar-variaveis-pesquisa",
+      "name": "Montar Variáveis (Pesquisa)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $json;\n\nconst prompt = `Atue como um especialista sênior em SEO, copywriting B2B e conteúdo para SaaS.\n\nVocê deve gerar o BODY JSON completo para cadastrar um post de blog na rota:\n\nPOST /v1/platform/blog/posts\n\nA API cria posts multilíngues com conteúdo em:\n\n* português: pt\n* espanhol: es\n* inglês: en\n\nA rota aceita:\n\n* dados principais do post\n* status\n* categoria\n* slug\n* traduções\n* FAQ\n* posts relacionados\n\nO post será criado como rascunho.\nA publicação será feita depois pela rota:\nPATCH /v1/platform/blog/posts/{id}/publish\n\nPRODUTO:\nJornafy.\n\nDESCRIÇÃO DO PRODUTO:\nJornafy é um SaaS B2B para controle de ponto, gestão de colaboradores, jornadas de trabalho, relatórios, geolocalização, folha de ponto, documentos internos, comunicados, férias e ausências.\n\nPÚBLICO-ALVO:\nEmpresas pequenas e médias.\nPrincipal mercado: Espanha.\nDecisores:\n\n* donos de empresa\n* RH\n* gestores administrativos\n* gestores operacionais\n\nTEMA DO POST:\n${v.tema}\n\nPALAVRA-CHAVE PRINCIPAL:\n${v.keyword}\n\nCATEGORIA:\n${v.categoria}\n\nINTENÇÃO DE BUSCA:\n${v.intencaoBusca}\n\nIDIOMA PRINCIPAL:\nEspanhol.\n\nREGRAS GERAIS:\n\n1. Retorne somente JSON válido.\n2. Não use markdown.\n3. Não escreva explicações fora do JSON.\n4. Não inclua comentários.\n5. Não invente leis.\n6. Não invente multas.\n7. Não prometa conformidade legal absoluta.\n8. Se falar de legislação, use linguagem cautelosa.\n9. O conteúdo deve vender o Jornafy de forma indireta.\n10. O tom deve ser profissional, claro e confiável.\n11. O slug deve ser curto, único, sem acentos e em minúsculas.\n12. O status deve ser \"draft\".\n13. related_post_ids deve ser array vazio se nenhum ID for informado.\n14. O conteúdo deve ser completo e pronto para publicação.\n15. O post deve ter boa profundidade, sem parecer genérico.\n\nESTRUTURA DO POST:\nCada idioma deve conter:\n\n* título\n* resumo\n* conteúdo completo\n* meta title\n* meta description\n* OG title\n* OG description\n\nO campo content deve usar HTML simples:\n\n* <h2>\n* <h3>\n* <p>\n* <ul>\n* <li>\n* <strong>\n\nO conteúdo deve conter:\n\n* introdução com a dor do cliente\n* explicação do problema\n* subtítulos claros\n* exemplos práticos\n* benefícios de digitalizar o processo\n* menção natural ao Jornafy\n* conclusão com CTA suave\n\nFAQ:\nCrie entre 4 e 6 perguntas.\nCada pergunta e resposta deve existir em pt, es e en.\n\nLIMITES DE SEO:\n\n* meta_title: máximo 60 caracteres\n* meta_description: máximo 155 caracteres\n* excerpt: máximo 250 caracteres\n* usar a palavra-chave principal naturalmente\n* evitar keyword stuffing\n\nFORMATO EXATO DE SAÍDA:\n\n{\n\"slug\": \"\",\n\"status\": \"draft\",\n\"category\": \"\",\n\"related_post_ids\": [],\n\"translations\": {\n\"es\": {\n\"title\": \"\",\n\"excerpt\": \"\",\n\"content\": \"\",\n\"meta_title\": \"\",\n\"meta_description\": \"\",\n\"og_title\": \"\",\n\"og_description\": \"\"\n},\n\"pt\": {\n\"title\": \"\",\n\"excerpt\": \"\",\n\"content\": \"\",\n\"meta_title\": \"\",\n\"meta_description\": \"\",\n\"og_title\": \"\",\n\"og_description\": \"\"\n},\n\"en\": {\n\"title\": \"\",\n\"excerpt\": \"\",\n\"content\": \"\",\n\"meta_title\": \"\",\n\"meta_description\": \"\",\n\"og_title\": \"\",\n\"og_description\": \"\"\n}\n},\n\"faq\": [\n{\n\"question\": {\n\"es\": \"\",\n\"pt\": \"\",\n\"en\": \"\"\n},\n\"answer\": {\n\"es\": \"\",\n\"pt\": \"\",\n\"en\": \"\"\n}\n}\n]\n}\n\nIMPORTANTE:\nPreencha todos os campos.\nNão deixe strings vazias.\nNão adicione campos extras.\nNão altere os nomes dos campos.\nRetorne apenas o JSON final.`;\n\nreturn [{\n  json: {\n    categoria: v.categoria,\n    hoje: v.hoje,\n    openAiContentRequest: {\n      model: 'gpt-4o',\n      response_format: { type: 'json_object' },\n      messages: [\n        { role: 'system', content: 'Você retorna apenas JSON válido, sem markdown, sem comentários e sem texto fora do JSON.' },\n        { role: 'user', content: prompt },\n      ],\n    },\n  },\n}];"
+      },
+      "id": "montar-prompt-artigo",
+      "name": "Montar Prompt do Artigo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        110
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.openAiContentRequest }}",
+        "options": {}
+      },
+      "id": "gerar-conteudo-openai",
+      "name": "Gerar Conteúdo do Post (OpenAI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        110
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ai = JSON.parse($json.choices[0].message.content);\nconst ctx = $('Montar Prompt do Artigo').first().json;\n\nfunction slugify(str) {\n  return String(str)\n    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .trim()\n    .replace(/[^a-z0-9\\s-]/g, '')\n    .replace(/\\s+/g, '-')\n    .replace(/-+/g, '-')\n    .replace(/^-|-$/g, '');\n}\n\nconst langs = ['pt', 'es', 'en'];\nconst t = ai.translations || {};\n\nconst title = {};\nconst excerpt = {};\nconst content_html = {};\nconst seo_title = {};\nconst seo_description = {};\n\nfor (const lang of langs) {\n  const tr = t[lang] || {};\n  title[lang] = tr.title || '';\n  excerpt[lang] = tr.excerpt || '';\n  content_html[lang] = tr.content || '';\n  seo_title[lang] = tr.meta_title || '';\n  seo_description[lang] = tr.meta_description || '';\n}\n\n// og_title/og_description vêm do prompt mas a API não tem esses campos (só og_image_url, que é uma URL) -- descartados de propósito.\n\nconst faq = (ai.faq || []).map((item) => ({\n  question: item.question || {},\n  answer: item.answer || {},\n}));\n\nconst baseSlug = slugify(ai.slug || title.pt || title.es || 'post');\nconst slug = `${baseSlug}-${ctx.hoje}`;\n\nreturn [{\n  json: {\n    slug,\n    author: 'Equipe Jornafy',\n    category: ai.category || ctx.categoria,\n    status: 'draft',\n    source: 'n8n',\n    title,\n    excerpt,\n    content_html,\n    seo_title,\n    seo_description,\n    faq,\n    related_post_ids: Array.isArray(ai.related_post_ids) ? ai.related_post_ids : [],\n  },\n}];"
+      },
+      "id": "montar-body-post",
+      "name": "Montar Body do Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        110
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.jornafy.com/v1/platform/blog/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "criar-post-blog",
+      "name": "Criar Post (platform, draft)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        110
+      ]
+    }
+  ],
+  "connections": {
+    "Todo dia 08:00": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sugestão manual de tema": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Entrada": {
+      "main": [
+        [
+          {
+            "node": "Tema foi sugerido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tema foi sugerido?": {
+      "main": [
+        [
+          {
+            "node": "Montar Variáveis (Manual)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar Posts Recentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Variáveis (Manual)": {
+      "main": [
+        [
+          {
+            "node": "Montar Prompt do Artigo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Posts Recentes": {
+      "main": [
+        [
+          {
+            "node": "Montar Pesquisa de Tema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Pesquisa de Tema": {
+      "main": [
+        [
+          {
+            "node": "Pesquisar Tema (OpenAI Web Search)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pesquisar Tema (OpenAI Web Search)": {
+      "main": [
+        [
+          {
+            "node": "Montar Variáveis (Pesquisa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Variáveis (Pesquisa)": {
+      "main": [
+        [
+          {
+            "node": "Montar Prompt do Artigo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Prompt do Artigo": {
+      "main": [
+        [
+          {
+            "node": "Gerar Conteúdo do Post (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Conteúdo do Post (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Montar Body do Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Body do Post": {
+      "main": [
+        [
+          {
+            "node": "Criar Post (platform, draft)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/Sao_Paulo",
+    "executionOrder": "v1"
+  },
+  "active": false
+}

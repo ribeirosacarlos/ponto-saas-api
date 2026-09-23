@@ -27,4 +27,10 @@ class EmployeePolicy
         return $user->hasRole(['admin', 'super_admin']) &&
                $user->company_id === $employee->company_id;
     }
+
+    public function restore(User $user, User $employee): bool
+    {
+        return $user->hasRole(['admin', 'super_admin']) &&
+               $user->company_id === $employee->company_id;
+    }
 }

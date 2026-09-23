@@ -22,8 +22,8 @@ class CommercialLeadAssignRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $user = User::find($value);
 
-                    if (! $user || ! $user->hasRole(['super_admin', 'admin'])) {
-                        $fail('O responsável atribuído precisa ser um administrador.');
+                    if (! $user || ! $user->hasRole('super_admin')) {
+                        $fail('O responsável atribuído precisa ser um super_admin.');
                     }
                 },
             ],
