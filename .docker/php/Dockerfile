@@ -2,8 +2,9 @@
 FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
+ARG COMPOSER_NO_DEV=--no-dev
 RUN composer install \
-  --no-dev \
+  ${COMPOSER_NO_DEV} \
   --no-interaction \
   --prefer-dist \
   --optimize-autoloader \
@@ -24,6 +25,11 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-install \
     pdo_pgsql pgsql \
     mbstring exif pcntl bcmath gd zip opcache
+
+# Permite alinhar www-data ao UID/GID do host (evita conflito de permissão em bind mounts no WSL)
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+RUN groupmod -g ${HOST_GID} www-data && usermod -u ${HOST_UID} www-data
 
 WORKDIR /var/www
 COPY . /var/www
