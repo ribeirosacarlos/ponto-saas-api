@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.24.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.24.0...v2.24.1) (2026-09-23)
+
+
+### Correções de Bugs
+
+* exclude pending time entries from worked hours ([7d60230](https://github.com/ribeirosacarlos/ponto-saas-api/commit/7d602307d7c2fcd5f44debc08e0ea59bd23e9470))
+* exclude pending time entries from worked hours ([70effef](https://github.com/ribeirosacarlos/ponto-saas-api/commit/70effef642cee92b06a65ac1c1d9ef22a0f6c443))
+
 ## [2.24.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.23.0...v2.24.0) (2026-09-01)
 
 
