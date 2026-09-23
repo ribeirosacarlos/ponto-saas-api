@@ -14,6 +14,8 @@ class TimeEntry extends Model
 {
     use CompanyScoped, HasFactory, HasUuids, SoftDeletes;
 
+    private const COUNTABLE_ADJUSTMENT_STATUSES = [null, 'approved'];
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -58,6 +60,19 @@ class TimeEntry extends Model
             $builder->whereNull('adjustment_status')
                 ->orWhere('adjustment_status', '!=', 'rejected');
         });
+    }
+
+    public function scopeCountable(Builder $query): Builder
+    {
+        return $query->where(function (Builder $builder) {
+            $builder->whereNull('adjustment_status')
+                ->orWhereIn('adjustment_status', array_filter(self::COUNTABLE_ADJUSTMENT_STATUSES));
+        });
+    }
+
+    public function isCountable(): bool
+    {
+        return in_array($this->adjustment_status, self::COUNTABLE_ADJUSTMENT_STATUSES, true);
     }
 
     public function user()

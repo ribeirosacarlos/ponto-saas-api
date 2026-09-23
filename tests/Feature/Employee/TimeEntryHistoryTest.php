@@ -55,6 +55,37 @@ class TimeEntryHistoryTest extends TestCase
             ->assertJsonPath('days.0.summary.status', 'debt');
     }
 
+    public function test_pending_return_remains_visible_without_counting_afternoon_hours(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('employee');
+        $date = CarbonImmutable::parse('2025-12-19', 'UTC');
+        $this->assignShift($user, $date);
+        foreach ([['08:00', 'in', null], ['12:00', 'out', null], ['12:50', 'in', 'pending'], ['19:00', 'out', null]] as [$time, $type, $status]) {
+            TimeEntry::create([
+                'company_id' => $user->company_id,
+                'user_id' => $user->id,
+                'clocked_at' => $date->setTimeFromTimeString($time),
+                'type' => $type,
+                'source' => $status ? 'adjustment' : 'web',
+                'adjustment_status' => $status,
+            ]);
+        }
+
+        $this->actingAs($user)->getJson('/v1/employee/entries/history?from=2025-12-19&to=2025-12-19')
+            ->assertOk()
+            ->assertJsonPath('days.0.worked_minutes', 240)
+            ->assertJsonPath('days.0.extra_minutes', 0)
+            ->assertJsonPath('days.0.summary.worked_minutes', 240)
+            ->assertJsonPath('days.0.summary.has_incomplete_entries', true)
+            ->assertJsonPath('days.0.summary.pair_count', 1);
+
+        $this->getJson('/v1/employee/entries')
+            ->assertOk()
+            ->assertJsonCount(4, 'data')
+            ->assertJsonFragment(['adjustment_status' => 'pending']);
+    }
+
     private function assignShift(User $user, CarbonImmutable $date): void
     {
         $shift = Shift::create([
