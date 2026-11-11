@@ -47,7 +47,7 @@ class TimesheetSnapshotService
 
         $to = $from->endOfMonth();
 
-        $snapshot = $this->calculationService->calculateForEmployee($employee, $from, $to);
+        $snapshot = $this->calculationService->calculateForEmployee($employee, $from, $to, hideUnapprovedEntries: true);
 
         $previousBalanceMinutes = $this->calculatePreviousBalance($timesheet);
         $currentBalanceMinutes = (int) ($snapshot['totals']['balance_minutes'] ?? 0);
