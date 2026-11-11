@@ -5,6 +5,7 @@ namespace App\Services\Timesheet;
 use App\Enums\TimesheetSignatureRole;
 use App\Enums\TimesheetStatus;
 use App\Models\EmployeeTimesheet;
+use App\Models\MonthlyClosure;
 use App\Models\TimesheetSignature;
 use App\Models\User;
 use App\Services\AuditLogService;
@@ -26,33 +27,35 @@ class TimesheetSignatureService
 
     public function signAsEmployee(EmployeeTimesheet $timesheet, User $signer, Request $request): TimesheetSignature
     {
-        if ((string) $signer->id !== (string) $timesheet->employee_id) {
-            abort(403, 'Você só pode assinar a própria folha.');
-        }
+        $signature = DB::transaction(function () use (&$timesheet, $signer, $request) {
+            $timesheet = $this->lockTimesheet($timesheet, $signer);
 
-        if ($timesheet->status !== TimesheetStatus::PENDING_EMPLOYEE) {
-            throw ValidationException::withMessages([
-                'status' => 'A folha não está aguardando assinatura do colaborador.',
-            ]);
-        }
+            if ((string) $signer->id !== (string) $timesheet->employee_id) {
+                abort(403, 'Você só pode assinar a própria folha.');
+            }
 
-        if ($timesheet->hasOpenDispute()) {
-            throw ValidationException::withMessages([
-                'dispute' => 'Existe uma contestação em aberto. Resolva antes de assinar.',
-            ]);
-        }
+            if ($timesheet->status !== TimesheetStatus::PENDING_EMPLOYEE) {
+                throw ValidationException::withMessages([
+                    'status' => 'A folha não está aguardando assinatura do colaborador.',
+                ]);
+            }
 
-        $this->validatePassword($signer, $request->string('password')->toString());
+            if ($timesheet->hasOpenDispute()) {
+                throw ValidationException::withMessages([
+                    'dispute' => 'Existe uma contestação em aberto. Resolva antes de assinar.',
+                ]);
+            }
 
-        $signatureImagePath = $this->saveSignatureImage(
-            $request->string('signature_image')->toString(),
-            $timesheet
-        );
+            $this->validatePassword($signer, $request->string('password')->toString());
 
-        $documentHash = $timesheet->computeDocumentHash();
-        $signatureHash = hash('sha256', $signatureImagePath . $documentHash . $signer->id . now()->toIso8601String());
+            $signatureImagePath = $this->saveSignatureImage(
+                $request->string('signature_image')->toString(),
+                $timesheet
+            );
 
-        $signature = DB::transaction(function () use ($timesheet, $signer, $request, $signatureImagePath, $documentHash, $signatureHash) {
+            $documentHash = $timesheet->computeDocumentHash();
+            $signatureHash = hash('sha256', $signatureImagePath.$documentHash.$signer->id.now()->toIso8601String());
+
             $signature = TimesheetSignature::create([
                 'company_id' => $timesheet->company_id,
                 'employee_timesheet_id' => $timesheet->id,
@@ -94,19 +97,19 @@ class TimesheetSignatureService
 
     public function signAsManager(EmployeeTimesheet $timesheet, User $signer, Request $request): TimesheetSignature
     {
-        $employee = $timesheet->employee;
+        $signature = DB::transaction(function () use (&$timesheet, $signer, $request) {
+            $timesheet = $this->lockTimesheet($timesheet, $signer);
 
-        if (! $this->userVisibilityService->canManageUser($signer, $employee)) {
-            abort(403, 'Você não tem permissão para assinar a folha deste colaborador.');
-        }
+            if (! $this->userVisibilityService->canManageUser($signer, $timesheet->employee)) {
+                abort(403, 'Você não tem permissão para assinar a folha deste colaborador.');
+            }
 
-        if ($timesheet->status !== TimesheetStatus::PENDING_MANAGER) {
-            throw ValidationException::withMessages([
-                'status' => 'A folha não está aguardando assinatura do gestor.',
-            ]);
-        }
+            if ($timesheet->status !== TimesheetStatus::PENDING_MANAGER) {
+                throw ValidationException::withMessages([
+                    'status' => 'A folha não está aguardando assinatura do gestor.',
+                ]);
+            }
 
-        $signature = DB::transaction(function () use ($timesheet, $signer, $request) {
             $signature = TimesheetSignature::create([
                 'company_id' => $timesheet->company_id,
                 'employee_timesheet_id' => $timesheet->id,
@@ -172,6 +175,26 @@ class TimesheetSignatureService
         );
 
         return true;
+    }
+
+    private function lockTimesheet(EmployeeTimesheet $timesheet, User $signer): EmployeeTimesheet
+    {
+        abort_unless((string) $timesheet->company_id === (string) $signer->company_id, 403);
+
+        // Match the deletion/generation lock order to serialize signing with deletion.
+        $closure = MonthlyClosure::query()
+            ->where('company_id', $signer->company_id)
+            ->lockForUpdate()
+            ->findOrFail($timesheet->monthly_closure_id);
+
+        $lockedTimesheet = $closure->timesheets()
+            ->where('company_id', $signer->company_id)
+            ->lockForUpdate()
+            ->findOrFail($timesheet->id);
+
+        // Preserve the instance used by the controller when building its response.
+        return $timesheet->setRawAttributes($lockedTimesheet->getAttributes(), true)
+            ->setRelations(['monthlyClosure' => $closure]);
     }
 
     private function validatePassword(User $user, string $password): void

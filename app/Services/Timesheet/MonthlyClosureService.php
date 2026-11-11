@@ -7,10 +7,13 @@ use App\Enums\TimesheetStatus;
 use App\Jobs\GenerateEmployeeTimesheetJob;
 use App\Models\EmployeeTimesheet;
 use App\Models\MonthlyClosure;
+use App\Models\TimesheetDispute;
+use App\Models\TimesheetSignature;
 use App\Models\User;
 use App\Services\AuditLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class MonthlyClosureService
@@ -81,6 +84,61 @@ class MonthlyClosureService
         );
 
         return $closure;
+    }
+
+    public function delete(User $actor, MonthlyClosure $closure): void
+    {
+        DB::transaction(function () use ($actor, $closure) {
+            $closure = MonthlyClosure::query()
+                ->where('company_id', $actor->company_id)
+                ->lockForUpdate()
+                ->findOrFail($closure->id);
+
+            $timesheets = $closure->timesheets()
+                ->withoutGlobalScope('company')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            // Cascade deletion must never remove a row belonging to another company.
+            abort_if($timesheets->contains(
+                fn ($timesheet) => (string) $timesheet->company_id !== (string) $actor->company_id
+            ), 403);
+
+            abort_if(TimesheetDispute::withoutGlobalScope('company')
+                ->whereIn('employee_timesheet_id', $timesheets->modelKeys())
+                ->where('company_id', '!=', $actor->company_id)
+                ->exists(), 403);
+
+            Gate::forUser($actor)->authorize('delete', $closure);
+
+            $hasSignatures = TimesheetSignature::withoutGlobalScope('company')
+                ->whereIn('employee_timesheet_id', $timesheets->modelKeys())
+                ->exists();
+
+            if ($hasSignatures) {
+                throw ValidationException::withMessages([
+                    'closure' => 'Não é possível excluir um fechamento que já possui assinatura, mesmo que invalidada.',
+                ]);
+            }
+
+            $oldValues = $closure->only([
+                'company_id', 'employee_id', 'reference_year', 'reference_month', 'status', 'closed_by',
+            ]);
+            $oldValues['status'] = $closure->status->value;
+
+            $closure->delete();
+
+            $this->auditLogService->log(
+                action: 'monthly_closure.deleted',
+                entityType: MonthlyClosure::class,
+                entityId: $closure->id,
+                description: 'Fechamento mensal sem assinatura excluído',
+                oldValues: $oldValues,
+                companyId: $actor->company_id,
+                userId: $actor->id,
+            );
+        });
     }
 
     public function checkAndAdvanceToOpen(MonthlyClosure $closure): void

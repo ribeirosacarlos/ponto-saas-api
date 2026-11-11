@@ -8,7 +8,9 @@ use App\Http\Requests\CloseMonthRequest;
 use App\Http\Resources\MonthlyClosureResource;
 use App\Models\MonthlyClosure;
 use App\Models\User;
+use App\Services\Timesheet\MonthlyClosureService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class MonthlyClosureController extends Controller
 {
@@ -59,5 +61,14 @@ class MonthlyClosureController extends Controller
         $closure->load(['closedBy', 'employee'])->loadCount(['timesheets']);
 
         return new MonthlyClosureResource($closure);
+    }
+
+    public function destroy(Request $request, MonthlyClosure $closure, MonthlyClosureService $closureService): Response
+    {
+        $this->authorize('delete', $closure);
+
+        $closureService->delete($request->user(), $closure);
+
+        return response()->noContent();
     }
 }

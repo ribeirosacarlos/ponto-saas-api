@@ -69,6 +69,7 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['role:admin|manager|area_manager', 'subscription.access'])->group(function () {
         Route::get('/monthly-closures', [MonthlyClosureController::class, 'index']);
         Route::get('/monthly-closures/{closure}', [MonthlyClosureController::class, 'show']);
+        Route::delete('/monthly-closures/{closure}', [MonthlyClosureController::class, 'destroy']);
         Route::get('/monthly-closures/{closure}/timesheets', [TimesheetAdminController::class, 'index']);
         Route::get('/timesheets/{timesheet}', [TimesheetAdminController::class, 'show']);
         Route::post('/timesheets/{timesheet}/sign', [TimesheetAdminController::class, 'sign']);

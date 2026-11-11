@@ -123,6 +123,61 @@ POST /api/v1/admin/monthly-closures
 
 ---
 
+### Excluir um fechamento sem assinatura
+
+```http
+DELETE /api/v1/admin/monthly-closures/{closure}
+Authorization: Bearer {token}
+```
+
+**Roles permitidas:** `admin`, `manager`, `area_manager`.
+
+O fechamento deve pertencer à empresa do usuário autenticado. Gestores precisam ter permissão sobre o colaborador conforme `UserVisibilityService`, incluindo a regra existente para colaboradores sem área. Em fechamentos legados sem `employee_id`, precisam ter acesso a todos os colaboradores das folhas vinculadas; se não houver colaborador identificável, somente o administrador poderá excluir.
+
+Não há body. Retorna **`204 No Content`** em caso de sucesso.
+
+A exclusão é definitiva: remove o fechamento, suas folhas (snapshots) e contestações vinculadas, preservando as batidas de ponto e os registros de auditoria. Permite fechar novamente o mesmo período pelo endpoint de criação, que continua restrito a `admin`. Contestações abertas não impedem a exclusão quando não houver assinatura. Fechamentos em `processing` também podem ser excluídos; jobs pendentes para folhas removidas são descartados.
+
+**Qualquer assinatura registrada bloqueia a operação**, seja de colaborador ou gestor, ativa ou invalidada (`superseded_at` preenchido). A condição é verificada em todas as folhas vinculadas, e não apenas pelo status do fechamento. Assinatura e exclusão simultâneas são serializadas: se a assinatura ocorrer primeiro, a exclusão é bloqueada; se a exclusão ocorrer primeiro, a assinatura retorna `404`.
+
+**Erros:** `401` sem autenticação; `403` sem permissão de perfil, empresa ou área; `404` para fechamento inexistente (também possível para recursos ocultos pelo escopo de tenant); `422` quando já existe assinatura.
+
+Exemplo de erro `422`:
+
+```json
+{
+  "message": "Não é possível excluir um fechamento que já possui assinatura, mesmo que invalidada.",
+  "errors": {
+    "closure": [
+      "Não é possível excluir um fechamento que já possui assinatura, mesmo que invalidada."
+    ]
+  }
+}
+```
+
+A operação registra `monthly_closure.deleted` com autor, empresa e os dados anteriores do fechamento.
+
+**Integração no front-end:**
+
+- Usar o `id` do fechamento (`closure.id`), não o ID da folha nem o do colaborador.
+- Exibir a ação para `admin`, `manager` e `area_manager`; o backend valida empresa, área e acesso da assinatura do plano. O recurso de fechamento não retorna `can_delete`: o status `open` ou `pending_employee` da folha não garante ausência de assinaturas no histórico.
+- Antes de excluir, confirmar com: “Excluir este fechamento? As folhas e contestações vinculadas serão removidas. As batidas de ponto serão preservadas.”
+- Desabilitar a ação enquanto a requisição estiver em andamento. Em `204`, não tentar interpretar JSON; fechar o detalhe removido, atualizar a lista de fechamentos e invalidar os dados de folhas/contestações desse fechamento.
+- Em `422`, exibir `errors.closure[0]` (ou `message` como fallback) e manter o fechamento na tela. Em `404`, atualizar a lista. Em `403`, apresentar a mensagem do servidor. Em `401`, seguir o fluxo existente de autenticação. Em falha de rede ou `5xx`, apresentar erro e atualizar a lista antes de uma nova tentativa.
+- A assinatura pode ocorrer depois que a tela foi carregada: tratar `422` mesmo se o botão estava habilitado.
+
+Exemplo com Axios, considerando um cliente `api` já autenticado e com `baseURL` terminando em `/api/v1`:
+
+```typescript
+// Não repetir /api/v1 se o prefixo já estiver no baseURL.
+export async function deleteMonthlyClosure(closureId: string): Promise<void> {
+  await api.delete(`/admin/monthly-closures/${encodeURIComponent(closureId)}`);
+  // Sucesso: 204, sem corpo. Atualizar as consultas da tela após o await.
+}
+```
+
+---
+
 ### Listar fechamentos mensais
 
 ```
