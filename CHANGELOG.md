@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.25.0](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.24.1...v2.25.0) (2026-11-11)
+
+
+### Novas Funcionalidades
+
+* allow deleting unsigned monthly closures ([1f9aa99](https://github.com/ribeirosacarlos/ponto-saas-api/commit/1f9aa992fd56c3db1c3c0482026d509679634956))
+* allow deleting unsigned monthly closures ([89da873](https://github.com/ribeirosacarlos/ponto-saas-api/commit/89da873dfc27b130b5385a41e3ae40933bf38642))
+
+
+### Correções de Bugs
+
+* hide unapproved entries in monthly closures ([52f2868](https://github.com/ribeirosacarlos/ponto-saas-api/commit/52f28687542d205791d96f8ad5345fec4418de96))
+
 ## [2.24.1](https://github.com/ribeirosacarlos/ponto-saas-api/compare/v2.24.0...v2.24.1) (2026-09-23)
 
 
