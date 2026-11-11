@@ -39,11 +39,12 @@ class TimesheetCalculationService
         User $employee,
         ?CarbonImmutable $from = null,
         ?CarbonImmutable $to = null,
-        bool $onlyDaysWithEntries = false
+        bool $onlyDaysWithEntries = false,
+        bool $onlyApprovedEntries = false
     ): array {
         $timezone = $this->resolveTimezone($employee);
         $toLocal = $this->normalizeToLocalEnd($to ?? CarbonImmutable::now($timezone), $timezone);
-        $firstEntryDate = $this->resolveFirstEntryDate($employee, $timezone);
+        $firstEntryDate = $this->resolveFirstEntryDate($employee, $timezone, $onlyApprovedEntries);
 
         if ($from) {
             $fromLocal = $this->normalizeToLocalStart($from, $timezone);
@@ -55,7 +56,7 @@ class TimesheetCalculationService
             [$fromLocal, $toLocal] = [$toLocal->startOfDay(), $fromLocal->endOfDay()];
         }
 
-        $entries = $this->fetchEntries($employee, $fromLocal, $toLocal);
+        $entries = $this->fetchEntries($employee, $fromLocal, $toLocal, $onlyApprovedEntries);
         $entriesByDate = $this->groupEntriesByDate($entries, $timezone);
         $shiftAssignments = $this->fetchShiftAssignments($employee);
         $defaultShift = $this->fetchDefaultShift($employee);
@@ -153,12 +154,14 @@ class TimesheetCalculationService
     /**
      * @return Collection<int, TimeEntry>
      */
-    protected function fetchEntries(User $employee, CarbonImmutable $from, CarbonImmutable $to): Collection
+    protected function fetchEntries(User $employee, CarbonImmutable $from, CarbonImmutable $to, bool $onlyApprovedEntries = false): Collection
     {
         $fromUtc = $from->setTimezone('UTC');
         $toUtc = $to->setTimezone('UTC');
 
         return $employee->timeEntries()
+            ->where('company_id', $employee->company_id)
+            ->when($onlyApprovedEntries, fn ($query) => $query->approvedOrRegular())
             ->whereBetween('clocked_at', [$fromUtc->toDateTimeString(), $toUtc->toDateTimeString()])
             ->orderBy('clocked_at')
             ->orderBy('created_at')
@@ -736,9 +739,11 @@ class TimesheetCalculationService
         return $company ? $company->timezone : (config('app.timezone', 'UTC'));
     }
 
-    protected function resolveFirstEntryDate(User $employee, string $timezone): ?CarbonImmutable
+    protected function resolveFirstEntryDate(User $employee, string $timezone, bool $onlyApprovedEntries = false): ?CarbonImmutable
     {
         $first = $employee->timeEntries()
+            ->where('company_id', $employee->company_id)
+            ->when($onlyApprovedEntries, fn ($query) => $query->approvedOrRegular())
             ->whereIn('type', self::WORK_ENTRY_TYPES)
             ->excludeRejected()
             ->orderBy('clocked_at')

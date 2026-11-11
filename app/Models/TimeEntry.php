@@ -60,6 +60,14 @@ class TimeEntry extends Model
         });
     }
 
+    public function scopeApprovedOrRegular(Builder $query): Builder
+    {
+        return $query->where(function (Builder $builder) {
+            $builder->whereNull('adjustment_status')
+                ->orWhere('adjustment_status', 'approved');
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
