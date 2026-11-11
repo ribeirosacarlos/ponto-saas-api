@@ -1,0 +1,111 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ponto-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ponto_saas
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: laravel
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./.docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - laravel
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laravel -d ponto_saas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: .docker/php/Dockerfile
+      args:
+        COMPOSER_NO_DEV: ""
+        HOST_UID: ${UID:-1000}
+        HOST_GID: ${GID:-1000}
+    container_name: ponto-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ponto_saas
+      DB_USERNAME: laravel
+      DB_PASSWORD: laravel
+      WAIT_FOR_DB: "true"
+      RUN_MIGRATIONS: "true"
+      RUN_OPTIMIZE: "false"
+      RUN_COMPOSER_INSTALL: "false"
+      APP_URL: "http://localhost:8080"
+      SESSION_SECURE_COOKIE: "false"
+      SESSION_DOMAIN: "localhost"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - laravel
+    volumes:
+      - .:/var/www
+      - vendor_data:/var/www/vendor
+      - public_data:/var/www/public
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: .docker/php/Dockerfile
+      args:
+        COMPOSER_NO_DEV: ""
+        HOST_UID: ${UID:-1000}
+        HOST_GID: ${GID:-1000}
+    container_name: ponto-queue
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ponto_saas
+      DB_USERNAME: laravel
+      DB_PASSWORD: laravel
+      WAIT_FOR_DB: "true"
+      RUN_MIGRATIONS: "false"
+      RUN_OPTIMIZE: "false"
+      RUN_COMPOSER_INSTALL: "false"
+    depends_on:
+      - app
+    command: ["php", "/var/www/artisan", "queue:work", "database", "--queue=default", "--sleep=1", "--tries=3", "--timeout=120"]
+    networks:
+      - laravel
+
+  nginx:
+    image: nginx:alpine
+    container_name: ponto-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - app
+    networks:
+      - laravel
+    volumes:
+      - ./.docker/nginx:/etc/nginx/conf.d:ro
+      - public_data:/var/www/public:ro
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  postgres_data: {}
+  public_data: {}
+  vendor_data: {}
