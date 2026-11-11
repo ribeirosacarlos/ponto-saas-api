@@ -438,6 +438,10 @@ POST /api/v1/employee/timesheets/{timesheet_id}/dispute
 
 O snapshot é um JSON imutável gerado no momento do fechamento, com os dados de ponto do colaborador no período.
 
+Na geração ou regeneração do snapshot, `days[].entries` exibe somente batidas normais (`adjustment_status = null`) e ajustes aprovados (`approved`) da mesma empresa e colaborador. Batidas `pending` ou `rejected` não aparecem, não somam horas e não definem `counting_since`. O cálculo preserva a sequência original para impedir que batidas válidas sejam pareadas através de um extremo pendente.
+
+Snapshots já gerados precisam de regeneração explícita (`php artisan timesheets:regenerate-snapshot <timesheet-id>`) para aplicar a correção. O comando mantém a proteção existente para documentos assinados.
+
 ```json
 {
   "employee_id": "uuid",

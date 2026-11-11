@@ -47,6 +47,32 @@ class RegenerateTimesheetSnapshotTest extends TestCase
         $this->assertSame('2026-05-24T09:00-03:00', $this->firstEntryClockedAt($timesheet->refresh()));
     }
 
+    public function test_regeneration_removes_pending_entries_from_existing_snapshot(): void
+    {
+        $timesheet = $this->createTimesheetWithStaleSnapshot();
+        $pending = TimeEntry::create([
+            'company_id' => $timesheet->company_id,
+            'user_id' => $timesheet->employee_id,
+            'clocked_at' => '2026-05-24 17:00:00',
+            'type' => 'out',
+            'source' => 'web',
+            'adjustment_status' => 'pending',
+        ]);
+        $snapshot = $timesheet->snapshot;
+        $snapshot['days'][0]['entries'][] = ['id' => $pending->id, 'adjustment_status' => 'pending'];
+        $timesheet->update(['snapshot' => $snapshot]);
+
+        $this->artisan('timesheets:regenerate-snapshot', ['timesheet' => $timesheet->id])
+            ->assertExitCode(0);
+
+        $timesheet->refresh();
+        $entries = collect($timesheet->snapshot['days'])->pluck('entries')->flatten(1);
+
+        $this->assertCount(1, $entries);
+        $this->assertNotContains($pending->id, $entries->pluck('id')->all());
+        $this->assertSame(0, $timesheet->snapshot['totals']['worked_minutes']);
+    }
+
     public function test_skips_timesheet_with_active_signature_unless_forced(): void
     {
         $timesheet = $this->createTimesheetWithStaleSnapshot();

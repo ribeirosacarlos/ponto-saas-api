@@ -39,7 +39,8 @@ class TimesheetCalculationService
         User $employee,
         ?CarbonImmutable $from = null,
         ?CarbonImmutable $to = null,
-        bool $onlyDaysWithEntries = false
+        bool $onlyDaysWithEntries = false,
+        bool $hideUnapprovedEntries = false
     ): array {
         $timezone = $this->resolveTimezone($employee);
         $toLocal = $this->normalizeToLocalEnd($to ?? CarbonImmutable::now($timezone), $timezone);
@@ -81,7 +82,8 @@ class TimesheetCalculationService
                 $absences,
                 $shiftAssignments,
                 $defaultShift,
-                $timezone
+                $timezone,
+                $hideUnapprovedEntries
             );
         }
 
@@ -159,6 +161,7 @@ class TimesheetCalculationService
         $toUtc = $to->setTimezone('UTC');
 
         return $employee->timeEntries()
+            ->where('company_id', $employee->company_id)
             ->whereBetween('clocked_at', [$fromUtc->toDateTimeString(), $toUtc->toDateTimeString()])
             ->orderBy('clocked_at')
             ->orderBy('created_at')
@@ -241,7 +244,8 @@ class TimesheetCalculationService
         array $absences,
         Collection $shiftAssignments,
         ?Shift $defaultShift,
-        string $timezone
+        string $timezone,
+        bool $hideUnapprovedEntries = false
     ): array {
         $dateKey = $date->toDateString();
         $isHoliday = isset($holidays[$dateKey]);
@@ -289,12 +293,18 @@ class TimesheetCalculationService
         $extraMinutes = max(0, $balanceMinutes);
         $debtMinutes = min(0, $balanceMinutes);
 
+        // Filter display only: pairing must keep pending entries in sequence
+        // so valid endpoints are never joined across an unapproved endpoint.
+        $displayEntries = $hideUnapprovedEntries
+            ? array_values(array_filter($entries, fn (TimeEntry $entry) => $entry->isCountable()))
+            : $entries;
+
         return [
             'date' => $dateKey,
             'employee_id' => $employee->id,
             'entries' => array_map(
                 fn (TimeEntry $entry) => $this->formatEntry($entry, $timezone),
-                $entries
+                $displayEntries
             ),
             'virtual_entries' => $this->buildVirtualAbsenceEntries(
                 $absence,
@@ -760,6 +770,7 @@ class TimesheetCalculationService
     protected function resolveFirstEntryDate(User $employee, string $timezone): ?CarbonImmutable
     {
         $first = $employee->timeEntries()
+            ->where('company_id', $employee->company_id)
             ->whereIn('type', self::WORK_ENTRY_TYPES)
             ->countable()
             ->orderBy('clocked_at')
